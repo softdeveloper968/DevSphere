@@ -1,0 +1,64 @@
+﻿@model SignRequestViewModel
+
+<form asp-controller="Forms" asp-action="SignSingle" method="post">
+    <input asp-for="RequestId" type="hidden" value="@Model.RequestId" />
+    <div class="form-group">
+        <div class="row">
+            <label asp-for="PrintedNameAndTitle" class="col-md-2 control-label"></label>
+            <div class="col-md-6">
+                <input asp-for="PrintedNameAndTitle" class="form-control" />
+                <span asp-validation-for="PrintedNameAndTitle" class="text-danger"></span>
+            </div>
+            <div class="col-md-2"></div>
+        </div>
+        <div class="row">
+            <label asp-for="Signature" class="col-md-2 control-label"></label>
+            <div class="col-md-6">
+                <input asp-for="Signature" class="form-control" id="digsignature" />
+                <span asp-validation-for="Signature" class="text-danger"></span>
+            </div>
+            <div class="col-md-2"></div>
+        </div>
+        <div class="row">
+            <div class="checkbox col-md-2">
+                <label asp-for="ManualSignature">
+                    <input asp-for="ManualSignature" id="chkManualSig" onclick="toggleSignature();" />
+                    @Html.DisplayNameFor(m => m.ManualSignature)
+                </label>
+            </div>
+        </div>
+    </div>
+    <button type="submit" class="btn" style="margin-bottom:15px" id="btnSigSubmit">Sign</button>
+</form>
+<script asp-add-nonce="true">
+    function toggleSignature() {
+        var chk = document.getElementById('chkManualSig');
+        var txtSig = document.getElementById('digsignature');
+        var btnSigSubmit = document.getElementById('btnSigSubmit');
+        if (chk.checked) {
+            txtSig.innerText = "";
+            txtSig.disabled = "disabled";
+            btnSigSubmit.innerText = "Prepare for manual signing";
+        }
+        else {
+            txtSig.disabled = "";
+            btnSigSubmit.innerText = "Sign";
+        }
+    }
+</script>
+<div id="content">
+    <div class="loader" style="display:none">
+        <i class="fa fa-spinner fa-spin" style="font-size:36px"></i>
+    </div>
+    <object data="/Forms/ViewForm/@Model.RequestId" type="application/pdf" onloadeddata="HideLoader();" style="width: 100%; height:1000px;">
+        <p>
+            <b>Error</b>:
+            This browser does not support PDFs. Please download the PDF to view it: <a href="/Forms/ViewForm/@Model.RequestId">Download PDF</a>.
+        </p>
+    </object>
+</div>
+<script asp-add-nonce="true">
+    function HideLoader() {
+        $(".loader").hide();
+    }
+</script>

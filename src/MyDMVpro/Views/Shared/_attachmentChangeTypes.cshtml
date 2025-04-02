@@ -1,0 +1,49 @@
+﻿@model MyDMVpro.Models.SharedViews.AttachmentChangeTypeModel
+@{
+    string GetAttachmentTypeApprovedClass(MdpAttachmentTypes attachmentType)
+    {
+        if (attachmentType.Name == "Extra")
+        {
+            return "";
+        }
+        var status = Model.UploadedAttachmentTypeIds.Find(x => x.AttachmentTypeId == attachmentType.AttachmentTypeId);
+        if (status != null)
+        {
+            if (status.Approved == null)
+            {
+                return "attachmentNotReviewed";
+            }
+            if (status.Approved.Value)
+            {
+                return "attachmentApproved";
+            }
+            return "attachmentRejected";
+        }
+        return "";
+    }
+    string GetExtraDisabled(bool hasExtra)
+    {
+        if (hasExtra)
+        {
+            return "disabled";
+        }
+        return "";
+    }
+}
+@foreach (var changeType in Model.AttachmentTypes.Where(x=> x.Name != "Extra").OrderBy(x => x.Name))
+{
+    if (changeType.AttachmentTypeId == Model.SelectedAttachmentTypeId)
+    {
+        <li data-attachmenttypeid="@changeType.AttachmentTypeId" class="disabled"><a class="dropdown-item" href="#">@changeType.Name</a></li>
+    }
+    else
+    {
+        <li data-attachmenttypeid="@changeType.AttachmentTypeId"><a class="dropdown-item @GetAttachmentTypeApprovedClass(changeType)" href="#">@changeType.Name</a></li>
+    }
+}
+@{
+    var extra = Model.AttachmentTypes.FirstOrDefault(x => x.Name == "Extra");
+    var hasExtra = Model.UploadedAttachmentTypeIds.Any(x => x.AttachmentTypeId == extra.AttachmentTypeId);
+}
+@* <li role="separator" class="divider"></li> *@
+<li data-attachmenttypeid="@extra.AttachmentTypeId" class="@GetExtraDisabled(hasExtra)"><a class="dropdown-item" href="#">@extra.Name</a></li>

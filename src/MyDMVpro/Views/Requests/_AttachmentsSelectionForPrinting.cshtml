@@ -1,0 +1,66 @@
+﻿<div id="modal-request-printing-selection" class="modal fade hidden-print" tabindex="-1" role="">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Attachments</h4>
+            </div>
+            <div class="modal-body"></div>
+            <div class="modal-footer">
+                <div class="alert alert-danger" role="alert" style="display:none"></div>
+                <button type="button" class="btn btn-primary" id="btnStartBulkPrinting">Combine to Print</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal" id="btnCloseBulkPrinting">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script asp-add-nonce="true">
+    $("#btnStartBulkPrinting").off('click').on('click', function (e) {
+        e.preventDefault();
+        let $btn = $(this);
+        let $modal = $("#modal-request-printing-selection");
+        $btn.hide();
+        $("#bulkPrintingStep1").hide();
+        $("#bulkPrintingStep2").fadeIn();
+
+        var formData = new FormData();
+        $(vendorBulkPrint_Items).each(function (i, v) {
+            formData.append("requestIds", v.requestId);
+        });
+
+        var attachmentTypeId = $("#bulkPrintingStep1 input[type=radio]:checked").val();
+
+        formData.append("attachmentTypeId", attachmentTypeId);
+
+        $.ajax({
+            url: '/BulkPrint/BulkPrintAttachments',
+            type: 'POST',
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            data: formData,
+            dataType: 'json', 
+            cache: false,
+            contentType: false,
+            processData: false,
+        }).done(function (data) {
+            if (data.status == "error") {
+                vendor_show_alert($modal, data.message, -1);
+                $("#bulkPrintingStep2").hide();
+                $("#bulkPrintingStep1").fadeIn();
+                $btn.show();
+            }
+            else {
+                $("#bulkFileName").text(data.data);
+                // refresh list
+                AjaxReloadList($("#DT_BulkPrintAttachments").DataTable(), false);
+            }
+        });
+        return false;
+    });
+
+    $("#btnCloseBulkPrinting").off('click').on('click', function () {
+        $("#btnStartBulkPrinting").show();
+        $("#bulkPrintingStep1").show();
+        $("#bulkPrintingStep2").hide();
+    });
+</script>

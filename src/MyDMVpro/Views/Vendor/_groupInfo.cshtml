@@ -1,0 +1,46 @@
+﻿@model MyDMVpro.Models.VendorViewModels.BusinessInfo
+
+<div id="groupInfoPanel" tabindex="-1">
+    <form id="groupInfoForm">
+        <input type="hidden" name="GroupId" />
+        <input type="hidden" name="Version" />
+        <div>
+            <div class="form-group col-lg-6 nooutline">
+                <fieldset class="scheduler-border">
+                    <legend class="scheduler-border">Primary Address</legend>
+                    <div>
+                        <div name="BusinessName" data-editor-field="BusinessName">@Html.DisplayFor(m => m.BusinessName)</div>
+                        <div name="AddrLine1" data-editor-field="AddrLine1">@Html.DisplayFor(m => m.AddrLine1)</div>
+                        <div name="AddrLine2" data-editor-field="AddrLine2">@Html.DisplayFor(m => m.AddrLine2)</div>
+                        <div style="display:inline-block">
+                            <span name="City" data-editor-field="City">@Html.DisplayFor(m => m.City)</span>,&nbsp;
+                            <span name="State" data-editor-field="State">@Html.DisplayFor(m => m.State)</span>&nbsp;
+                            <span name="Zip" data-editor-field="Zip">@Html.DisplayFor(m => m.Zip)</span>
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+            <hr />
+            <div class="form-group col-lg-12 nooutline">
+                <fieldset class="scheduler-border">
+                    <legend class="scheduler-border">Notes</legend>
+                    <div style="width:100%;">
+                        <textarea name="Notes" class="border-0 fullwidth" data-editor-field="Notes" readonly>@Html.DisplayFor(m => m.Notes)</textarea>
+                    </div>
+                </fieldset>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $("#groupInfoSubmit").off('click').on('click', function (e) {
+            e.preventDefault();
+            SaveGroupInfo();
+        });
+    });
+</script>
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

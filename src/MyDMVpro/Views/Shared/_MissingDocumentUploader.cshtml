@@ -1,0 +1,375 @@
+﻿@model MyDMVpro.Models.SharedViews.AttachmentsViewModel
+@{
+    var link = ViewBag.HelpLink;
+}
+
+<div class="row flex_row gap_15">
+    <div class="col-md-6">
+        <div class="sectionBox bg_white">
+            <div class="box-header mb_10">
+                <h3 class="box-title">Attachments: @Model.Request.Vin</h3>
+            </div>
+            <p class="attachmentNotes">@Model.AttachmentNotes</p>
+            <div><b>Requested Attachments:</b></div>
+            <div class="table-responsive">
+                <table class="attachmentList table">
+                    <tbody>
+                        @foreach (var attachment in Model.AttachmentTypes)
+                        {
+                            <tr>
+                                <td class="p_15">
+                                    <span class="text-red">@attachment.Name:</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    @attachment.Description
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div id="reqAttContent" class="attachment-section col-md-6">
+        <div class="attachment-header">
+            <h4 class="attachment-title">Attachments</h4>
+        </div>
+        <div class="attachment-body">
+            <form id="att-addMissingAttachment" asp-controller="Requests" asp-action="UploadAttachment" method="post" enctype="multipart/form-data" onsubmit="return false;">
+                <input type="hidden" name="id" id="att-RequestId" value="@Model.RequestId" />
+                <input type="hidden" name="vin" id="att-VIN" value="@Model.Request.Vin" />
+                <div id="attUploadPanel">
+                    <h4 class="hrheader">Upload Attachments</h4>
+                    <div class="form-group">
+                        <input type="file" name="file" class="form-control" required />
+                    </div>
+                    <div class="form-group" id="attachmentTypePanel">
+                        <label for="attachmentTypeId">Type:</label>
+                        <select asp-for="AttachmentTypes.FirstOrDefault().AttachmentTypeId" class="form-control" required>
+                            @foreach (var type in Model.AttachmentTypes)
+                            {
+                                <option value="@type.AttachmentTypeId">@type.Name</option>
+                            }
+                        </select>
+
+                        <span style="font-size:small">Please confirm the type of document you are attaching. If you do not see an option that describes your document, choose the “extra” type</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="att-FileDesc" class="control-label">Description (optional): </label>
+                        <input type="text" class="form-control" name="filedesc" id="att-FileDesc" />
+                    </div>
+                    <div class="form-group mb-0">
+                        <button type="submit" class="btn btn-success custom_btn">Upload File</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="alert alert-danger" style="display:none" role="alert"></div>
+    </div>
+
+</div>
+
+<script>
+
+    $(document).ready(function () {
+        var $attForm = $("#att-addMissingAttachment");
+
+        $attForm.on("submit", function (e) {
+            e.preventDefault();
+            e.stopPropagation()
+
+            var requestId = $("#att-RequestId").val();
+            var fileDesc = $("#att-FileDesc").val();
+            var attachmentTypeId = $attForm.find("#attachmentTypeId").val();
+
+            var formData = new FormData(this);
+            formData.append("id", requestId);
+            formData.append("filedesc", fileDesc);
+
+            var fileInput = $attForm.find('input[name="file"]');
+            if (!fileInput.val()) {
+                alert("Please select a file to upload.");
+                return;
+            }
+
+            $.ajax({
+                url: $attForm.attr("action"),
+                type: $attForm.attr("method"),
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    const uploadDocumentSection = document.getElementById('missing-uploadDocument');
+                    uploadDocumentSection.style.display = 'none';
+
+                    jqToast.success({
+                        text: 'File uploaded successfully.'
+                    });
+
+                    $attForm[0].reset();
+                    loadAttachmentsPartialView();
+                },
+                error: function (xhr, status, error) {
+                    jqToast.error({
+                        text: 'An error occurred while uploading the file.'
+                    });
+                    $(".alert.alert-danger").text(xhr.responseText).show();
+                }
+            });
+        });
+
+    });
+
+    function loadAttachmentsPartialView() {
+
+        $.ajax({
+            url: '/MyServices/GetMissingAttachmentsListOptimized',
+            type: 'POST',
+            async: true,
+            dataType: 'html',
+            cache: false,
+            contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+            processData: true,
+            data: { requestId: "someRequestId" },
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            success: function (response) {
+                var data = JSON.parse(response)
+
+                messageParts.attachments = (data && data.length > 0) ? `${data.length} attachment requests` : "";
+                updateMessageContainer();
+
+
+                if ($.fn.DataTable.isDataTable('#missingAttachmentsTable')) {
+                    $('#missingAttachmentsTable').DataTable().destroy();
+                }
+
+                var table = $('#missingAttachmentsTable').DataTable({
+                    data: data,
+                    "paging": true,
+                    "pageLength": 10,
+                    "scrollX": true,
+                    "scrollY": "400px",
+                    "scrollCollapse": true,
+                    "searching": true,
+                    "info": true,
+                    "lengthChange": true,
+                    "ordering": true,
+                    "language": {
+                        emptyTable: "No missing attachments available"
+                    },
+                    "buttons": [
+                        {
+                            extend: 'collection',
+                            className: 'btn-export-auditlookup',
+                            text: 'Export',
+                            buttons: [
+                                {
+                                    extend: 'copy',
+                                    text: 'Copy',
+                                    exportOptions: {
+                                        columns: ':visible'
+                                    }
+                                },
+                                {
+                                    extend: 'excelHtml5',
+                                    text: 'Excel',
+                                    autoFilter: true,
+                                    sheetName: 'myDMV.pro',
+                                    exportOptions: {
+                                        columns: ':visible'
+                                    }
+                                },
+                                {
+                                    extend: 'pdfHtml5',
+                                    text: 'PDF',
+                                    orientation: 'landscape',
+                                    pageSize: 'LEGAL',
+                                    exportOptions: {
+                                        columns: ':visible'
+                                    }
+                                },
+                                {
+                                    extend: 'print',
+                                    text: 'Print',
+                                    exportOptions: {
+                                        columns: ':visible'
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    columns: [
+                        { data: 'requestNumber', render: function (data) { return `<input type="checkbox" class="selectRow" value="${data}" data-id="${data}" />`; } },
+                        { data: null, render: getfn_datatable_render_group_editrequest() },
+                        { data: 'attachmentType' },
+                        { data: 'hardcopyOrDigital', render: function (data) { return data ? "Hardcopy" : "Digital"; } },
+                        { data: 'attachmentDescription' },
+                        { data: 'processStageId', render: function (data) { return getProcessstageName(data); } },
+                        { data: 'vin' },
+                        { data: 'state' },
+                        { data: 'type' },
+                        { data: 'dateToVendor', render: function (data) { return data ? formatDateForDisplay(data) : ''; } },
+                        { data: 'requestNumber' }
+                    ]
+                });
+
+                function formatDateForDisplay(date) {
+                    return new Date(date).toLocaleDateString();  // Customize as needed
+                }
+
+                function getProcessstageName(id) {
+                    switch (id) {
+                        case 2:
+                            return "Incoming";
+                            break;
+                        case 12:
+                            return "Not Ready To Process";
+                            break;
+                        case 99:
+                            return "Hold";
+                            break;
+                        default:
+                            return "";
+                    }
+                }
+
+                table.buttons().container().appendTo('#export-button-audit');
+
+                table.columns.adjust();
+
+                const uploadDocumentSection = document.getElementById('missing-uploadDocument');
+
+                $('#missingAttachmentsTable').on('click', '.selectRow', function () {
+                    $('.selectRow').not(this).prop('checked', false);
+                    $('.selectRow').not(this).closest('tr').removeClass('selected');
+
+                    var isChecked = $(this).prop('checked');
+                    var id = $(this).prop("data-id");
+
+                    if (isChecked) {
+                        $(this).closest('tr').addClass('selected');
+                        var selectedRow = $(this).closest('tr');
+                        const rowData = table.row(selectedRow).data(); // Use DataTable API to get the data
+                        updateSelectAllCheckbox(rowData.requestId, rowData.attachmentTypeId);
+
+                    }
+                    else {
+                        $(this).closest('tr').removeClass('selected');
+                        uploadDocumentSection.style.display = 'none'; // Hide the div
+                        const warningSection = document.getElementById('warningContainer');
+                        warningSection.style.display = 'none'; // Show the div
+
+                    }
+
+                });
+
+                function updateSelectAllCheckbox(dataId, attachmentId) {
+                    var totalRows = $('.selectRow').length;
+                    var selectedRows = $('.selectRow:checked').length;
+                    $('#selectAll').prop('checked', totalRows === selectedRows);
+                    fetchAttachmentData(dataId, attachmentId)
+                }
+            },
+            error: function (xhr, status, error) {
+                $('#loadingSkeleton').show();
+            }
+        });
+
+    }
+
+
+    function checkForDigitalDocumentsDynamic() {
+        let hasDigital = false;
+        let hasHardCopy = false;
+
+        $('#missingAttachmentsTable tbody tr').each(function () {
+            const rowText = $(this).text().toUpperCase();
+
+            if (rowText.includes('DIGITAL')) {
+                hasDigital = true;
+            } else if (rowText.includes('HARDCOPY')) {
+                hasHardCopy = true;
+            }
+        });
+
+        if (hasDigital) {
+            showDigitalDocumentModal(
+                'Warning: Digital Documents Found', // Title
+                'Thank you for submitting your document. It will be reviewed by a member of our team ASAP! Please select another needed document in the list below to continue 😊', // Message
+                'Okay' // Action button text
+            );
+        } else if (hasHardCopy) {
+            showDigitalDocumentModal(
+                'Warning: Hardcopy Documents Found', // Title
+                `Thank you for submitting your document. It will be reviewed by a member of our team ASAP! It looks like there are no more digital documents needed from you at this time, but we still need some hard copy documents. We will assume you are sending these documents to our office, but please let us know via chat if you need any assistance 😊`, // Message
+                'Okay'
+            );
+        } else {
+            showDigitalDocumentModal(
+                'All Clear', // Title
+                `Thank you for submitting your document. It will be reviewed by a member of our team ASAP! It looks like there are no more documents needed from you at this time. Check back here later to see if you need to provide any new documents 😊`, // Message
+                'Okay' // Action button text
+            );
+        }
+    }
+
+    function showDigitalDocumentModal(title, message, actionButtonText = '', actionCallback = null) {
+        $('#digitalDocumentModalLabel').text(title);
+        $('#digitalDocumentModalBody').html(message);
+
+        const actionButton = $('#dynamicModalActionButton');
+
+        if (actionButtonText) {
+            actionButton.text(actionButtonText);
+            actionButton.show();
+
+            actionButton.off('click');
+
+            actionButton.on('click', function () {
+                $('#digitalDocumentModal').modal('hide');
+            });
+        } else {
+            actionButton.hide(); 
+        }
+
+        $('#digitalDocumentModal').modal('show');
+    }
+
+    function checkForDigitalDocumentsDynamicRenderText() {
+        let hasDigital = false;
+        let hasHardCopy = false;
+
+        $('#missingAttachmentsTable tbody tr').each(function () {
+            const rowText = $(this).text().toUpperCase();
+
+            if (rowText.includes('DIGITAL')) {
+                hasDigital = true;
+            } else if (rowText.includes('HARDCOPY')) {
+                hasHardCopy = true;
+            }
+        });
+
+        if (hasDigital) {
+            const warningSection = document.getElementById('warningContainer_docs');
+            warningSection.style.display = 'block'; // Show the div
+            var htmlText = "Thank you for submitting your document. It will be reviewed by a member of our team ASAP! Please select another needed document in the list below to continue 😊"
+            $('#warningContainer_missingDocs').find('.panel-body').html(htmlText);
+
+        } else if (hasHardCopy) {
+            const warningSection = document.getElementById('warningContainer_docs');
+            warningSection.style.display = 'block'; // Show the div
+            var htmlText = "Thank you for submitting your document. It will be reviewed by a member of our team ASAP! It looks like there are no more digital documents needed from you at this time, but we still need some hard copy documents. We will assume you are sending these documents to our office, but please let us know via chat if you need any assistance 😊"
+            $('#warningContainer_missingDocs').find('.panel-body').html(htmlText);
+
+        } else {
+            const warningSection = document.getElementById('warningContainer_docs');
+            warningSection.style.display = 'block'; // Show the div
+            var htmlText = "Thank you for submitting your document. It will be reviewed by a member of our team ASAP! It looks like there are no more documents needed from you at this time. Check back here later to see if you need to provide any new documents 😊"
+            $('#warningContainer_missingDocs').find('.panel-body').html(htmlText);
+
+        }
+    }
+
+</script>

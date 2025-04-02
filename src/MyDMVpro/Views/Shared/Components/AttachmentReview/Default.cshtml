@@ -1,0 +1,27 @@
+﻿@model AttachmentReviewInfo
+@{
+    string GetLink()
+    {
+        if (Model.IsVendorAgent)
+        {
+            return Url.Action("Index", "AttachmentReview");
+        }
+        return "#";
+    }
+}
+@if (Model.IsVendorAgent)
+{
+    <li class="dropdown attachmentreview-menu">
+        <a href="@GetLink()">
+            <i class="fa fa-paperclip" style="font-size:x-large;line-height:15px"></i>
+            @if (Model.PendingReviewCount > 0)
+            {
+                <span class="label alert-error">@Model.PendingReviewCount</span>
+            }
+            else
+            {
+                <span class="label label-success">0</span>
+            }
+        </a>
+    </li>
+}

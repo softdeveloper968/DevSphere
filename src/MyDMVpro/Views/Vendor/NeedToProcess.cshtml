@@ -1,0 +1,365 @@
+﻿@model MyDMVpro.Common.ViewHelpers.ViewDefinitionCollection
+
+@{
+    const string PageName = VendorPageNames.NeedToProcess;
+    string GetUrl(string name)
+    {
+        return MyDMVpro.Controllers.RequestStatusController.GetEndpointUrl(this.Context, name);
+    }
+}
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+@{
+    await Html.RenderPartialAsync("_Chat", new Chats());
+    await Html.RenderPartialAsync("_AttachmentList");
+    await Html.RenderPartialAsync("_MoveDialog");
+    await Html.RenderPartialAsync("_BulkDialog");
+    await Html.RenderPartialAsync("_EditDetails");
+    await Html.RenderPartialAsync("_ExportItems");
+    await Html.RenderPartialAsync("_DeleteRequest");
+    await Html.RenderPartialAsync("_downloadStatements");
+    // These are required for the bulk print dialogs
+    await Html.RenderPartialAsync("~/Views/Requests/_ApplicationsSelectionForPrinting.cshtml");
+    await Html.RenderPartialAsync("~/Views/Requests/_CheckMergeForPrinting.cshtml");
+    await Html.RenderPartialAsync("~/Views/Requests/_AttachmentsSelectionForPrinting.cshtml");
+}
+<div class="white_box p_15 mb_20">
+    <div class="row gap_15">
+        <div class="col-md-12 form-group m-0">           
+            <div class="row gap_15 align-items-center">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label class="control-label">Select a Day </label>
+                        <select id="processingDay" class="form-control">  
+                            <option value="">Select day</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="assignedProcessorFilter" class="control-label">Select a Processor</label>
+                        <select id="assignedProcessorFilter" class="form-control" data-required="required">
+                            <option value="">Select Processor</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <button id="resetFilters" class="btn btn-secondary" style="margin-top: 25px">
+                            <i class="fa fa-refresh"></i> Reset Filters
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h2 class="sub_heading">Incoming</h2>
+<div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel All_Incoming = new VendorRequestViewModel(VendorViewType.NTP_AllIncoming, PageName)
+                {
+                    QueueName = "All_Incoming",
+                    AllowMultiplePerPage = true,
+                    AllowMove = false,
+                    AllowDelete = false,
+                    AllowCancel = false,
+                    AllowAddToInvoice = false,
+                    AllowRefresh = true,
+                    AllowStatusEdit = false,
+                    AllowMultiSelect = true,
+                    AllowDirectToBilling = false,
+                    AllowSort = true,
+                    EnableFilter = true,
+                    ColorizeStatus = false,
+                    EnableSortButton = false,
+                    AddLastModified = false,
+                    AddLastModifiedBy = false,
+                    EnableExport = true,
+                    EnablePresets = false,
+                    EnableReportBuilder = false,
+                    AddExpandNotesOption = false,
+                    AddIncludeArchivedOption = false,
+                    UpdateAuditsButton = false,
+                    EnableBulkEdit = false,
+                    
+                };
+
+            All_Incoming.Columns.Add_Select();
+            All_Incoming.Columns.Add_AppState();
+            All_Incoming.Columns.Add_AppType();
+            All_Incoming.Columns.Add_VIN();
+            All_Incoming.Columns.Add_LH_Shipped_to_Vendor();
+            All_Incoming.Columns.Add_DateReceived();
+
+            await Html.RenderPartialAsync("_VendorRequestList", All_Incoming);
+        }
+    }
+</div>
+
+<h2 class="sub_heading">Repo/Duplicate Title</h2>
+<div class="white_box p_15 mb_20">
+    @{
+        {
+
+            VendorRequestViewModel list_Repo_duplicate_title = new VendorRequestViewModel(VendorViewType.RT_ReadyToProcess, PageName)
+
+                {
+                    QueueTitle = "Ready to be Processed - RT",
+                    QueueName = "ReadyToProcess",
+                    ListId = "DT_ToDo_ReadyToProcess",
+                    TableClass = "needToProcess",
+
+                    AllowMove = false,
+
+                    AllowDelete = false,
+                    AllowCancel = false,
+                    AllowAddToInvoice = false,
+                    AllowRefresh = true,
+                    AllowStatusEdit = false,
+                    AllowMultiSelect = true,
+                    AllowDirectToBilling = false,
+                    AllowSort = true,
+                    EnableFilter = true,
+                    ColorizeStatus = false,
+                    EnableSortButton = false,
+                    AddLastModified = false,
+                    AddLastModifiedBy = false,
+                    EnableExport = true,
+                    EnablePresets = false,
+                    EnableReportBuilder = false,
+                    AddExpandNotesOption = false,
+                    AddIncludeArchivedOption = false,
+                    UpdateAuditsButton = false,
+                    EnableBulkEdit = false,
+                    UpdateNeedToProcessButton = true,
+                };
+            list_Repo_duplicate_title.Columns.Add_Select();
+            list_Repo_duplicate_title.Columns.Add_AppState();
+            list_Repo_duplicate_title.Columns.Add_AppType();
+            list_Repo_duplicate_title.Columns.Add_VIN();
+            list_Repo_duplicate_title.Columns.Add_LH_Shipped_to_Vendor();
+            list_Repo_duplicate_title.Columns.Add_DateReceived();
+            list_Repo_duplicate_title.Columns.Add_AssignedProcessor();
+            list_Repo_duplicate_title.Columns.Add_AssignedShipper();
+            list_Repo_duplicate_title.Columns.Add_ProcessingDay();
+
+            await Html.RenderPartialAsync("_VendorRequestList", list_Repo_duplicate_title);
+        }
+    }
+</div>
+
+<h2 class="sub_heading">Lien Inquiry</h2>
+<div class="white_box p_15 mb_20">
+    @{
+        {
+
+            VendorRequestViewModel list_lien_inquiry = new VendorRequestViewModel(VendorViewType.LI_ReadyToProcess, PageName)
+
+                {
+                    QueueTitle = "Ready to be Processed - LI",
+                    QueueName = "ReadyToProcess",
+                    ListId = "DT_ToDoLI_ReadyToProcess",
+                    TableClass = "needToProcess",
+                    AllowMove = false,
+                    AllowDelete = false,
+                    AllowCancel = false,
+                    AllowAddToInvoice = false,
+                    AllowRefresh = true,
+                    AllowStatusEdit = false,
+                    AllowMultiSelect = true,
+                    AllowDirectToBilling = false,
+                    AllowSort = true,
+                    EnableFilter = true,
+                    ColorizeStatus = false,
+                    EnableSortButton = false,
+                    AddLastModified = false,
+                    AddLastModifiedBy = false,
+                    EnableExport = true,
+                    EnablePresets = false,
+                    EnableReportBuilder = false,
+                    AddExpandNotesOption = false,
+                    AddIncludeArchivedOption = false,
+                    UpdateAuditsButton = false,
+                    EnableBulkEdit = false,
+                    
+                    DisplayRequiredAttachmentsAsChildRow = false,
+                    EnablePrintAttachments = false,
+                    UpdateNeedToProcessButton = true,
+                };
+
+            list_lien_inquiry.Columns.Add_Select();
+            list_lien_inquiry.Columns.Add_AppState();
+            list_lien_inquiry.Columns.Add_AppType();
+            list_lien_inquiry.Columns.Add_VIN();
+            list_lien_inquiry.Columns.Add_LH_Shipped_to_Vendor();
+            list_lien_inquiry.Columns.Add_DateReceived();
+            list_lien_inquiry.Columns.Add_AssignedProcessor();
+            list_lien_inquiry.Columns.Add_AssignedShipper();
+            list_lien_inquiry.Columns.Add_ProcessingDay();
+
+            await Html.RenderPartialAsync("_VendorRequestList", list_lien_inquiry);
+        }
+    }
+</div>
+
+<h2 class="sub_heading">Title Correction</h2>
+<div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel list_tc = new VendorRequestViewModel(VendorViewType.TC_ReadyToProcess, PageName)
+                {
+                    QueueTitle = "Ready to be Processed - TC",
+                    QueueName = "ReadyToProcess",
+                    ListId = "DT_ToDoTC_ReadyToProcess",
+                    TableClass = "needToProcess",
+                    AllowMove = false,
+                    AllowDelete = false,
+                    AllowCancel = false,
+                    AllowAddToInvoice = false,
+                    AllowRefresh = true,
+                    AllowStatusEdit = false,
+                    AllowMultiSelect = true,
+                    AllowDirectToBilling = false,
+                    AllowSort = true,
+                    EnableFilter = true,
+                    ColorizeStatus = false,
+                    EnableSortButton = false,
+                    AddLastModified = false,
+                    AddLastModifiedBy = false,
+                    EnableExport = true,
+                    EnablePresets = false,
+                    EnableReportBuilder = false,
+                    AddExpandNotesOption = false,
+                    AddIncludeArchivedOption = false,
+                    UpdateAuditsButton = false,
+                    EnableBulkEdit = false,
+                    
+                    DisplayRequiredAttachmentsAsChildRow = false,
+                    EnablePrintAttachments = false,
+                    UpdateNeedToProcessButton = true,
+                };
+
+            list_tc.Columns.Add_Select();
+            list_tc.Columns.Add_AppState();
+            list_tc.Columns.Add_AppType();
+            list_tc.Columns.Add_VIN();
+            list_tc.Columns.Add_LH_Shipped_to_Vendor();
+            list_tc.Columns.Add_DateReceived();
+            list_tc.Columns.Add_AssignedProcessor();
+            list_tc.Columns.Add_AssignedShipper();
+            list_tc.Columns.Add_ProcessingDay();
+
+            await Html.RenderPartialAsync("_VendorRequestList", list_tc);
+        }
+    }
+</div>
+
+<h2 class="sub_heading">Other</h2>
+<div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel list_other = new VendorRequestViewModel(VendorViewType.Other_ReadyToProcess, PageName)
+                {
+                    QueueTitle = "Ready for Processing - Other",
+                    QueueName = "ReadyToProcess",
+                    ListId = "DT_ToDoOther_ReadyToProcess",
+                    AllowMove = false,
+                    AllowDelete = false,
+                    AllowCancel = false,
+                    AllowAddToInvoice = false,
+                    AllowRefresh = true,
+                    AllowStatusEdit = false,
+                    AllowMultiSelect = true,
+                    AllowDirectToBilling = false,
+                    AllowSort = true,
+                    EnableFilter = true,
+                    ColorizeStatus = false,
+                    EnableSortButton = false,
+                    AddLastModified = false,
+                    AddLastModifiedBy = false,
+                    EnableExport = true,
+                    EnablePresets = false,
+                    EnableReportBuilder = false,
+                    AddExpandNotesOption = false,
+                    AddIncludeArchivedOption = false,
+                    UpdateAuditsButton = false,
+                    EnableBulkEdit = false,
+                    
+                    DisplayRequiredAttachmentsAsChildRow = false,
+                    EnablePrintAttachments = false,
+                    UpdateNeedToProcessButton = true,
+                };
+
+            list_other.Columns.Add_Select();
+            list_other.Columns.Add_AppState();
+            list_other.Columns.Add_AppType();
+            list_other.Columns.Add_VIN();
+            list_other.Columns.Add_LH_Shipped_to_Vendor();
+            list_other.Columns.Add_DateReceived();
+            list_other.Columns.Add_AssignedProcessor();
+            list_other.Columns.Add_AssignedShipper();
+            list_other.Columns.Add_ProcessingDay();
+
+            await Html.RenderPartialAsync("_VendorRequestList", list_other);
+        }
+    }
+</div>
+
+<h2 class="sub_heading">Follow-Ups</h2>
+<div class="white_box p_15 mb_20">
+@{
+    VendorFollowUpViewModel list_follow_ups = new VendorFollowUpViewModel(VendorViewType.FollowUps, PageName)
+            {
+                QueueName = "FollowUps",
+                DataUrl = "/FollowUp/VendorFollowUps",
+                ListId = "DT_FollowUps",
+                AllowMove = false,
+                AllowDelete = false,
+                AllowAddToInvoice = false,
+                AllowStatusEdit = false,
+                AllowDirectToBilling = false,
+                EnableFilter = true,
+                AddLastModified = false,
+                AddLastModifiedBy = false,
+                EnableReportBuilder = false,
+                AllowComplete=false,
+                AllowEdit=false,
+                AllowLengthChange=true,
+                EnableAdvancedSearch=false,
+            };
+    list_follow_ups.Columns.Add_Select();
+    list_follow_ups.Columns.Add_AppState();
+    list_follow_ups.Columns.Add_AppType();
+    list_follow_ups.Columns.Add_VIN();
+    list_follow_ups.Columns.Add("Title", "reqTitle asearch");
+    list_follow_ups.Columns.Add("Action", "reqContactAction");
+    list_follow_ups.Columns.Add("Due Date", "reqDueDate");
+    
+
+
+    await Html.RenderPartialAsync("_vendorFollowUpsList", list_follow_ups);
+}
+</div>
+<script>
+    $(document).ready(function () {  
+        populateAssignedShipperDropdown('#assignedProcessorFilter');
+        populateProcessingDayDropdown("#processingDay")
+        $("#processingDay").on('change', function (e) {
+            NeedToProcess_RefreshViewFilters(this);
+        });
+        $("#assignedProcessorFilter").on('change', function (e) {
+            NeedToProcess_RefreshViewFilters(this);
+        });
+        $('#resetFilters').on('click', function () {
+            // Reset both dropdowns to their default values
+            $('#processingDay').val(''); // Reset processing day
+            $('#assignedProcessorFilter').val(''); // Reset assigned shipper
+            // Call the refresh function to update views if necessary
+            NeedToProcess_RefreshViewFilters(this);
+        });
+    });
+</script>

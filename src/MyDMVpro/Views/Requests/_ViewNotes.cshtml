@@ -1,0 +1,21 @@
+﻿@model MyDMVpro.Models.RequestsViewModels.EditNotesModel
+@if (Model.StandaloneForm)
+{
+    <div class="form-group note-body">
+        @{ await Html.RenderPartialAsync("_NoteHistory", Model.CurrentNotes); }
+    </div>
+}
+else
+{
+    <div class="notesViewer">
+        <div class="notesForm">
+            <div class="form-group note-body">
+                <label for="notesTable">Remarks</label>
+                @{ await Html.RenderPartialAsync("_NoteHistory", Model.CurrentNotes); }
+            </div>
+            <div class="form-group">
+                <button type="button" class="btn btn-default btn-close">Close</button>
+            </div>
+        </div>
+    </div>
+}

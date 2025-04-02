@@ -1,0 +1,30 @@
+﻿@model string
+
+<div id="modal-moveToStage" class="modal fade hidden-print" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Move Items to <span style="font-weight:bold" id="moveItemsToStage"></span></h4>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="form-group" style="text-align:center;margin:5px 25px 5px 25px">
+                    </div>
+                </div>
+                <div class="row">
+                    <div style="" class="col-md-12 col-md-12">
+                        @{
+                            await Html.RenderPartialAsync("_standardCodeNotesChat", Model);
+                        }
+                    </div>
+                </div>
+            </div>
+            <div style="display:none" class="alert alert-danger"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>

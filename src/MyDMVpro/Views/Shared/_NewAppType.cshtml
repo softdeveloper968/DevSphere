@@ -1,0 +1,220 @@
+﻿@model MyDMVpro.Models.AppFormModels.NewAppTypeViewModel
+
+<div class="appTypeSelector white_box p_15 mb_15">
+    <form asp-controller="AppForm" id="newFormSelector" asp-action="Create" method="post">
+        @if (Model.VendorId != null)
+        {
+            <input type="hidden" name="IsOnBehalfOf" value="@(Model.IsOnBehalfOf ? "true" : "false")" />
+            <input type="hidden" name="ForceVendorMode" value="false" />
+            <div class="row gap_15">
+                <div class="form-group col-sm-6">
+                    <label for="GroupId" class="control-label required">Group</label>
+                    <select id="vendorUploadGroupId" name="GroupId" asp-items="@(Model.GetGroups())" class="form-control" data-val="true" data-required="required">
+                        <option value=""></option>
+                    </select>
+                    <span class="field-validation-valid text-danger" data-valmsg-for="GroupId" data-valmsg-replace="true"></span>
+                </div>
+                <div class="form-group col-sm-6">
+                    <label for="UserId" class="control-label required">On behalf of</label>
+                    <select id="vendorUploadUserId" name="UserId" class="form-control" data-val="true" data-required="required">
+                        <option value=""></option>
+                    </select>
+                    <span class="field-validation-valid text-danger" data-valmsg-for="UserId" data-valmsg-replace="true"></span>
+                </div>
+            </div>
+        }
+        <div class="row gap_15">
+            <div class="form-group col-sm-6">
+                <label asp-for="AppTypeState" class="control-label required">State</label>
+                <select id="AppTypeState" name="AppTypeState" asp-for="AppTypeState" asp-items="@Model.GetUSStates(null)" class="form-control" data-val="true" data-valmsg-replace="true">
+                    <option value=""></option>
+                </select>
+            </div>
+            <div class="form-group col-sm-6">
+                <label asp-for="AppType" class="control-label required">Application Type</label>
+                <select id="AppType" name="AppType" asp-for="AppType" asp-items="@Model.GetAppTypes()" class="form-control" data-val="true" data-valmsg-replace="true">
+                    <option value=""></option>
+                </select>
+            </div>
+            <div class="col-md-12">
+                @*<a asp-action="Create" asp-controller="AppForm" asp-route-AppType="@Model.AppType" asp-route-AppTypeState="@Model.AppTypeState"
+                data-target="newFormPanel" id="createNewForm">Create Form</!--a>*@
+                <div class="form-group mb_5">
+                    <button type="submit" class="btn btn-primary custom_btn" id="createNewForm" data-target="newFormPanel">Create Form</button>
+                    <button class="btn custom_btn" style="display: none;" id="resetForm" data-target="newFormPanel">Restart</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div class="white_box p_15 mb_15">
+    <div id="opStatusPanel" class="opStatusPanel" style="display:none;"></div>
+    <div id="newFormPanel"></div>
+</div>
+
+<script asp-add-nonce="true">
+    $(function () {
+        $("#createNewForm").off('click').on('click', function (e) {
+            e.preventDefault();
+            $('#opStatusPanel').html('');
+            var _this = $(this);
+            $.ajax({
+                url: '/AppForm/Create',
+                data: $('#newFormSelector').serialize(),
+                type: 'post',
+                success: function (data) {
+                    $form = $('#newFormPanel');
+                    $form.html(data);
+                    resetFormValidator("#dynamicAppForm");
+
+                    var extractedFields = _this.data("extractedfields");
+                    var fields = [];
+                    if (extractedFields != null && extractedFields != '') {
+                        try {
+                            fields = JSON.parse(extractedFields);
+                            formAnalyzer_apply_ExtractedFields($('#newFormPanel'), fields, _this.data("vin"));
+                        }
+                        catch (ex) {
+                        }
+                    }
+                    attachToFormSubmit();
+                },
+                error: function (err) {
+                    alert(err.responseText);
+                }
+            });
+        });
+        $("#AppTypeState").change(function () {
+            var state = $(this).val();
+            $('#opStatusPanel').html('');
+            $.ajax({
+                url: '/AppForm/FormTypes/' + state,
+                type: 'get',
+                success: function (data) {
+                    $('#AppType').val('');
+                    $('#AppType option').each(function () {
+                        var val = $(this).val();
+                        if ($.inArray(val, data) > -1) {
+                            $(this).show();
+                        }
+                        else {
+                            $(this).hide();
+                        }
+                    });
+                },
+                error: function (err) {
+                    alert(err.responseText);
+                }
+            });
+        });
+    @if (Model.VendorId != null)
+    {
+        <text>
+                $('#vendorUploadGroupId').on('change', function () {
+                    populateUsersList();
+                });
+        </text>
+    }
+
+            });
+    function populateUsersList() {
+        var groupId = $('#vendorUploadGroupId').val();
+        var formData = new FormData();
+        formData.append("groupId", groupId);
+        $.ajax({
+            url: "@Url.Action("GetUsers", "Vendor")",
+            type: 'POST',
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            async: true,
+            cache: false,
+            data: formData,
+            dataType: 'json',
+            processData: false,
+            contentType: false,
+        }).done(function (data) {
+            // populate users list
+            $('#vendorUploadUserId').empty();
+            $.each(data, function (i, obj) {
+                var elt = document.createElement('span');
+                elt.textContent = obj.displayName;
+                var div_data = "<option value='" + obj.userId + "'>" + elt.innerHTML + "</option>";
+                $(div_data).appendTo('#vendorUploadUserId');
+            });
+        }).fail(function (jqXHR, textStatus) {
+            // do nothing
+            succeeded = false;
+        });
+    }
+    function saveFormDefaults() {
+        var $form = $("#dynamicAppForm")
+
+        $.ajax({
+            url: '/AppForm/SaveFormDefaults',
+            type: 'post',
+            data: $form.serialize(),
+            success: function () {
+                $('#opStatusPanel').html('Form defaults have been saved...');
+                $('#newFormPanel').html('');
+                jqToast.success({ text: 'Form defaults have been saved...' });
+            },
+            error: function (err) {
+                var obj = JSON.parse(err.responseText);
+                alert(obj.title);
+            }
+        });
+    }
+    function attachToFormSubmit() {
+        var $form = $("#dynamicAppForm");
+        var $submitbtn = $form.find(":submit");
+
+        /*
+                $form.data("validator", null);
+                $form.data("unobtrusivevalidation", null);
+                $.validator.unobtrusive.parse("#dynamicAppForm");
+        */
+        $form.removeData("validator") /* added by the raw jquery.validate plugin */
+            .removeData("unobtrusiveValidation");  /* added by the jquery unobtrusive plugin*/
+        $.validator.unobtrusive.parse($form);
+
+        $form.on('submit', (function (e) {
+            e.preventDefault();
+            var $f = $("#dynamicAppForm");
+            if ($f.valid()) {
+                $submitbtn.attr('disabled', true);
+                //console.log("Valid form");
+                var formData = new FormData($f[0]);
+                $.ajax({
+                    url: '/AppForm/SaveForm',
+                    type: 'post',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function () {
+                        jqToast.success({ text: 'Your form has been sent to vendor for processing.' });
+                        $('#newFormPanel').html('');
+                        var pathname = window.location.pathname;
+                        if (pathname.toLowerCase().indexOf('/formanalyzer') >= 0) {
+                            formAnalyzer_newFormSubmitted();
+                        }
+                        else {
+                            $('#opStatusPanel').html('Your form has been sent to vendor for processing.');
+                            $('#opStatusPanel').show();
+                        }
+                        $submitbtn.attr('disabled', false);
+                    },
+                    error: function (err) {
+                        var obj = JSON.parse(err.responseText);
+                        $submitbtn.attr('disabled', false);
+                        alert(obj.title);
+                    }
+                });
+            }
+        }));
+    }
+</script>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,0 +1,9 @@
+﻿@using System.Collections.Generic
+@using Microsoft.AspNetCore.Http
+@{
+    ViewData["Title"] = "Upload Requests";
+}
+
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+
+@{ await Html.RenderPartialAsync("_vendorFileUploads"); }

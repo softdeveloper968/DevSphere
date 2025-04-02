@@ -1,0 +1,67 @@
+﻿@model string
+@{
+    VendorViewType viewType = VendorViewType.RT_ReadyForPrinting;
+    switch (Model)
+    {
+        case "ToDo":
+            viewType = VendorViewType.RT_ReadyForPrinting;
+            break;
+        case "ToDoLC":
+            viewType = VendorViewType.LC_ReadyForPrinting;
+            break;
+        case "ToDoLI":
+            viewType = VendorViewType.LI_ReadyForPrinting;
+            break;
+        case "ToDoTC":
+            viewType = VendorViewType.TC_ReadyForPrinting;
+            break;
+
+        default:
+            viewType = VendorViewType.RT_ReadyForPrinting;
+            break;
+    }
+}
+<h2 class="sub_heading">Ready for Printing</h2>
+<div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel list = new VendorRequestViewModel(viewType, Model)
+                {
+                    QueueTitle = "Ready to Print",
+                    QueueName = "ReadyForPrinting",
+                    AllowMove = true,
+                    AllowAutoIMSRefresh = true
+                };
+            list.Columns.Add_Select();
+            list.Columns.Add_CodeCount();
+            list.Columns.Add_Chat();
+            list.Columns.Add_Attachments();
+            list.Columns.Add_Links();
+            list.Columns.Add_AutoIMS();
+            list.Columns.Add_DupeCheck();
+            //list.Columns.Add_EditStatus();
+            list.Columns.Add_AppType(true);
+            list.Columns.Add_AppState();
+            list.Columns.Add_VIN();
+            list.Columns.Add_Notes();
+            list.Columns.Add_Code();
+            list.Columns.Add_RepoDate();
+            list.Columns.Add_Odometer();
+            list.Columns.Add_MileageBrand();
+            list.Columns.Add_Make();
+            list.Columns.Add_Year();
+            list.Columns.Add_Group();
+            list.Columns.Add_RT_LH();
+            list.Columns.Add_DT_LH();
+            list.Columns.Add_LHShippedToVendor();
+            list.Columns.Add_RNo();
+            list.Columns.Add_SubmittedBy();
+
+            list.SortColumns.Add("reqType");
+            list.SortColumns.Add("reqState");
+            list.SortColumns.Add("reqVIN");
+
+            await Html.RenderPartialAsync("_VendorRequestList", list);
+        }
+    }
+</div>

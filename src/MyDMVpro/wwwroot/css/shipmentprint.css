@@ -1,0 +1,419 @@
+﻿@page {
+    size: letter;
+    margin-top: 18pt;
+    margin-bottom: 18pt;
+    margin-left: 18pt;
+    margin-right: 18pt;
+}
+
+@media print {
+    body {
+        color: black;
+        width: 612pt;
+        height: 792pt;
+        margin-top: 10mm;
+        margin-bottom: 10mm;
+        margin-left: 10mm;
+        margin-right: 10mm;
+        font-size: 12pt;
+    }
+    .main-footer {
+        display: none;
+    }
+}
+   
+    div.invoice-box {
+        width: 200mm;
+        height: auto;
+    }
+    .invoice-box {
+        font-size: 12pt;
+        font-family: 'Calibri', 'Helvetica', Helvetica, Arial, sans-serif;
+        height: auto;
+        width: 100%;
+    }
+    .invoice-header-box {
+        margin: 0px;
+        padding: 0px;
+        height: auto;
+    }
+    .invoice-header {
+        width: 100%;
+        padding-left: 1cm;
+        padding-right: 1cm;
+        font-size: 12pt;
+        font-weight: bold;
+    }
+
+    .invoice-no {
+        display: inline-block;
+        float: left;
+    }
+
+    .invoice-date {
+        display: inline-block;
+        float: right;
+        position: relative;
+        right: 2cm;
+    }
+
+    .vendor-info {
+        width: 100%;
+        display: block;
+        text-align: center;
+        /*margin-bottom: 5mm;*/
+    }
+    div.space-before-vendor-info {
+        width: 100%;
+        height: 5mm;
+    }
+    .vendor-name {
+        font-size: 20pt;
+        font-weight: bolder;
+        width: 100%;
+        text-align: center;
+    }
+
+    .vendor-address {
+        font-size: 9pt;
+        width: 100%;
+    }
+
+    .vendor-street {
+        padding-right: 5mm;
+    }
+
+    .vendor-phone {
+        padding-right: 5mm;
+    }
+
+    .vendor-fax {
+        padding-right: 5mm;
+    }
+
+    .vendor-email {
+    }
+
+    .client-info {
+/*        position: relative;*/
+        margin-left: 10mm;
+        width: 30%;
+        display: inline-block;
+        font-size: 12pt;
+        height: 25mm;
+    }
+
+    .client-name {
+    }
+
+    .client-address {
+    }
+
+    .client-city {
+    }
+
+    .client-state {
+    }
+
+    .client-zipcode {
+    }
+
+    .client-attn {
+    }
+
+    .payment-info {
+        float: right;
+        display: inline-block;
+        padding-right: 10mm;
+        text-align: right;
+    }
+
+    .invoice-taxid {
+        font-size: 9pt;
+        float: right;
+        display: block;
+        width: 100%;
+    }
+    .invoice-taxid span {
+        font-weight: bold;
+    }
+
+    .invoice-terms {
+        font-size: 12pt;
+        float: right;
+        display: block;
+        width: 100%;
+    }
+    .summary-info-box {
+        display: block;
+        width: 100%;
+        height: auto;
+    }
+    .summary-info-space {
+        width: 50%;
+        height: 10mm;
+        display: inline-block;
+    }
+    .summary-info {
+        width: 50%;
+        font-size: 12pt;
+        float: right;
+        padding: 0px;
+        display: inline-block;
+        height: auto;
+    }
+
+    .invoice-totaldue {
+        width: 100%;
+        text-align: left;
+    }
+
+        .invoice-totaldue span {
+            font-size: 12pt;
+            font-weight: bold;
+        }
+
+
+    .invoice-recordcount {
+        width: 100%;
+        text-align: left;
+    }
+
+        .invoice-recordcount span {
+            font-size: 12pt;
+            font-weight: normal;
+        }
+
+    div.space-before-table {
+        height: 5mm;
+        width: 100%;
+    }
+    div.space-before-header {
+        height: 10mm;
+        width: 100%;
+    }
+
+    div.invoice-details-box {
+        width: 100%;
+    }
+    .invoice-details {
+        display: block;
+        width: 100%;
+        font-size: 12pt;
+    }
+
+        .invoice-details td {
+            padding-right: 1mm;
+            padding-left: 1mm;
+        }
+
+        .invoice-details tr {
+            font-size: 12pt;
+        }
+
+        .invoice-details th {
+            text-align: left;
+            padding-right: 1mm;
+            padding-left: 1mm;
+        }
+
+    .svccode-col {
+        min-width: 17mm;
+    }
+
+    .state-col {
+        min-width: 10mm;
+    }
+
+    th.state-col, td.state-col {
+        text-align: left;
+    }
+
+    .vin-col {
+        min-width: 50mm;
+    }
+
+    th.vin-col, td.vin-col {
+        text-align: left;
+    }
+
+    .submit-col {
+        min-width: 23mm;
+    }
+
+    th.submit-col, td.submit-col {
+        text-align: right;
+    }
+
+    .shipped-col {
+        min-width: 20mm;
+    }
+
+    th.shipped-col, td.shipped-col {
+        text-align: right;
+    }
+
+    .clientref-col {
+        min-width: 25mm;
+    }
+
+    .balance-col {
+        min-width: 20mm;
+    }
+
+    th.balance-col, td.balance-col {
+        text-align: right;
+    }
+
+    div.divider {
+        width: 100%;
+        display: block;
+    }
+
+.shippingReport {
+    width: 960px;
+    max-width: 960px;
+    white-space: nowrap;
+}
+
+.topCenter {
+    display: inline-block;
+    width: 20%;
+    align-content: center;
+}
+
+img.qrcode {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.upperLeft {
+    float: left;
+    display: inline-block;
+    width: 40%;
+}
+
+.upperRight {
+    float: right;
+    display: inline-block;
+    width: 40%;
+}
+
+.vendorName {
+    font-size: 16pt;
+}
+
+.dateShipped {
+    font-size: 14pt;
+}
+
+.auctionName {
+    font-size: 16pt;
+}
+
+.groupName {
+    font-size: 14pt;
+    height: 20pt;
+}
+
+.auctionName, .trackingNumber, .numberShipped, .groupName {
+    text-align: right;
+    float: right;
+    width: 100%;
+}
+
+.trackingNumber {
+    font-size: 11pt;
+}
+
+.numberShipped {
+    font-size: 11pt;
+}
+
+table {
+    font-size: 11pt;
+}
+
+    table > caption {
+        font-size: 20pt;
+    }
+
+tfoot > tr {
+    margin-top: 50px;
+    font-size: 14pt
+}
+
+.colCheck {
+    max-width: 30px;
+    width: 30px;
+    margin-right: 5px;
+}
+
+.colState {
+    width: 20px;
+}
+
+.colVin {
+    width: 100px;
+    padding-left: 20px;
+    font-family: monospace;
+    font-size: 14pt;
+}
+
+.colODO {
+    width: 50px;
+    text-align: right;
+    padding-left: 20px;
+    padding-right: 50px;
+    font-size: 14pt;
+}
+
+.colYear {
+    width: 50px;
+}
+
+.colMake {
+    width: 100px;
+}
+
+.colClientRef {
+    width: 100px;
+}
+
+.colLH {
+    width: 100px;
+}
+
+.colAuction {
+    padding-left: 20px;
+    width: 100px;
+}
+
+.dateShipped {
+    margin-top: 30px;
+}
+
+.numberShipped {
+    margin-top: 30px;
+}
+
+.formfillline {
+    border-bottom: 1px solid black;
+}
+
+.leftspacer {
+    width: 20px;
+}
+
+.qrsizer {
+    width: 100px;
+    height: 100px;
+    max-width: 100px;
+    max-height: 100px;
+}
+
+.signature {
+    padding-top: 50px;
+}
+

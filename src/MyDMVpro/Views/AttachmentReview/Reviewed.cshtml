@@ -1,0 +1,84 @@
+﻿@using MyDMVpro.Models.AttachmentReviewModels
+
+@{
+    ViewData["Title"] = "Attachment Review";
+}
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/attachmentreview.css" asp-append-version="true" />
+<script src="~/js/attachmentreview.js" asp-append-version="true"></script>
+
+<div class="container-fluid">
+    <div class="col-lg-6">
+        <div class="attachmentListPanel col-md-12  col-lg-12">
+            @{
+                AttachmentReviewModel list = new AttachmentReviewModel()
+            {
+                DataUrl = "/AttachmentReview/ReviewCompleted",
+                ListId = "DT_AttachmentReview",
+                TableVarName = "AttachmentReviewTable",
+                PageLength = 10,
+                EnableKeyNavigation = false,
+                AllowMultilineVin = false,
+                AllowMultiSelect = true
+            };
+                list.Columns.Add_Select();
+                list.Columns.Add("", "reqBlank");
+                list.Columns.Add("", "reqBlank");
+
+                list.Columns.Add_AppType();
+                list.Columns.Add_AppState();
+                list.Columns.Add_VIN();
+                list.Columns.Add("Attachment Type", "colAttachmentType afilter", filterField: "attachmentTypeName");
+                list.Columns.Add("Review Status", "reqReviewStatus afilter", filterField: "reviewStatus");
+                list.Columns.Add("Review Date", "reqReviewDate dsearch");
+                list.Columns.Add("Review By", "reqReviewByName asearch");
+                list.Columns.Add_Group();
+
+                list.SortColumns.Add("reqType");
+                list.SortColumns.Add("reqState");
+
+                await Html.RenderPartialAsync("_requestAttachments", list);
+            }
+        </div>
+        <div class="col-sm-12 col-md-12 col-lg-12" style="max-width:800px">
+            <div id="reviewPanel" class="reviewPanel" tabindex="-1" style="display:none">
+                <div class="container vertical-alignment-helper">
+                    <div class="col-sm-4"></div>
+                    <div class="panel-body">
+                    </div>
+                    <div class="panel-footer" style="background-color:inherit;margin:10px;">
+                        <button type="button" style="float:right" class="btn btn-success custom_btn" id="reviewPanel_rejectButton">Reject</button>
+                        <button type="button" style="float:right" class="btn btn-success custom_btn" id="reviewPanel_approveButton">Approve</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6" style="height:100%">
+        <div class="row">
+            <div class="col-md-12 col-lg-12">
+                <div id="docViewPanel" class="docViewPanel">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div style="display:none">
+        <form id="hiddenform" method="post" action=""></form>
+    </div>
+</div>
+@{
+    await Html.RenderPartialAsync("_rejectAttachment");
+}
+<script asp-add-nonce="true">
+    $(document).ready(function () {
+        $("#reviewPanel_rejectButton").off('click').on('click', function () {
+            var dt = $("#DT_AttachmentReview").DataTable();
+            attachmentReview_show_Reject(dt);
+        });
+        $("#reviewPanel_approveButton").off('click').on('click', function () {
+            var dt = $("#DT_AttachmentReview").DataTable();
+            attachmentReview_show_Approve(dt);
+        });
+    });
+</script>

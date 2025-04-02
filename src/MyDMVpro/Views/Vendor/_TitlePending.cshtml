@@ -1,0 +1,31 @@
+﻿<div id="modal-titleIssued" class="modal fade hidden-print" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Title Issued</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="dateTitleIssued">Date Issued</label>
+                    <input type="date" id="dateTitleIssued" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label for="inTransit">Routing:&nbsp;</label>
+                    <select name="inTransit" id="inTransit" class="form-control">
+                        <option value="false" selected>Returning to Maggard</option>
+                        <option value="true">In Transit to the Lienholder</option>
+                    </select>
+                </div>
+                <div class="form-group m-0">
+                    <label id="titleIssuedCount"></label>
+                </div>
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>

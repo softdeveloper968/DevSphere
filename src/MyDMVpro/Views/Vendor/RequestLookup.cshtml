@@ -1,0 +1,2256 @@
+﻿@using MyDMVpro.Models.VendorViewModels
+@{
+    const string PageName = VendorPageNames.RequestLookup;
+    ViewData["Title"] = "Request Lookup";
+    UserInfo ui = UserInfo.GetCurrentUser(User, false);
+    string GetUrl(string name)
+    {
+        return MyDMVpro.Controllers.RequestStatusController.GetEndpointUrl(this.Context, name);
+    }
+}
+
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+<script src="~/js/requestcodes.js" asp-append-version="true"></script>
+<script src="~/js/taxcalculator.js" asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/requesttags.css" asp-append-version="true" />
+
+<div class="row gap_15">
+    <div class="col-sm-12 col-md-12 col-lg-12">
+        <div id="detailSummaryPanel" class="detailSummaryPanel" tabindex="-1" style="display:none;">
+            <div class="container vertical-alignment-helper">
+                <div class="col-sm-4">R#: <span id="request_reqno"></span></div>
+                <div class="col-sm-4">Status: <span id="request_status"></span></div>
+                <div class="col-sm-4">Process: <span id="request_process"></span></div>
+            </div>
+        </div>
+        <div class="form-horizontal">
+            <div class="container vertical-alignment-helper" style="display:none;">
+                <div class="form-group">
+                    <p class="form-control-static" id="summary-Status">ACTIVE</p>
+                </div>
+                <div class="form-group">
+                    <label for="summary-VIN" style="float:left" class="control-label">VIN</label>
+                    <p class="form-control-static" id="summary-VIN">VIN GOES HERE</p>
+                </div>
+                <div class="form-group col-sm-12 col-md-2 col-lg-1">
+                    <label for="summary-RequestNo" style="float:left" class="control-label">R#</label>
+                    <p class="form-control-static" id="summary-RequestNo">00000</p>
+                </div>
+                <div class="form-group col-sm-12 col-md-2 col-lg-1">
+                    <label for="summary-State" style="float:left" class="control-label">State</label>
+                    <p class="form-control-static" id="summary-State">XX</p>
+                </div>
+                <div class="form-group col-sm-12 col-md-4 col-lg-2">
+                    <label for="summary-GroupName" style="float:left" class="control-label">Group</label>
+                    <p class="form-control-static" id="summary-GroupName">BANK OF USA</p>
+                </div>
+                <div class="form-group col-sm-12 col-md-2 col-lg-1">
+                    <label for="summary-SubmittedBy" style="float:left" class="control-label">Submitted By</label>
+                    <p class="form-control-static" id="summary-SubmittedBy">JOHN Q. PUBLIC</p>
+                </div>
+                <div class="form-group col-sm-12 col-md-4 col-lg-2">
+                    <label for="summary-ModifiedBy" style="float:left" class="control-label">Modified By</label>
+                    <p class="form-control-static" id="summary-ModifiedBy">Jane Doe</p>
+                    <p class="form-control-static" id="summary-Modified">Dec. 31, 2019 10am</p>
+                </div>
+                @*                    <div class="form-group">
+                <label for="summary-Stage" style="float:left" class="control-label">Stage</label>
+                <input type="text" class="form-control" name="summary-Stage" id="summary-Stage" readonly />
+                </div>*@
+                <div class="form-group">
+                    <div class="">
+                        <img href="/images/" /> @*auto ims*@
+                        <img href="/images/" /> @*duplicates*@
+                    </div>
+                </div>
+            </div>
+
+            @*[RequestNo]
+            ,[Vin]
+            ,[AppType]
+            ,[State]
+            ,[GroupName]
+            ,[SubmittedBy]
+            ,[LastModified]
+            ,[LastModifiedBy]
+            ,[StatusID]
+            ,[ProcessStageID]
+            ,[HasNewChat]
+            ,[HasActiveChat]
+            ,[WaitingForVendorReply]
+            ,[WaitingForUserReply]
+
+            ,[AutoImsStatus]
+            ,[AutoImsError]
+            ,[DupeAppTypeForVin]
+            ,[ActiveCountForVin]
+
+            -- LH only
+            ,[VendorCode]*@
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-6 col-lg-4">
+        <div id="detailsEditPanel" class="detailsEditPanel" tabindex="-1" style="display:none;">
+            <div class="white_box">
+                <div class="panel-body">
+                </div>
+                <div class="panel-footer" style="background-color:inherit;">
+                    <button type="button" class="btn btn-success custom_btn" id="detailsEditPanel_saveButton">Save Form</button>
+                    <button type="button" class="btn btn-default custom_btn pull-right" id="detailsEditPanel_changeAppTypeButton">Change App Type&nbsp;<span style="font-family:FontAwesome;">&#x0F078;</span></button>
+                </div>
+                <div class="panel-footer">
+                    @{
+                        await Html.RenderPartialAsync("_changeAppType");
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-6 col-lg-4">
+        <div id="requestCodesPanel" class="requestCodesPanel" tabindex="-1" style="display:none;">
+            <div class="white_box p_15">
+                <h2>Codes</h2>
+                <div class="panel-body p-0">
+                    @{
+                        {
+                            VendorRequestCodesViewModel list = new VendorRequestCodesViewModel(VendorViewType.RequestCodes)
+                {
+                    //ControllerName = "Requests",
+                    DataUrl = $"/Requests/RequestCodes/{Guid.Empty}",
+                    ListId = "DT_RequestCodes",
+                    AllowDelete = false,
+                    TableVarName = "vendorRequestCodes",
+                    EnableFilter = false,
+                    EnableAdvancedSearch = false,
+                    EnablePresets = false,
+                    EnableReportBuilder = false,
+                    AllowSort = false,
+                    AddLastModified = false,
+                    AddLastModifiedBy = false,
+                    EnableExport = false,
+                    DisplayFullNotesAsChildRow = false,
+                    PageLength = 50
+                };
+
+                            if (!DataHelpers.UpdateViewColumns("Vendor_RequestCodes", list))
+                            {
+                                list.Columns.Add_Select();
+                                list.Columns.Add("Code", "reqCode");
+                                list.Columns.Add("Fields", "reqFields");
+                                list.Columns.Add("Notes", "reqNote");
+                                list.Columns.Add("Suggested Resolution", "reqResolution");
+
+                                //list.SortColumns.Add("");
+                            }
+                            list.RequestId = new Guid();
+                            await Html.RenderPartialAsync("~/Views/Shared/_requestcodesupport.cshtml");
+                            await Html.RenderPartialAsync("_vendorRequestCodesList", list);
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+        <div id="notesEditPanel" class="notesEditPanel" tabindex="-1" style="display:none;">
+            @if (ViewBag.HelpLink != null)
+            {
+                <div style="position:absolute;top:0;right:0;"><a href="@ViewBag.HelpLink" target="_blank"><span style="font-family:FontAwesome;font-size:x-large">&#x0f05a;</span></a></div>
+            }
+            <div class="white_box">
+                <div class="p_15">
+                    <h2>Notes/Remarks</h2>
+                    <div class="panel-body p-0">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="chatsEditPanel" class="chatsEditPanel" tabindex="-1" style="display:none;">
+            <div class="white_box">
+                <div class="p_15">
+                    <h2>Chat</h2>
+                    <div class="panel-body chat-body" style="display:none; max-height: 300px;"></div>
+                    <div class="panel-footer chat_footer" style="display:none;">
+                        <form asp-controller="Chats" asp-action="Create" method="post" id="chat-SendMessageForm" class="w-100">
+                            <input type="hidden" name="RequestId" id="chat-RequestId" />
+                            <textarea class="form-control" name="Message" id="chat-newMsg" rows="4" width="100%" placeholder="Type message" style="resize:none;"></textarea>
+                            <div class="mt_10">
+                                <input type="submit" value="Send" class="btn btn-primary custom_btn" />
+                                <button type="button" id="chatMarkAsRead" class="btn btn-default custom_btn">Mark As Read</button>
+                                <button type="button" id="chatRefreshBtn" class="btn custom_btn">Refresh</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="modal-miscAttachment" class="modal fade hidden-print" tabindex="-1" role="dialog">
+            <div class="container vertical-alignment-helper">
+                <div class="row vertical-align-center">
+                    <div class="col-sm-4"></div>
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                                <div class="modal-title h4" style="margin-right:20px" id="REQ_VIN_RNO_HEADER">Special Requirement</div>
+                            </div>
+                            <div class="modal-body">
+                                <input type="hidden" id="miscAttachment_requestId" />
+                                <div class="form-group">
+                                    <label for="miscAttachment_attachmentTypeId">Type:</label>
+                                    <select name="miscAttachment_attachmentTypeId" id="miscAttachment_attachmentTypeId" class="form-control" required>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="miscAttachment_comment">Comment</label>
+                                    <textarea name="miscAttachment_comment" id="miscAttachment_comment" class="form-control vresize" required></textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-success custom_btn" id="okButton">Save</button>
+                                <button type="button" class="btn btn-default custom_btn" data-dismiss="modal">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="attachmentsEditPanel" class="attachmentsEditPanel" tabindex="-1" style="display:none;">
+            <div class="white_box">
+                <div class="p_15">
+                    <h2>Attachments</h2>
+                    <div class="panel-body p-0" style="display:none;">
+                    </div>
+                    <div class="panel-footer attachment_footer mt_10" style="display:none;">
+                        <form id="att-addAttachment" asp-controller="Requests" asp-action="UploadAttachment" method="post" enctype="multipart/form-data">
+                            <input type="hidden" name="id" id="att-RequestId" />
+                            <div id="attUploadPanel" style="display:none;">
+                                <h4 class="hrheader">Upload Attachments</h4>
+                                <div class="form-group">
+                                    <input type="file" name="file" class="form-control" required />
+                                </div>
+                                <div class="form-group" id="attachmentTypePanel">
+                                    <label for="attachmentTypeId">Type:</label>
+                                    <select name="attachmentTypeId" id="attachmentTypeId" class="form-control" required>
+                                    </select>
+                                    <span style="font-size:small">Please confirm the type of document you are attaching. If you do not see an option that describes your document, choose the “extra” type</span>
+                                </div>
+                                <div class="form-group">
+                                    <label for="att-FileDesc" class="control-label">Description (optional): </label>
+                                    <input type="text" class="form-control" name="filedesc" id="att-FileDesc" />
+                                </div>
+                                <div class="form-group mb-0">
+                                    <button type="submit" class="btn btn-success custom_btn">Upload File</button>
+                                </div>
+                            </div>
+                        </form>
+                        <div class="text-right">
+                            <button type="button" style="float: left" class="btn btn-default custom_btn" id="btnAttMisc">Miscellaneous</button>
+                            <button type="button" class="btn btn-default custom_btn" id="btnAttUpload">Upload Attachment&nbsp;<span style="font-family:FontAwesome;">&#x0F078;</span></button>
+                            <button type="button" style="display:none;" class="btn btn-default custom_btn" id="btnAttUploadClose"><span style="font-family:FontAwesome;">&#x0F077;</span></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="followUpsPanel" class="followUpsPanel" tabindex="-1" style="display:none;">
+            <div class="white_box">
+                <div class="p_15">
+                    <h2>Follow-Ups</h2>
+                    <div class="panel-body p-0">
+                        @{
+                            {
+                                VendorFollowUpViewModel list = new VendorFollowUpViewModel(VendorViewType.RequestFollowUps, PageName)
+                {
+                    QueueName = "FollowUps",
+                    DataUrl = $"/FollowUp/VendorFollowUps/{Guid.Empty}", /* Changed by javascript actions */
+                    ListId = "DT_FollowUps",
+                    AllowMove = false,
+                    TableVarName = "vendorFollowUp",
+                    EnableFilter = false,
+                    EnableAdvancedSearch = false,
+                    EnablePresets = false,
+                    EnableReportBuilder = false,
+                    AllowSort = false,
+                    AddLastModified = false,
+                    AddLastModifiedBy = false,
+                    EnableExport = false,
+                    DisplayFullNotesAsChildRow = false
+                };
+
+                                if (!DataHelpers.UpdateViewColumns("Vendor_RequestFollowUps", list))
+                                {
+                                    list.Columns.Add_Select();
+                                    list.Columns.Add("Title", "reqTitle");
+                                    list.Columns.Add("Due Date", "reqDueDate");
+                                    list.Columns.Add("Codes", "reqTags");
+                                    list.Columns.Add("Completed Date", "reqCompletedDate");
+                                    list.Columns.Add("Notes", "reqFUPNotes");
+
+                                    list.SortColumns.Add("reqDueDate");
+                                }
+                                list.RequestId = new Guid();
+                                await Html.RenderPartialAsync("~/Views/Shared/_followupsupport.cshtml");
+                                await Html.RenderPartialAsync("_vendorFollowUpsList", list);
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="linkedRequestsPanel" class="linkedRequestsPanel" tabindex="-1" style="display:none;">
+            <div class="white_box">
+                <div class="p_15">
+                    <h2>Linked Records</h2>
+                    <div class="panel-body p-0" style="max-width:600px">
+                        @{
+                            {
+                                VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.LinkedRequests, PageName)
+                {
+                    QueueTitle = "Linked Requests",
+                    QueueName = "LinkedRequests",
+                    Prefix = "", /* both LH and Vendor */
+                    PageName = "", /* multiple pages */
+                    //DataUrl = GetUrl("LinkedRequests"), @* This url always returns 0 results - the url is updated in code later *@
+                    //ListId = "DT_LinkedRequests",
+                    AllowMove = false,
+                    //TableVarName = "vendorLinkedTable",
+                    IsLinkedRequestView = true,
+                    EnableFilter = false,
+                    EnableAdvancedSearch = false,
+                    EnablePresets = false,
+                    EnableReportBuilder = false,
+                    AllowSort = false,
+                    AddLastModified = false,
+                    AddLastModifiedBy = false,
+                    AddExpandNotesOption = false,
+                    AddIncludeArchivedOption = false,
+                    AddSelectDeselectButtons = true,
+                    AllowMultiSelect = false
+                };
+                                list.Columns.Add_Select();
+                                //list.Columns.Add_Chat();
+                                //list.Columns.Add_Attachments();
+                                list.Columns.Add_Links();
+                                list.Columns.Add_RNo();
+                                list.Columns.Add_VIN();
+                                list.Columns.Add_AppType(true);
+                                list.Columns.Add_AppState();
+
+                                list.SortColumns.Add("reqNo");
+                                list.SortColumns.Add("reqType");
+                                list.SortColumns.Add("reqState");
+
+                                await Html.RenderPartialAsync("_VendorRequestList", list);
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        @{
+            await Html.RenderPartialAsync("~/Views/Shared/_vendorLinkedRequestsSupport.cshtml");
+        }
+        <div id="requestHistoryPanel" class="requestHistoryPanel" tabindex="-1" style="display:none;">
+            <div class="text-right">
+                <button type="button" class="btn btn-success custom_btn" id="okButton">View History</button>
+            </div>
+            <div class="panel-body">
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-6 col-lg-4">
+        <div id="statusEditPanel" class="statusEditPanel" tabindex="-1" style="display:none;">
+            <div class="white_box">
+                <div class="p_15">
+                    <h2>Status</h2>
+                    <div class="panel-body p-0">
+                    </div>
+                    @* <button type="button" class="btn btn-success custom_btn" id="okButton">Update Status</button> *@
+            </div>
+            </div>
+        </div>
+        <div id="transactionPanel" class="transactionPanel" tabindex="-1" style="display:none;">
+            <div class="white_box">
+                <div class="p_15">
+                    <h2>Transactions</h2>
+                    <div class="panel-body p-0"></div>
+                </div>
+            </div>
+        </div>
+        <div id="paymentDisbursementPanel" class="paymentDisbursementPanel" tabindex="-1" style="display:none; padding-top:15px">
+            <div class="white_box">
+                <div class="p_15" id="paymentDisbursementPanelDiv">
+                    <div class="panel-body p-0"></div>
+                </div>
+                <div id="calculatedFieldsPanel" class="calculatedFieldsPanel" tabindex="-1">
+                    <div class="p_15">
+                        <div class="panel-body p-0"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="stripePaymentPanel" class="stripePaymentPanel" tabindex="-1" style="display:none; padding-top:15px">
+            <div class="white_box p_15 mt_15">
+                <div class="mb_15">
+                    @Html.Partial("_StripePayment")
+                </div>
+
+                <div id="paymentLinksList" class="card mt-3 d-none">
+                    <div class="card-header bg-primary text-white p_10">
+                        Payment Links
+                    </div>
+                    <div class="card-body">
+                        <div id="paymentLinksContainer"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div id="feePanel" class="feePanel" tabindex="-1" style="display:none; padding-top:15px">
+            <div class="white_box p_15 mt_15">
+                <h2>Fee Panel</h2>
+                @Html.Partial("_FeePanel")
+            </div>
+        </div>
+
+        <div style="display:none">
+            <form id="hiddenform" method="post" action=""></form>
+        </div>
+    </div>
+    <div id="dataTagsPanel" class="dataTagsPanel" tabindex="-1" style="display:none;">
+        <div class="white_box">
+            <div class="p_15">
+                <h2>Data Tags</h2>
+                <div class="panel-body p-0"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="paymentAndDisbursementPanel" class="paymentAndDisbursementPanel" tabindex="-1" style="display: none">
+    <div class="white_box p_15 mt_15">
+        <h2>Payment And Disbursement </h2>
+        <div class="row">
+            <div class="form-group col-md-4">
+                <label for="paymentTypeSelect">Select Payment Type</label>
+                <select id="paymentTypeSelect" class="form-control">
+                    <option value="credit">Credit</option>
+                    <option value="debit">Debit</option>
+                </select>
+            </div>
+        </div>
+        <table id="paymentAndDisbursementPanelDataTable" class="table table-striped" style="width:100%"></table>
+        <div id="export-button-paymentAndDisbursement"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="editPaymentModal" tabindex="-1" aria-labelledby="editPaymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editPaymentModalLabel">Edit Payment</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editPaymentForm">
+                    <input type="hidden" name="id" id="modalPay-Id" />
+                    <input type="hidden" name="requestId" id="modalPay-RequestId" />
+                    <input type="hidden" name="vin" id="modalPay-vin" />
+                    <input type="hidden" name="isCredit" id="modalPay-isCredit" />
+
+                    <div class="form-group">
+                        <label for="PaymentTypeIDForModal">Transaction Type</label>
+                        <select class="form-control" name="PaymentTypeIDForModal" id="PaymentTypeIDForModal" disabled>
+                            <option value="">Select Type</option>
+                            <option value="1">Check</option>
+                            <option value="2">Credit Card</option>
+                            <option value="3">ACH</option>
+                            <option value="4">Disbursement Check</option>
+                            <option value="5">Electronic Disbursement</option>
+                            <option value="6">Maggard Service Fee</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="AmountForModal">Amount ($)</label>
+                        <input type="number" class="form-control" name="AmountForModal" id="AmountForModal" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ReferenceNumberForModal">Reference Number (#)</label>
+                        <input type="text" class="form-control" name="ReferenceNumberForModal" id="ReferenceNumberForModal" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="paymentDateForModal">Payment Date</label>
+                        <input type="date" class="form-control" name="paymentDateForModal" id="paymentDateForModal" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ProcessingFeeForModal">Processing Fee</label>
+                        <input type="number" class="form-control" name="ProcessingFeeForModal" id="ProcessingFeeForModal" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="TotalChargeForModal">Total Charge</label>
+                        <input type="number" readonly class="form-control" name="TotalChargeForModal" id="TotalChargeForModal" />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="confirmDeletePayDisbursementModal" tabindex="-1" role="dialog" aria-labelledby="confirmDeletePayDisbursementModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white" style="    height: 60px;">
+                <h5 class="modal-title" id="confirmDeletePayDisbursementModalLabel" style="color: black;">
+                    Confirm Delete Row
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the row?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmDeletePayDisbursementButton">Remove</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="confirmDeletePaymentLinkModal" tabindex="-1" role="dialog" aria-labelledby="confirmDeletePayDisbursementModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white" style="    height: 60px;">
+                <h5 class="modal-title" id="confirmDeletePaymentLinkModalLabel" style="color: black;">
+                    Confirm Delete Link
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the payment link?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmDeletePaymentLinkButton">Remove</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div>
+    <div id="calculateSectionPanel" style="display: none;">
+        <div class="table-responsive white_box p_15 mb_20">
+            <div style="display: flex; justify-content: space-between; align-items: center;gap:20px; margin:inherit">
+                <div style="display: flex;align-items: center;">
+                    <h2 class="sub_heading">Tax Items</h2>
+                    <i class="fa fa-info-circle info-icon" id="infoIconRP"></i>
+                </div>
+                <button type="button" class="btn btn-success custom_btn" id="saveTaxButton">Save</button>
+                <button type="button" class="btn btn-primary custom_btn" id="calculateButtonRP">Calculate</button>
+
+            </div>
+            <table class="table table-responsive">
+                <thead>
+                    <tr>
+                        <th>Item Name</th>
+                        <th>Value</th>
+                        <th>Taxable Amount</th>
+                        <th>Tax Due</th>
+                    </tr>
+                </thead>
+                <tbody id="itemGridRP">
+                </tbody>
+            </table>
+            <div>
+                <label>Total Taxable Amount:</label>
+                <input type="text" id="calTotalTaxableAmountRP" class="form-control" readonly />
+
+                <label>Total Tax Due:</label>
+                <input type="text" id="calTotalTaxDueRP" class="form-control" readonly />
+
+                <label>Total Tax Paid (Other State):</label>
+                <input type="text" id="calTotalTaxPaidOtherStateRP" class="form-control" readonly />
+
+                <label>Total Leftover (Titling State):</label>
+                <input type="text" id="calTotalLeftOverTitlingStateRP" class="form-control" readonly />
+            </div>
+        </div>
+    </div>
+    <div id="regFeeSectionPanel" style="display: none;">
+        <div class="table-responsive white_box p_15 mb_20">
+            <div style="display: flex; justify-content: space-between; align-items: end;gap:20px; margin:inherit">
+                <h2 class="sub_heading">Registration Fee Items</h2>
+                <button type="button" class="btn btn-success custom_btn" id="saveRegistrationBtn">Save</button>
+                <button type="button" class="btn btn-primary custom_btn" id="calculateRegFeeButtonRP">Calculate</button>
+            </div>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Item Name</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody id="regItemGrid">
+                </tbody>
+            </table>
+            <div id="calculatedFeeGrid">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="taxBreakdownModalRP" class="tax-modal">
+    <div class="tax-modal-content">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+            <h3 class="sub_heading">Tax Breakdown</h3>
+            <button class="close-modal" style="font-size:25px">&times;</button>
+        </div>
+        <div id="taxBreakdownRP"></div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
+
+<script>
+        let stateId;
+        let jurisdictionId;
+        let modalTimeout;
+        let totalTaxDetails;
+
+    $(document).ready(function () {
+
+        let amountInput = document.getElementById("StripeAmount");
+        let serviceChargeInput = document.getElementById("StripeServiceCharge");
+        let StripePaymentMethod = document.getElementById("StripePaymentTypeId");
+
+
+        StripePaymentMethod.addEventListener("change", function () {
+            var StripePaymentMethod = $("#StripePaymentTypeId").val();
+
+            let X = parseFloat(amountInput.value) || 0;
+            let Y = 0;
+
+            if (StripePaymentMethod === "card") {
+                // Credit Card Fee Calculation
+                Y = (X + 0.30) / 0.971;
+            } else if (StripePaymentMethod === "us_bank_account") {
+                // ACH Fee Calculation
+                if (X <= 625) {
+                    Y = X / 0.992;
+                } else {
+                    Y = X + 5.00;
+                }
+            }
+
+            // Ensure Y is rounded to two decimal places
+            serviceChargeInput.value = (Y - X).toFixed(2);
+        });
+
+        amountInput.addEventListener("input", function () {
+            var StripePaymentMethod = $("#StripePaymentTypeId").val();
+
+            let X = parseFloat(amountInput.value) || 0;
+            let Y = 0;
+
+            if (StripePaymentMethod === "card") {
+                // Credit Card Fee Calculation
+                Y = (X + 0.30) / 0.971;
+            } else if (StripePaymentMethod === "us_bank_account") {
+                // ACH Fee Calculation
+                if (X <= 625) {
+                    Y = X / 0.992;
+                } else {
+                    Y = X + 5.00;
+                }
+            }
+
+            // Ensure Y is rounded to two decimal places
+            serviceChargeInput.value = (Y - X).toFixed(2);
+        });
+
+        $("#copyPayLinkButton").click(function () {
+            var amount = $("#StripeAmount").val();
+            var StripePaymentType = $("#StripePaymentTypeId").val();
+            var StripeServiceCharge = $("#StripeServiceCharge").val();
+            var reqid = '@ViewData["RequestId"]';
+            var reqno = '@ViewData["RequestNo"]';
+            var vin = '@ViewData["VIN"]';
+
+            if (amount == null || amount == "" || amount == undefined) {
+                jqToast.error({ text: 'Please enter amount first!' });
+            }
+            else if (StripePaymentType == null || StripePaymentType == "" || StripePaymentType == undefined) {
+                jqToast.error({ text: 'Please select payment type!' });
+            }
+            else {
+
+                $.ajax({
+                    url: "/Stripe/CreatePaymentLink",
+                    type: "POST",
+                    headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                    data: {
+                        amount: amount,
+                        currency: "usd",
+                        successUrl: "",
+                        cancelUrl: "",
+                        requestId: reqid,
+                        vin: vin,
+                        paymentMethodType: StripePaymentType,
+                        serviceCharge: StripeServiceCharge
+                    },
+                    success: function (response) {
+                        if (!response.url) {
+                            jqToast.error("Failed to generate payment link.")
+                            return;
+                        }
+
+                        if (response.message) {
+                            $("#paymentMessage").text(response.message);
+                            $("#paymentMessage1").text(response.url);
+                            const paymentSection = document.getElementById('paymentMessageDiv');
+                            paymentSection.style.display = 'block'; 
+                        } else {
+                            const paymentSection = document.getElementById('paymentMessageDiv');
+                            paymentSection.style.display = 'none';
+                        }
+
+                        const tempInput = document.createElement('input');
+                        tempInput.value = response.url;
+                        document.body.appendChild(tempInput);
+                        tempInput.select();
+                        try {
+                            document.execCommand('copy');
+                            jqToast.success({
+                                text: 'Link copied to clipboard!'
+                            });
+                        } catch (err) {
+                            console.error("Fallback: Failed to copy text: ", err);
+                            jqToast.error({
+                                text: 'Failed to copy the link. Please try again.'
+                            });
+                        }
+                        document.body.removeChild(tempInput);
+                       
+                        getPaymentLinks(reqid)
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error:", xhr.responseText);
+                        alert("Payment request failed. Please try again.");
+                    }
+                });
+            }
+        });
+
+        $("#payNowBtn").click(function () {
+            var amount = $("#StripeAmount").val();
+            var StripePaymentType = $("#StripePaymentTypeId").val();
+            var StripeServiceCharge = $("#StripeServiceCharge").val();
+            var reqid = '@ViewData["RequestId"]';
+            var reqno = '@ViewData["RequestNo"]';
+            var vin = '@ViewData["VIN"]';
+
+            if (amount == null || amount == "" || amount == undefined) {
+                jqToast.error({ text: 'Please enter amount first!' });
+            }
+
+            if (StripePaymentType == null || StripePaymentType == "" || StripePaymentType == undefined) {
+                jqToast.error({ text: 'Please select payment type!' });
+            }
+            else {
+
+                $.ajax({
+                    url: "/Stripe/CreateSession",
+                    type: "POST",
+                    contentType: "application/json",
+                    headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                    data: JSON.stringify({
+                        amount: amount,
+                        currency: "usd",
+                        successUrl: "https://localhost:44366/Stripe/PaymentSuccess",
+                        cancelUrl: "https://localhost:44366/Stripe/PaymentFailed",
+                        requestId: reqid,
+                        vin:vin,
+                        paymentMethodType: StripePaymentType,
+                        serviceCharge: StripeServiceCharge
+
+                    }),
+                    success: function (response) {
+                        if (response.url) {
+                            window.open(response.url, "_blank", "width=800,height=600");
+                        } else {
+                            jqToast.error("Failed to generate payment session.")
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error:", xhr.responseText);
+                        jqToast.error("Payment request failed. Please try again.")
+
+                    }
+                });
+            }
+        });
+
+        $("#chat-SendMessageForm").off('submit').on('submit', function (e) {
+            e.preventDefault();
+            $chatForm = $("#chat-SendMessageForm");
+            if ($chatForm.find("#chat-newMsg").val() != '') {
+                $.ajax({
+                    url: $chatForm.attr('action'),
+                    type: 'POST',
+                    data: $chatForm.serialize()
+                }).done(function (data) {
+                    $("#chat-newMsg").val('');
+                    jqToast.success({ text: 'Message send successfully' });
+                    var $form = $("#chatsEditPanel");
+                    var $body = $form.find(".panel-body");
+                    $body.html(data);
+                    $body.animate({ scrollTop: $body.prop("scrollHeight") }, 1000);
+                    //$body.scrollTop = $body.scrollHeight;
+
+                        var reqid = $("#chat-RequestId").val();
+                        refreshChat(reqid);
+                    });
+                }
+                return false;
+            });
+
+            $("#paymentTypeSelect").change(function () {
+                let selectedType = $(this).val();
+                var reqid = '@ViewData["RequestId"]';
+
+                if (selectedType == "credit") {
+                    loadPaymentAndDisbursement(true, reqid);
+                }
+                else
+                {
+                    loadPaymentAndDisbursement(false, reqid);
+                }
+
+            });
+
+            $("#chatRefreshBtn").on('click', function (e) {
+                e.preventDefault();
+                var reqid = $("#chat-RequestId").val();
+                requestLookup_showChat(reqid);
+            });
+
+            $("#chatCloseBtn").off('click').on('click',function (e) {
+                e.preventDefault();
+                var reqid = $("#chat-RequestId").val();
+                refreshChat(reqid);
+            });
+
+            $("#chatMarkAsRead").off('click').on('click',function (e) {
+                e.preventDefault();
+                var reqid = $("#chat-RequestId").val();
+                var lastcreated = $("#chatsEditPanel").find("[data-lastcreated]").data("lastcreated");
+
+                var formdata = new FormData();
+                formdata.append('id', reqid);
+                formdata.append('lastcreated', lastcreated);
+                $.ajax({
+                    url: '/Chats/MarkAsRead',
+                    type: 'POST',
+                    headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                    data: formdata,
+                    cache: false,
+                    contentType: false,
+                    processData: false
+                }).done(function (data) {
+                    var reqid = $("#chat-RequestId").val();
+                    refreshChat(reqid);
+                });
+
+                return false;
+            });
+
+            $("#att-addAttachment").submit(function (e) {
+                e.preventDefault();
+
+                var $attForm = $("#att-addAttachment");
+                var formData = new FormData();
+                var id = $attForm.find("#att-RequestId").val();
+                var desc = $attForm.find("#att-FileDesc").val();
+                var attachmentTypeId = $attForm.find("#attachmentTypeId").val();
+
+                if (attachmentTypeId == null || attachmentTypeId == "") {
+                    alert("Please select a type for the attachment");
+                    return;
+                }
+                formData.append("id", id);
+                formData.append("filedesc", desc);
+                formData.append("attachmentTypeId", attachmentTypeId);
+
+                var $file = $attForm.find("input[type='file']")[0];
+                if ($file.length == 0) {
+                    alert("Please select a file for upload");
+                    return;
+                }
+                formData.append("file", $file.files[0]);
+
+                $.ajax({
+                    url: $attForm.attr('action'),
+                    type: 'POST',
+                    headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                    processData: false,
+                    contentType: false,
+                    data: formData
+                }).done(function (data) {
+                    var $input = $attForm.find("input[type='file']");
+                    $input.replaceWith($input.val('').clone(true));
+                    $attForm.find('#attUploadPanel').hide();
+                    $attForm.find("#att-FileDesc").val('');
+
+                    showUploadPanel(false);
+                    requestLookup_showAttachments(id);
+                });
+                return false;
+            });
+
+            $("#btnAttUpload").off('click').on('click',function (e) {
+                e.preventDefault();
+                uploadBtnClick();
+            });
+            $("#btnAttMisc").off('click').on('click',function (e) {
+                e.preventDefault();
+                miscAttBtnClick();
+            });
+            $("#btnAttUploadClose").off('click').on('click', function (e) {
+                e.preventDefault();
+                $modalForm = $("#attachmentsEditPanel");
+                $modalForm.find('#attUploadPanel').hide();
+                $modalForm.find('#btnAttUpload').show();
+                $modalForm.find('#btnAttUploadClose').hide();
+                $modalForm.find('#btnAttMisc').show();
+            });
+            $("#calculateButtonRP").on('click', async function() {
+                try
+                {
+                     const itemValues = {};
+                     $('input[name^="itemValueRP_"]').each(function() {
+                         const value = parseFloat($(this).val()) || 0;
+                         const itemName = $(this).data('item-name');
+                         if (itemName) itemValues[itemName] = value;
+                     });
+                     const response = await calculateTax(stateId, jurisdictionId, itemValues,reqid);
+                     displayTax(response);
+                                 populateTaxData(response.totalCollectionTaxDetails,"RP");
+                                     totalTaxDetails = response.totalCollectionTaxDetails;
+                     jqToast.success({
+                         text: "Tax calculated successfully."
+                     })
+                } catch (error) {
+                    console.error("Tax calculation error:", error);
+                    jqToast.error({
+                        text: error.message
+                    });
+                }
+            });
+            $("#calculateRegFeeButtonRP").off('click').on('click', function(e) {
+                e.preventDefault();
+                calculateRegFee();
+            });
+
+            var reqid = '@ViewData["RequestId"]';
+            var reqno = '@ViewData["RequestNo"]';
+            var vin = '@ViewData["VIN"]';
+            if (reqid != '') {
+                $("#globalRequestSearch").data('requestid', reqid);
+                $("#globalRequestSearch").data('reqno', reqno);
+                $("#globalRequestSearch").data('vin', vin);
+                $("#globalRequestSearch").val(vin);
+            }
+            requestLookup_fill_form(reqid, reqno, vin);
+
+            $("#saveTaxButton").off('click').on('click', function() {
+                saveTaxData(reqid);
+            });
+            $("#saveRegistrationBtn").off('click').on('click', function() {
+                saveRegistrationData(reqid);
+            });
+
+            $(document).on("click", ".edit-btn-payment-and-disbursement", function () {
+                var rowData = $('#paymentAndDisbursementPanelDataTable').DataTable().row($(this).parents("tr")).data();
+                if (!rowData) {
+                    console.error("No data found for the selected row");
+                    return;
+                }
+
+                $("#modalPay-Id").val(rowData.paymentID || "");
+                $("#modalPay-RequestId").val(rowData.requestId || "");
+                $("#modalPay-vin").val(rowData.vin || "");
+                $("#modalPay-isCredit").val(rowData.isCredit);
+                $("#PaymentTypeIDForModal").val(rowData.paymentTypeID || 0);
+                $("#AmountForModal").val(rowData.amount || 0);
+                $("#ReferenceNumberForModal").val(rowData.referenceNumber || "");
+                $("#paymentDateForModal").val(rowData.paymentDate ? formatDateForBind(rowData.paymentDate) : "");
+                $("#ProcessingFeeForModal").val(rowData.processingFee || 0);
+                $("#TotalChargeForModal").val(rowData.totalCharge || 0);
+
+                $("#editPaymentModal").modal("show");
+            });
+
+            $(document).on("click", ".delete-btn-payment-and-disbursement", function () {
+
+                var rowData = $('#paymentAndDisbursementPanelDataTable').DataTable().row($(this).parents("tr")).data();
+                if (!rowData) {
+                    console.error("No data found for the selected row");
+                    return;
+                }
+
+                $('#confirmDeletePayDisbursementModal').modal('show');
+
+                $('#confirmDeletePayDisbursementButton').off('click').on('click', function () {
+
+                    $.ajax({
+                        url: '/Requests/DeletePaymentAndDisbursement' + '?paymentId=' + rowData.paymentID,
+                        type: 'GET',
+                        async: true,
+                        dataType: 'text',
+                        cache: false,
+                        headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                        contentType: false,
+                        processData: false,
+                        data: {
+                            paymentId: rowData.paymentID,
+                        },
+                        success: function (response) {
+                            var dataResponse = JSON.parse(response)
+                            if (dataResponse.success) {
+                                jqToast.success({ text: 'Record deleted successfully!' });
+                                // loadPaymentAndDisbursement(true);
+                                window.location.reload();
+                            } else {
+                                jqToast.error({ text: 'Error occured while deleting record.' });
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            console.error("Error occured while processing the request.");
+                        }
+                    });
+
+                    $('#confirmDeletePayDisbursementModal').modal('hide');
+
+                });
+
+            });
+
+            $("#editPaymentForm").submit(function (e) {
+                e.preventDefault();
+                let reqId = $("#modalPay-RequestId").val()
+                var formData = {
+                    paymentID: parseInt($("#modalPay-Id").val()),
+                    requestId: $("#modalPay-RequestId").val(),
+                    vin: $("#modalPay-vin").val(),
+                    paymentTypeID: parseInt($("#PaymentTypeIDForModal").val()),
+                    amount: parseFloat($("#AmountForModal").val()),
+                    referenceNumber: $("#ReferenceNumberForModal").val(),
+                    paymentDate: new Date($("#paymentDateForModal").val()),
+                    ProcessingFee: parseFloat($("#ProcessingFeeForModal").val()),
+                    totalCharge: parseFloat($("#TotalChargeForModal").val()),
+                    isCredit: $("#modalPay-isCredit").val() === "true",
+
+                };
+
+                $.ajax({
+                    url: '/Requests/CreatePaymentAndDisbursement',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(formData),
+                    headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                    success: function (response) {
+                        jqToast.success({ text: "Data updated successfully!" });
+                        loadPaymentAndDisbursement(true, reqId);
+
+                    },
+                    error: function (xhr) {
+                        jqToast.error({ text: "Error occured during proccessing" });
+                    }
+                });
+
+                $('#editPaymentModal').modal('hide');
+
+            });
+
+            $("#infoIconRP").off('mouseenter').on('mouseenter', function() {
+                clearTimeout(modalTimeout);
+                $modalForm = $("#taxBreakdownModalRP");
+                $modalForm.find('#taxBreakdownRP').html($("#taxBreakdownRP").html());
+                positionModal($('#infoIconRP'), $('#taxBreakdownModalRP'));
+                $modalForm.fadeIn();
+                bindExpandFunctionality();
+            });
+
+            $("#taxBreakdownModalRP").off('mouseenter').on('mouseenter', function() {
+                clearTimeout(modalTimeout);
+            });
+
+            $("#taxBreakdownModalRP").off('mouseleave').on('mouseleave', function() {
+                modalTimeout = setTimeout(() => {
+                    $("#taxBreakdownModalRP").fadeOut();
+                }, 500);
+            });
+
+            $(".close-modal").off('click').on('click', function(e) {
+                e.preventDefault();
+                $("#taxBreakdownModalRP").fadeOut();
+            });
+
+           
+    });
+
+    function formatDateForBind(dateString) {
+            if (!dateString) return "";
+            const date = new Date(dateString);
+            return date.toISOString().split("T")[0]; // Extracts YYYY-MM-DD
+        }
+
+    function requestLookup_fill_form(requestId, reqno, vin) {
+        if (requestId.length == 36) {
+            requestLookup_vendorEditRequestInline(requestId);
+            requestLookup_vendorShowNotes(requestId);
+            requestLookup_showChat(requestId);
+            requestLookup_showAttachments(requestId);
+            requestLookup_vendorEditStatus(requestId);
+            requestLookup_vendorTransactions(requestId);
+            requestLookup_showLinkRequests(requestId, reqno, vin);
+            requestLookup_showFollowUps(requestId, reqno, vin);
+            requestLookup_showRequestCodes(requestId, reqno, vin);
+            requestLookup_vendorViewRequestHistory(requestId);
+            requestLookup_getPaymentTypes(requestId, reqno, vin);
+            requestLookup_dataTags(requestId);
+            requestLookup_TaxAndRegFee(requestId);
+            getCalculatedFields(requestId);
+            loadPaymentAndDisbursement(true, requestId);
+            $("#stripePaymentPanel").show();
+            $("#feePanel").show();
+            getPaymentLinks(requestId)
+        }
+        else {
+            requestLookup_clearEditForm();
+        }
+    }
+
+    function requestLookup_clearEditForm() {
+            var $pnl = $("#detailsEditPanel");
+            $pnl.find(".panel-body").empty().html('');
+            $pnl.hide();
+
+            var $pnl = $("#notesEditPanel");
+            $pnl.find(".panel-body").empty().html('');
+            $pnl.hide();
+
+            var $pnl = $("#chatsEditPanel");
+            $pnl.find(".panel-body").empty().html('');
+            $pnl.find(".panel-footer").hide();
+            $pnl.hide();
+
+            var $pnl = $("#attachmentsEditPanel");
+            $pnl.find(".panel-body").empty().html('');
+            $pnl.find(".panel-footer").hide();
+            $pnl.hide();
+
+            var $pnl = $("#statusEditPanel");
+            $pnl.find(".panel-body").empty().html('');
+            $pnl.hide();
+
+            var $pnl = $("#transactionPanel");
+            $pnl.find(".panel-body").empty().html('');
+            $pnl.hide();
+
+            var $pnl = $("#dataTagsPanel");
+            $pnl.find(".panel-body").empty().html('');
+            $pnl.hide();
+
+            var $pnl = $("#calculateSectionPanel");
+            $pnl.find(".panel-body").empty().html('');
+            $pnl.hide();
+
+            var $pnl = $("#regFeeSectionPanel");
+            $pnl.find(".panel-body").empty().html('');
+            $pnl.hide();
+
+            var $pnl = $("#i");
+            $pnl.find(".panel-body").empty().html('');
+            $pnl.hide();
+
+            var $pnl = $("#linkedRequestsPanel");
+            $pnl.find(".panel-body").hide();
+            $pnl.hide();
+
+            var $pnl = $("#followUpsPanel");
+            $pnl.find(".panel-body").hide();
+            $pnl.hide();
+
+            var $pnl = $("#requestHistoryPanel");
+            $pnl.find(".panel-body").empty().html('');
+            $pnl.hide();
+    }
+
+    function requestLookup_vendorEditRequestInline(reqid) {
+            var $panel = $("#detailsEditPanel");
+            $panel.find(".panel-body").hide();
+            $panel.data("reqid", reqid);
+            $panel.find(".panel-body").empty().html('');
+            $panel.hide();
+
+            var succeeded = false;
+            $.ajax({
+                url: '/AppForm/VendorOpen/' + reqid,
+                type: 'GET',
+                async: true,
+                dataType: 'text',
+                cache: false,
+                contentType: false,
+                processData: false,
+            }).done(function (res) {
+                if ($panel.data("reqid") == reqid) {
+                    $panel.find(".panel-body").html(res);
+
+                    $panel = $("#detailsEditPanel"); //refresh after reload
+                    var $saveBtn = $panel.find('#detailsEditPanel_saveButton');
+                    var $changeAppTypeBtn = $panel.find('#detailsEditPanel_changeAppTypeButton');
+
+                    $changeAppTypeBtn.off('click').on('click', function () {
+                        requestLookup_initChangeAppType(reqid);
+                    });
+
+                    var $form = $panel.find('.panel-body').find('form');
+                    resetFormValidator("#dynamicAppForm");
+
+                    $form.off('submit').on('submit', function (e) {
+                        e.preventDefault();
+                        var $thisForm = $(this);
+                        $saveBtn.attr('disabled', true);
+                        $.ajax({
+                            url: $thisForm.attr('action'),
+                            type: 'POST',
+                            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                            data: $thisForm.serialize()
+                        }).done(function (data) {
+                            try {
+                                formAnalyzer_update_request(uploadId, reqid, null);
+                            } catch (e) { };
+                           
+                            jqToast.success({ text: 'Data updated successfully!' });
+                            $saveBtn.attr('disabled', false);
+                            $thisForm.find('input, select, textarea').removeClass('highlighted');
+                            $thisForm.find('.sectionBox').removeClass('highlighted-section');
+
+                            var reqid = '@ViewData["RequestId"]';
+                            var reqno = '@ViewData["RequestNo"]';
+                            var vin = '@ViewData["VIN"]';
+
+                            requestLookup_fill_form(reqid, reqno, vin);
+
+                        }).fail(function () {
+                            $saveBtn.attr('disabled', false);
+                            jqToast.error({
+                                text: `Some error occurred, Please try again.`
+                            });
+                        });
+                        return false;
+                    });
+                   
+                    var $footer = $panel.find(".panel-footer");
+                    $saveBtn.prop('disabled', false);
+                    $saveBtn.off('click').on('click', function (e) {
+                        e.preventDefault();
+                        $form.trigger("submit");
+                    });
+                    $panel.find(".panel-body").show();
+                    $panel.show();
+
+                    requestcodes_updateFormTags();
+                }
+            });
+            return false;
+    }
+
+        function requestLookup_vendorShowNotes(requestId) {
+            var $panel = $("#notesEditPanel");
+           //  $panel.hide();
+            $panel.data("reqid", requestId);
+            // $panel.find(".panel-body").empty().html('');
+
+            var formData = new FormData();
+            var notes = '';
+            formData.append('id', requestId);
+            formData.append('standaloneForm', 'true');
+            $.ajax({
+                url: '/Requests/EditNotes',
+                type: 'POST',
+                async: true,
+                data: formData,
+                dataType: 'text',
+                cache: false,
+                contentType: false,
+                processData: false,
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            }).done(function (data) {
+                $panel.find('.panel-body').html(data);
+                var form = $panel.find('form').first();
+                form.find('.btn-close').hide();
+                $panel.show();
+
+                $(form).off('submit').on('submit', (function (e) {
+                    e.preventDefault();
+                    disableFormSubmit(form);
+
+                    $.ajax({
+                        url: '/Requests/UpdateNotes',
+                        type: 'post',
+                        data: form.serialize(),
+                        headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                        success: function (data) {
+                            if (data.status == 'error') {
+                                alert(data.message);
+                            }
+                            else {
+                                requestLookup_vendorShowNotes(requestId);
+                            }
+                            jqToast.success({ text: 'Notes updated successfully' });
+                            enableFormSubmit(form);
+                        },
+                        error: function (xhr) {
+                            jqToast.error({
+                                text: `Some error occurred, Please try again.`
+                            });
+                            enableFormSubmit(form);
+                        }
+                    });
+                }));
+            });
+        }
+        function requestLookup_showChat(requestId) {
+            var $panel = $("#chatsEditPanel");
+            $panel.find(".panel-body").hide();
+            $panel.find(".panel-footer").hide();
+            $panel.data("reqid", requestId);
+            $panel.find(".panel-body").empty().html('');
+
+            var succeeded = false;
+            $.ajax({
+                url: '/Chats/View/' + requestId,
+                type: 'GET',
+                async: true,
+                dataType: 'text',
+                cache: false,
+                contentType: false,
+                processData: false,
+            }).done(function (data) {
+                $panel.find("#chat-RequestId").val(requestId);
+                var $body = $panel.find(".panel-body");
+                $body.html(data);
+                $body.show();
+                $body.animate({ scrollTop: $body.prop("scrollHeight") }, 1000);
+                //$body.scrollTop = $body.scrollHeight;
+                $panel.find(".panel-footer").show();
+                $panel.show();
+
+                var hasUnreadChats = $panel.find("[data-unreadchats]").data("unreadchats");
+                if (typeof hasUnreadChats !== 'undefined') {
+                    $panel.find('#chatMarkAsRead').attr("disabled", hasUnreadChats != '1');
+                }
+                else {
+                    $panel.find('#chatMarkAsRead').attr("disabled", false);
+                }
+            });
+            return false;
+        }
+        function removeAttachment(requestid,id) {
+            var formData = new FormData();
+            formData.append("id", id);
+
+            if (!confirm("Are you sure?"))
+                return;
+
+            var succeeded = false;
+            $.ajax({
+                url: '/Requests/RemoveAttachment',
+                type: 'POST',
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                data: formData,
+                dataType: 'text',
+                cache: false,
+                contentType: false,
+                processData: false,
+            }).done(function (data) {
+                requestLookup_showAttachments(requestid);
+            });
+            return false;
+        }
+        function requestLookup_showAttachments(requestId) {
+            var formData = new FormData();
+            formData.append("id", requestId);
+
+            var succeeded = false;
+            $.ajax({
+                url: '/Requests/Attachments',
+                type: 'POST',
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                data: formData,
+                dataType: 'text',
+                cache: false,
+                contentType: false,
+                processData: false,
+            }).done(function (data) {
+                var $form = $("#attachmentsEditPanel");
+                $form.find("#att-RequestId").val(requestId);
+                var $body = $form.find(".panel-body");
+                $body.html(data);
+                $body.show();
+                showUploadPanel(false);
+                $form.find(".panel-footer").show();
+                $form.show();
+            });
+            return false;
+        }
+        function showUploadPanel(f) {
+            if (f) {
+                let content = $("#attachmentTypeOptionsTemplate").html();
+                $("#attachmentTypeId").html(content);
+                $('#attUploadPanel').show();
+                $('#btnAttUpload').hide();
+                $('#btnAttMisc').hide();
+                $('#btnAttUploadClose').show();
+            }
+            else {
+                $('#attUploadPanel').hide();
+                $('#btnAttUpload').show();
+                $('#btnAttMisc').show();
+                $('#btnAttUploadClose').hide();
+            }
+        }
+        function uploadBtnClick() {
+            var f = $("#attUploadPanel").is(':visible');
+            showUploadPanel(!f);
+        }
+        function miscAttBtnClick() {
+            showMiscAttachmentDialog();
+        }
+        function showMiscAttachmentDialog(){
+            var reqid = '@ViewData["RequestId"]';
+            var reqno = '@ViewData["RequestNo"]';
+            var vin = '@ViewData["VIN"]';
+
+            $form = $("#modal-miscAttachment");
+            let content = $("#miscAttachmentTypeOptionsTemplate").html();
+            $form.find("#miscAttachment_attachmentTypeId").html(content);
+            $form.find("#miscAttachment_requestId").val(reqid);
+            $form.find("#miscAttachment_comment").val('');
+            $form.find("#confirm-vin").val(vin);
+
+            vendor_set_single_vin_rno_header($form, 'Special Requirement', reqno, vin);
+
+            $form.find("#okButton").off("click").on("click", function(e) {
+                saveMiscAttachmentCondition($form);
+            });
+
+            $form.modal("show");
+        }
+        function saveMiscAttachmentCondition($form) {
+            let requestId = $form.find("#miscAttachment_requestId").val();
+            let attachmentTypeId = $form.find("#miscAttachment_attachmentTypeId").val();
+            let attachmentComment = $form.find("#miscAttachment_comment").val();
+
+            var formData = new FormData();
+            formData.append('requestId', requestId);
+            formData.append('attachmentTypeId', attachmentTypeId);
+            formData.append('comment', attachmentComment);
+
+            $.ajax({
+                url: '/Request/AddAttachmentRequirement/' + requestId,
+                type: 'POST',
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                async: true,
+                data: formData,
+                dataType: 'text',
+                cache: false,
+                contentType: false,
+                processData: false,
+            }).done(function (res) {
+                $form.modal("hide");
+            }).fail(function (xhr) {
+                processError(xhr);
+            });
+        }
+
+        // function vendor_set_single_vin_rno_header(form, txt, requestNo, vin) {
+        //     var html = `<span style="float:left">${txt}</span><span style="float:right">R# ${requestNo}&nbsp;/&nbsp;${vin}</span>`;
+        //     //<div style="float:left">Edit Follow-Up&nbsp;</div><div style="width:50%;display:inline-block;text-align:right" id="REQ_VIN_RNO_HEADER"></div>
+
+        //     form.find("#REQ_VIN_RNO_HEADER").html(html);
+        //     form.find("#REQ_MULTI_VIN_RNO_HEADER").html("");
+        // }
+
+        function requestLookup_showLinkRequests(requestId, reqno, vin) {
+            var $panel = $("#linkedRequestsPanel");
+            $panel.data("reqid", requestId);
+            $panel.data("reqno", reqno);
+            $panel.data("vin", vin);
+
+            try {
+                let $table = $("#DT_LinkedRequests").DataTable();
+                $table.ajax.url(`/RequestStatus/LinkedRequests/${requestId}`).load().draw();
+                $panel.show();
+            }
+            catch (e) {
+                $panel.hide();
+                return false;
+            }
+            return false;
+        }
+        function requestLookup_showRequestCodes(requestId, reqno, vin) {
+            var $panel = $("#requestCodesPanel");
+            $panel.data("reqid", requestId);
+            $panel.data("reqno", reqno);
+            $panel.data("vin", vin);
+            $panel.hide();
+
+            let $table = $("#DT_RequestCodes").DataTable();
+            $table.ajax.url(`/Requests/RequestCodes/${requestId}/`).load();
+            $panel.show();
+
+            return false;
+        }
+        function requestLookup_showFollowUps(requestId, reqno, vin) {
+            var $panel = $("#followUpsPanel");
+            $panel.data("reqid", requestId);
+            $panel.data("reqno", reqno);
+            $panel.data("vin", vin);
+            $panel.hide();
+
+            let $table = $("#DT_FollowUps").DataTable();
+            $table.ajax.url(`/FollowUp/VendorFollowUps/${requestId}/`).load();
+            $panel.show();
+
+            return false;
+        }
+        function requestLookup_vendorViewRequestHistory(requestId){
+            var $panel = $("#requestHistoryPanel");
+            $panel.data("reqid", requestId);
+            $panel.find(".panel-body").empty().html('');
+            $panel.find('#okButton').on('click', function (e) {
+                e.preventDefault();
+                requestLookup_vendorViewRequestHistory_Populate(requestId);
+            });
+            //TBD: uncomment after final testing
+            $panel.show();
+        }
+        function requestLookup_vendorViewRequestHistory_Populate(){
+            var $panel = $("#requestHistoryPanel");
+            var requestId = $panel.data("reqid");
+            var $body = $panel.find(".panel-body");
+            $body.empty().html('');
+            var succeeded = false;
+
+            if (true) // navigate to standalone page
+            {
+                var url = '/Requests/History/' + requestId;
+                var win = window.open(url, '_blank');
+                win.focus();
+            }
+            else
+            {
+                $.ajax({
+                    url: '/Requests/ViewHistory/' + requestId,
+                    type: 'POST',
+                    headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                    async: true,
+                    dataType: 'text',
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                }).done(function (res) {
+                    $body.html(res);
+                    $body.show();
+                }).fail(function (xhr) {
+                    processError(xhr);
+                });
+            }
+            return false;
+        }
+
+        function requestLookup_vendorEditStatus(requestId) {
+            var $panel = $("#statusEditPanel");
+            $panel.hide();
+            $panel.data("reqid", requestId);
+            $panel.find(".panel-body").empty().html('');
+
+            var succeeded = false;
+            $.ajax({
+                url: '/AppForm/VendorEditStatus/' + requestId,
+                type: 'GET',
+                async: true,
+                dataType: 'text',
+                cache: false,
+                contentType: false,
+                processData: false,
+            }).done(function (res) {
+                var $panel = $("#statusEditPanel");
+                
+                $panel.find(".panel-body").html(res);
+
+                var $form = $panel.find("form");
+
+                $form.off('submit').on('submit', function (e) {
+                    e.preventDefault();
+                    var $thisForm = $(this);
+                    $.ajax({
+                        url: $thisForm.attr('action'),
+                        type: 'POST',
+                        headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                        data: $thisForm.serialize()
+                    }).done(function (data) {
+                        jqToast.success({ text: 'Success!' });
+                    });
+                    return false;
+                });
+                
+                $panel.find("#okButton").off('click').on('click', function (e) {
+                    e.preventDefault();
+                    $form.trigger("submit");
+                });
+
+                $panel.show();
+            }).fail(function (xhr) {
+                processError(xhr);
+            });
+            return false;
+        }
+        function requestLookup_vendorTransactions(requestId) {
+            var $panel = $("#transactionPanel");
+            $panel.hide();
+            $panel.data("reqid", requestId);
+            $panel.find(".panel-body").empty().html('');
+
+            var succeeded = false;
+            $.ajax({
+                url: '/Requests/Transactions/' + requestId,
+                type: 'GET',
+                async: true,
+                dataType: 'text',
+                cache: false,
+                contentType: false,
+                processData: false,
+            }).done(function (res) {
+                $panel.find(".panel-body").html(res);
+                $panel.show();
+            }).fail(function (xhr) {
+                processError(xhr);
+            });
+            return false;
+        }
+        function requestLookup_getPaymentTypes(requestId, reqno, vin) {
+            var $panel1 = $("#paymentDisbursementPanel");
+            var $panel = $("#paymentDisbursementPanelDiv");
+            $panel.hide();
+            $panel.find(".panel-body").empty().html('');
+
+            var succeeded = false;
+            $.ajax({
+                url: '/Requests/GetPaymentTypes',
+                type: 'GET',
+                async: true,
+                dataType: 'text',
+                cache: false,
+                contentType: false,
+                processData: false,
+            }).done(function (res) {
+                $panel1.show();
+                $panel.find(".panel-body").html(res);
+                $panel.show();
+
+                var $form = $("#payment_disbursement_section");
+                $form.find("#pay-vin").val(vin);
+                $form.find("#pay-RequestId").val(requestId);
+            }).fail(function (xhr) {
+                processError(xhr);
+            });
+
+            return false;
+        }
+
+        function getCalculatedFields(requestId) {
+
+            var $panel = $("#calculatedFieldsPanel");
+            $panel.hide();
+            $panel.find(".panel-body").empty().html('');
+
+            var succeeded = false;
+
+            $.ajax({
+                url: '/Requests/GetCalculatedFieldsSummary',
+                type: 'POST',
+                dataType: 'html',
+                cache: false,
+                data: { requestId },
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                success: function (response) {
+                    $panel.find(".panel-body").html(response);
+                    $panel.show();
+                },
+                error: function (xhr) {
+                }
+
+            });
+
+        return false;
+    } 
+    function formatDateForDisplay(date) {
+        return new Date(date).toLocaleDateString();
+    }
+
+        function getPaymentTypeName(id) {
+
+            const PaymentType = {
+                Check: 1,
+                CreditCard: 2,
+                ACH: 3,
+                ElectronicDisbursement: 4,
+                DisbursementCheck: 5,
+                MaggardServiceFee: 6
+            };
+
+            const paymentTypeMap = {
+                [PaymentType.Check]: "Check",
+                [PaymentType.CreditCard]: "Credit Card",
+                [PaymentType.ACH]: "ACH",
+                [PaymentType.ElectronicDisbursement]: "Electronic Disbursement",
+                [PaymentType.DisbursementCheck]: "Disbursement Check",
+                [PaymentType.MaggardServiceFee]: "Maggard Service Fee"
+            };
+
+            return paymentTypeMap[id] || "";
+        }
+
+
+
+        function requestLookup_dataTags(requestId) {
+            var $panel = $("#dataTagsPanel");
+            $panel.hide();
+            $panel.data("reqid", requestId);
+            $panel.find(".panel-body").empty().html('');
+            $.ajax({
+                url: '/Requests/DataTags/' + requestId,
+                type: 'GET',
+                async: true,
+                dataType: 'json',
+                cache: false,
+            }).done(function(res) {
+                displayDataTags(res);
+                $panel.show();
+            }).fail(function(xhr) {
+                // processError(xhr);
+            });
+            return false;
+        }
+
+        function displayDataTags(dataTags) {
+            var $panelBody = $("#dataTagsPanel .panel-body");
+            for (var docName in dataTags) {
+                if (dataTags.hasOwnProperty(docName)) {
+                    var dataTag = dataTags[docName];
+                    var docHeader = $('<h5>')
+                        .text(docName)
+                        .addClass('box-header')
+                        .css({
+                            'background-color': '#d2d2d2',
+                            'padding': '10px',
+                            'cursor': 'pointer',
+                            'position': 'relative',
+                            'margin-bottom': '0px'
+                        });
+                    var collapseIcon = $('<i>')
+                        .addClass('fa fa-chevron-down')
+                        .css({
+                            'font-size': '12px',
+                            'position': 'absolute',
+                            'right': '10px',
+                            'top': '50%',
+                            'transform': 'translateY(-50%)'
+                        });
+                    var docContent = $('<div>')
+                        .addClass('doc-content')
+                        .css({
+                            'background-color': '#f0f0f0',
+                            'padding': '10px',
+                            'display': 'none'
+                        });
+                    docHeader.on('click', function() {
+                        var $content = $(this).next('.doc-content');
+                        var $icon = $(this).find('i');
+                        var isVisible = $content.is(':visible');
+                        if (isVisible) {
+                            $content.slideUp();
+                            $icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+                        } else {
+                            $content.slideDown();
+                            $icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+                        }
+                    });
+                    docHeader.append(collapseIcon);
+                    $panelBody.append(docHeader);
+                    $panelBody.append(docContent);
+                    appendTags(docContent, 'C1', dataTag.C1);
+                    appendTags(docContent, 'C2', dataTag.C2);
+                }
+            }
+        }
+        // Helper function to append tags
+        function appendTags($panelBody, column, tags) {
+            if (tags && tags.length > 0) {
+                var colHeader = $('<h5>').text('\u07E6 ' + column + ' Tags');
+                $panelBody.append(colHeader);
+                    var table = $('<table>').addClass('table table-responsive');
+                var headerRow = $('<tr>').append(
+                    $('<th>').text('Field Name'),
+                    $('<th>').text('Discrepancy'),
+                    $('<th>').text('Correct Value')
+                );
+                table.append(headerRow);
+                tags.forEach(function(tag) {
+                    var fieldNameCell = $('<td>').text(tag.fieldName);
+                    // Apply color based on column type
+                    if (column === 'C1') {
+                        fieldNameCell.css('color', 'red');
+                    } else if (column === 'C2') {
+                        fieldNameCell.css('color', 'orange');
+                    }
+                    var row = $('<tr>').append(
+                        fieldNameCell,
+                        $('<td>').text(tag.discrepancy),
+                        $('<td>').text(tag.correctValue || '')
+                    );
+                    table.append(row);
+                });
+                $panelBody.append(table);
+            }
+        }
+
+        function requestLookup_TaxAndRegFee(requestId) {
+            var $panel1 = $("#calculateSectionPanel");
+            $panel1.hide();
+            $panel1.data("reqid", requestId);
+            $panel1.find(".panel-body").empty().html('');
+            var $panel2 = $("#regFeeSectionPanel");
+            $panel2.hide();
+            $panel2.data("reqid", requestId);
+            $panel2.find(".panel-body").empty().html('');
+            $.ajax({
+                url: '/Requests/TaxAndRegFee/' + requestId,
+                type: 'GET',
+                async: true,
+                dataType: 'json',
+                cache: false,
+            }).done(function(res) {
+                stateId = res.stateId;
+                jurisdictionId = res.jurisdictionId;
+                displayTax(res.calculatedTaxResult);
+                displayRegistration(res.regItems, res.calculatedFeeResult)
+                $panel1.show();
+                $panel2.show();
+                       totalTaxDetails = res.calculatedTaxResult.totalCollectionTaxDetails
+                                populateTaxData(res.calculatedTaxResult.totalCollectionTaxDetails,"RP")
+            }).fail(function(xhr) {
+                // processError(xhr);
+            });
+            return false;
+        }
+
+        function displayTax(data) {
+            var $tbody = $("#itemGridRP");
+            $tbody.empty(); // Clear existing rows
+            if (!data || typeof data !== "object") {
+                console.error("Invalid data format", data);
+                return;
+            }
+            // Normalize object keys to lowercase for case-insensitive access
+            const normalizedData = {};
+            Object.keys(data).forEach(key => {
+                normalizedData[key.toLowerCase()] = data[key];
+            });
+            const taxItems = normalizedData.calculatedtaxitems || [];
+            if (!Array.isArray(taxItems)) {
+                console.error("Invalid data format", data);
+                return;
+            }
+            // Loop through tax items and append them to the table
+            taxItems.forEach(item => {
+                const normalizedItem = {};
+                Object.keys(item).forEach(key => {
+                    normalizedItem[key.toLowerCase()] = item[key];
+                });
+                var row = `
+                <tr>
+                    <td>${normalizedItem.itemname || ''}</td>
+                    <td>
+                        <div class="d-flex items-center" style="display: flex;">
+                            <span class="tax-currency-symbol">$</span>
+                            <input type="number" class="form-control" placeholder="Enter value"
+                                   name="itemValueRP_${normalizedItem.itemid || ''}" data-item-name="${normalizedItem.itemname || ''}"
+                                   value="${normalizedItem.value || ''}" />
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex items-center" style="display: flex;">
+                            <span class="tax-currency-symbol">$</span>
+                            <input type="text" class="form-control taxable-amount"
+                                       name="taxableAmountRP_${normalizedItem.itemid || ''}" data-item-name="${normalizedItem.itemname || ''}"
+                                               value="${normalizedItem.taxableamount || ''}"
+                                   readonly />
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex items-center" style="display: flex;">
+                            <span class="tax-currency-symbol">$</span>
+                            <input type="text" class="form-control tax-due"
+                                       name="taxDueRP_${normalizedItem.itemid || ''}" data-item-name="${normalizedItem.itemname || ''}"
+                                               value="${normalizedItem.taxdue || ''}"
+                                   readonly />
+                        </div>
+                    </td>
+                </tr>
+            `;
+                $tbody.append(row);
+            });
+            // Populate totals
+            $("#calTotalTaxableAmountRP").val(
+                !normalizedData.totaltaxableamount || isNaN(normalizedData.totaltaxableamount) ?
+                '$0' :
+                '$' + parseFloat(normalizedData.totaltaxableamount).toString()
+            );
+            $("#calTotalTaxDueRP").val(
+                !normalizedData.totaltaxdue || isNaN(normalizedData.totaltaxdue) ?
+                '$0' :
+                '$' + parseFloat(normalizedData.totaltaxdue).toString()
+            );
+            $("#calTotalTaxPaidOtherStateRP").val(
+                !normalizedData.totaltaxpaidotherstate || isNaN(normalizedData.totaltaxpaidotherstate) ?
+                '$0' :
+                '$' + parseFloat(normalizedData.totaltaxpaidotherstate).toString()
+            );
+            $("#calTotalLeftOverTitlingStateRP").val(
+                !normalizedData.totalleftovertitlingstate || isNaN(normalizedData.totalleftovertitlingstate) ?
+                '$0' :
+                '$' + parseFloat(normalizedData.totalleftovertitlingstate).toString()
+            );
+        }
+
+        function displayRegistration(regItems, calculatedRegResult) {
+            var $regTbody = $("#regItemGrid");
+            var $feeGrid = $("#calculatedFeeGrid");
+            $regTbody.empty(); // Clear existing rows
+            $feeGrid.empty(); // Clear existing fee grid
+            if (typeof regItems !== "object" || Array.isArray(regItems)) {
+                console.error("Invalid RegItems format", regItems);
+                return;
+            }
+            // Loop through RegItems and append them to the table
+            Object.keys(regItems).forEach(key => {
+                var row = `
+                <tr>
+                    <td>${key.toUpperCase()}</td>
+                    <td>
+                            <input type="${['mpg', 'mgw', 'unladenweight'].includes(key.toLowerCase() ) ? 'number' : 'text'}" class="form-control"
+                               name="regItemValue_${key}"
+                                   value="${regItems[key]}" ${key.toLowerCase() === 'statecode' ? 'readonly' : ''} />
+                    </td>
+                </tr>
+            `;
+                $regTbody.append(row);
+            });
+            // Display Calculated Registration Result
+            if (Array.isArray(calculatedRegResult)) {
+                calculatedRegResult.forEach(item => {
+                    var gridRow = `
+                        <label>${item.tableName}</label>
+                                <input type="text" class="form-control"
+           name="feeValue_${item.tableName}"
+           value="${isNaN(item.shippingCost) ? item.shippingCost : '$' + parseFloat(item.shippingCost).toString()}"
+           readonly />
+
+                `;
+                    $feeGrid.append(gridRow);
+                });
+            } else {
+                console.error("Invalid CalculatedRegResult format", calculatedRegResult);
+            }
+        }
+
+        function calculateRegFee() {
+            var regItems = {};
+            $("#regItemGrid tr").each(function() {
+                var key = $(this).find("td:first").text().trim();
+                var value = $(this).find("input").val().trim();
+                if (!["unladenweight", "mgw", "mpg"].includes(key.toLowerCase() )) {
+                    value = value.toLowerCase();
+                }
+                regItems[key] = value;
+            });
+            // Assign StateCode from stateId
+            regItems["STATECODE"] = stateId;
+            $.ajax({
+                url: '/RegistrationCalculator/CalculateRegistrationFee',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(regItems),
+                headers: {
+                    'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const formattedData = response.data.map(item => ({
+                            tableName: item.tableName,
+                            shippingCost: item.shippingCost
+                        }));
+                        const totalShippingCost = formattedData.reduce((sum, item) =>
+                            sum + (isNaN(parseFloat(item.shippingCost)) ? 0 : parseFloat(item.shippingCost)), 0
+                        );
+                        formattedData.push({
+                            tableName: "Total",
+                            ShippingCost: totalShippingCost
+                        });
+                        displayRegistration(regItems, formattedData);
+                        jqToast.success({
+                            text: "Registration fee calculated successfully."
+                        })
+                    } else {
+                        console.error("Error in API response", response.message);
+                        jqToast.error({
+                            text: response.message
+                        })
+                    }
+                },
+                error: function(xhr, status, error) {
+                    jqToast.error({
+                        text: error.message
+                    });
+                }
+            });
+        }
+
+        function parseCurrency(value) {
+            return value.replace(/[^0-9.-]+/g, ""); // Removes "$" and parses float
+        }
+
+        function saveTaxData(reqid) {
+            const calculatedTaxItems = [];
+            // Loop through rows in #itemGridRP to collect data
+            $("#itemGridRP tr").each(function() {
+                const $row = $(this);
+                const itemId = $row.find("input[name^='itemValueRP_']").attr("name")?.split("_")[1] || "";
+                const itemName = $row.find("input[name^='itemValueRP_']").data("item-name") || "";
+                const value = parseFloat($row.find("input[name^='itemValueRP_']").val()) || 0;
+                const taxableAmount = parseFloat($row.find("input[name^='taxableAmountRP_']").val()) || 0;
+                const taxDue = parseFloat($row.find("input[name^='taxDueRP_']").val()) || 0;
+                if (itemId) {
+                    calculatedTaxItems.push({
+                        ItemId: parseInt(itemId),
+                        ItemName: itemName,
+                        Value: value,
+                        TaxDue: taxDue,
+                        TaxableAmount: taxableAmount
+                    });
+                }
+            });
+            // Collect total amounts from summary fields
+            const calculatedTaxResult = {
+                TotalTaxableAmount: parseCurrency($("#calTotalTaxableAmountRP").val()),
+                TotalTaxDue: parseCurrency($("#calTotalTaxDueRP").val()),
+                TotalTaxPaidOtherState: parseCurrency($("#calTotalTaxPaidOtherStateRP").val()),
+                TotalLeftOverTitlingState: parseCurrency($("#calTotalLeftOverTitlingStateRP").val()),
+                CalculatedTaxItems: calculatedTaxItems,
+                        TotalCollectionTaxDetails:totalTaxDetails
+            };
+            // Prepare data to send
+            const requestData = {
+                RequestId: reqid,
+                CalculatedTaxResult: calculatedTaxResult
+            };
+            // Send data via AJAX
+            $.ajax({
+                url: '/Tax/SaveTax',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(requestData),
+                headers: {
+                    'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    jqToast.success({
+                        text: "Tax details saved successfully!"
+                    });
+                },
+                error: function(xhr) {
+                    jqToast.error({
+                        text: "Failed to save tax details. Please try again."
+                    });
+                }
+            });
+        }
+
+        function saveRegistrationData(reqid) {
+            var regItems = {};
+            $("#regItemGrid tr").each(function() {
+                var key = $(this).find("td:first").text().trim();
+                var value = $(this).find("input").val().trim();
+                if (key) {
+                    if (["unladenweight", "mgw", "mpg"].includes(key.toLowerCase() )) {
+                        regItems[key] = parseInt(value) || 0;
+                    } else {
+                        regItems[key] = value;
+                    }
+                }
+            });
+            var calculatedFeeResult = [];
+            $("#calculatedFeeGrid input").each(function() {
+                var tableName = $(this).attr("name").replace("feeValue_", "");
+                var value = $(this).val().replace("$", "").trim();
+                calculatedFeeResult.push({
+                    TableName: tableName,
+                    ShippingCost: parseFloat(value) || 0
+                });
+            });
+            var saveData = {
+                RequestId: reqid,
+                RegItems: regItems,
+                CalculatedFeeResult: calculatedFeeResult
+            };
+            $.ajax({
+                url: "/RegistrationCalculator/SaveRegistration",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(saveData),
+                headers: {
+                    'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    jqToast.success({
+                        text: "Registration fee details saved successfully!"
+                    });
+                },
+                error: function(xhr) {
+                    jqToast.error({
+                        text: "Failed to save registration fee details. Please try again."
+                    });
+                }
+            });
+        }
+
+        function getPaymentLinks(requestId) {
+            var $panel = $("#paymentLinksList");
+            var $container = $("#paymentLinksContainer");
+
+            $panel.addClass("d-none"); // Hide panel initially
+            $container.empty(); // Clear previous data
+
+            $.ajax({
+                url: '/Stripe/GetPaymentLink/' + requestId,
+                type: 'GET',
+                dataType: 'json',
+                cache: false,
+                async: true,
+            }).done(function (res) {
+                if (res.data && res.data.length > 0) {
+                    $.each(res.data, function (index, item) {
+                        var paymentHtml = `
+                                    <div class="payment-item mb_10">
+                                        <p class="mb_5">
+                                            <strong>Payment Method:</strong> ${item.paymentMethod !== 'card' ? 'ACH' : item.paymentMethod}<br>
+                                            <strong>Amount:</strong> ${item.amount} ${item.currency} + ${item.serviceCharge} Service Fee
+                                        </p>
+                                        <p class="mb_5">${item.paymentLinkUrl}</p>
+                                        <div class="d-flex items-center gap-2">
+                                                <button class="btn btn-primary btn-sm" onclick="copyPaymentLink('${item.paymentLinkUrl}', this)">Copy</button>
+                                            <button class="btn btn-danger btn-sm" onclick="deletePaymentLink('${item.id}', this)">Remove</button>
+                                        </div>
+                                    </div>
+                            `;
+                        $container.append(paymentHtml);
+                    });
+
+                    $panel.removeClass("d-none"); // Show panel after data is loaded
+                } else {
+                    $container.html('<p class="text-muted text-center">No payment links available.</p>');
+                    $panel.removeClass("d-none");
+                }
+            }).fail(function (xhr) {
+                console.error("Error fetching payment links", xhr);
+            });
+        }
+
+        function deletePaymentLink(id, element) {
+
+            const formData = new FormData();
+            formData.append('id', id);
+
+            $('#confirmDeletePaymentLinkModal').modal('show');
+
+            $('#confirmDeletePaymentLinkButton').off('click').on('click', function () {
+
+                $.ajax({
+                    url: '/Stripe/DeleteLink',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                    cache: false,
+                    success: function (response) {
+                        if (response.success) {
+                            jqToast.success({ text: response.message });
+                            $(element).closest('.payment-item').fadeOut(300, function () {
+                                $(this).remove();
+                            });
+                        } else {
+                            jqToast.error({ text: 'Error occured while deleting the link.' });
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        jqToast.error({ text: 'An error occurred while clearing the data.' });
+                    }
+                });
+
+                $('#confirmDeletePaymentLinkModal').modal('hide');
+            });
+        }
+
+        function copyPaymentLink(url, element) {
+            const tempInput = document.createElement('input');
+            tempInput.value = url;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            try {
+                document.execCommand('copy');
+                jqToast.success({
+                    text: 'Link copied to clipboard!'
+                });
+            } catch (err) {
+                console.error("Fallback: Failed to copy text: ", err);
+                jqToast.error({
+                    text: 'Failed to copy the link. Please try again.'
+                });
+            }
+            document.body.removeChild(tempInput);
+        }
+
+</script>

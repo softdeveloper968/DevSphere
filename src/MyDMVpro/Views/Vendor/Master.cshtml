@@ -1,0 +1,98 @@
+﻿@model MyDMVpro.Common.ViewHelpers.ViewDefinitionCollection
+@{
+    ViewData["Title"] = "Master";
+    string GetUrl(string name)
+    {
+        return MyDMVpro.Controllers.RequestStatusController.GetEndpointUrl(this.Context, name);
+    }
+
+}
+@*<script src="~/js/vendor.js" asp-append-version="true"></script>*@
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+<div class="white_box p_15">
+@{ await Html.RenderPartialAsync("_Chat", new Chats()); }
+@{ await Html.RenderPartialAsync("_AttachmentList"); }
+@{ await Html.RenderPartialAsync("~/Views/Requests/_AttachmentsSelectionForPrinting.cshtml"); }
+@{ await Html.RenderPartialAsync("_MoveDialog"); }
+@{ await Html.RenderPartialAsync("_BulkDialog"); }
+@{ await Html.RenderPartialAsync("_EditDetails"); }
+@{ await Html.RenderPartialAsync("_ExportItems"); }
+@{ await Html.RenderPartialAsync("_assignToUser"); }
+@{await Html.RenderPartialAsync("_downloadInstructionPacket");}
+@{
+    VendorRequestViewModel masterList = new VendorRequestViewModel(VendorViewType.Master)
+    {
+        DataUrl = GetUrl("Master"),
+        ListId = "DT_AllRequests",
+        TableVarName = "MasterList",
+        AllowMove = true,
+        AllowMultilineVin = true,
+        AddLastModified = true,
+        AddLastModifiedBy = true,
+        AllowReassign = true,
+        IncludeCancelledStatus = true,
+        EnablePrintInstructionPacket = true
+    };
+#if USE_VIEWS_FROM_DATABASE
+masterList.AddLastModified = false;
+masterList.AddLastModifiedBy = false;
+masterList.Columns.AddRange(Model["master"].Columns);
+masterList.SortColumns.AddRange(Model["master"].SortColumns);
+#else
+    masterList.Columns.Add_Select();
+    masterList.Columns.Add_Chat();
+    masterList.Columns.Add_Attachments();
+    masterList.Columns.Add_Links();
+    masterList.Columns.Add_DupeCheck();
+    masterList.Columns.Add_EditStatus();
+    masterList.Columns.Add_Stage();
+    masterList.Columns.Add_Status();
+    masterList.Columns.Add_AppType(true);
+    masterList.Columns.Add_AppStateAllStateFilter();
+    masterList.Columns.Add_VIN();
+    masterList.Columns.Add_RNo();
+    masterList.Columns.Add_Notes();
+    masterList.Columns.Add_Code();
+    masterList.Columns.Add_FinishDate();
+    masterList.Columns.Add_Auction();
+    masterList.Columns.Add_Group();
+    masterList.Columns.Add_SubmittedBy();
+    masterList.Columns.Add_Courier();
+    masterList.Columns.Add_Tracking();
+    masterList.Columns.Add_Make();
+    masterList.Columns.Add_Year();
+    masterList.Columns.Add_ETA();
+    masterList.Columns.Add_ReceivedFromDMV();
+    masterList.Columns.Add_SentToDMV();
+    masterList.Columns.Add_CheckNumber();
+    masterList.Columns.Add_ReceivedFromLH();
+    masterList.Columns.Add_LHShippedToVendor();
+    masterList.Columns.Add_FromLHCourier();
+    masterList.Columns.Add_FromLHTracking();
+    masterList.Columns.Add_PrintDate();
+    masterList.Columns.Add_DateSigned();
+    masterList.Columns.Add_ClientRef();
+    masterList.Columns.Add_InvNumber();
+    masterList.Columns.Add_InvDate();
+    masterList.Columns.Add_InvPaid();
+    masterList.Columns.Add_SvcFee();
+    masterList.Columns.Add_DmvFee();
+    masterList.Columns.Add_OtherFee();
+    masterList.Columns.Add_OtherDesc();
+    masterList.Columns.Add_TotalDue();
+#endif
+    masterList.SortColumns.Add("reqType");
+    masterList.SortColumns.Add("reqState");
+    masterList.SortColumns.Add("reqVIN");
+
+    DataHelpers.AddColumnFilters("Vendor_Master", masterList);
+
+    await Html.RenderPartialAsync("_VendorRequestList", masterList);
+}
+</div>
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+<script>
+    $(document).ready(function () {
+        vendor_hide_global_search();
+    });
+</script>

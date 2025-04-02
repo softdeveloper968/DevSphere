@@ -1,0 +1,54 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+<style>
+    .bulkEditProfile {
+        font-size: large;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 5px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        margin: 5px;
+    }
+
+    .bulkEditProfile {
+        vertical-align: middle;
+        font-size: large;
+    }
+    .bulkEditProfile #profileId {
+        margin-right: 30px;
+    }
+    .bulkEditProfile label, .bulkEditProfile select {
+        margin-right: 30px;
+    }
+    .profileSelect {
+        width: 300px; 
+        margin-right: 10px;
+        margin-left: 10px;
+    }
+
+    #profileColorCode {
+        vertical-align: middle;
+        margin-right: 10px;
+        margin-left: 10px;
+    }
+
+    #profileCollapseCol {
+        vertical-align: middle;
+        margin-right: 10px;
+        margin-left: 10px;
+    }
+</style>
+<template id="bulkEditProfileTemplate">
+<div class="bulkEditProfile">
+    <select id="profileId" class="profileSelect">
+    </select>
+        <label for="profileColorCode"><input type="checkbox" id="profileColorCode" />Color Code</label>
+        <label for="profileCollapseCol"><input type="checkbox" id="profileCollapseCol" />Collapse Columns</label>
+</div>
+</template>

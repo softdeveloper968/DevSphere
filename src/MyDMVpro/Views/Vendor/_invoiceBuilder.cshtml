@@ -1,0 +1,393 @@
+﻿<style asp-add-nonce="true">
+    .invoice-body {
+        width: 100%;
+    }
+
+    .invoice-footer {
+    }
+
+    .invoice-details {
+        width: 100%;
+        height: auto;
+    }
+
+    td.numericCol {
+        text-align: right !important;
+        padding-right: 30px;
+    }
+
+    th.numericCol {
+        text-align: right !important;
+        padding-right: 30px;
+    }
+
+    .secondaryCol {
+        background-color: gainsboro !important;
+    }
+</style>
+<h2 class="sub_heading">Invoice Builder</h2>
+<div id="invoiceBuilder" class="white_box p_15 mb_20 invoice-builder" tabindex="-1">
+   
+    <div>
+    <form id="invoiceBuilderForm" method="post" asp-controller="Vendor" asp-action="CreateInvoice">
+        <input type="hidden" id="groupId" name="groupId" value="" />
+        <input type="hidden" id="vendorId" name="vendorId" value="" />
+        <input type="hidden" id="details" name="details" value="" />
+        <input type="hidden" id="singleInvoice" name="singleInvoice" value="" />
+            <div class="invoice-body row gap_15">
+            <div class="form-group col-md-3">
+                <label for="groupName" class="control-label">Group</label>
+                <input type="text" width="150" id="groupName" name="groupName" class="form-control" readonly />
+            </div>
+            <div class="form-group col-md-2">
+                <label for="billToList" class="control-label">Bill To</label>
+                <select id="billToList" name="billToList" class="form-control"></select>
+            </div>
+            <div class="form-group col-md-3">
+                <label class="control-label">Billing Name/Address</label>
+                <input type="text" width="150" id="custName" name="custName" class="accordion form-control" readonly />
+                <div class="collapse accordion" id="BillingAddressDetailPanel">
+                    <label for="custAddr1" class="control-label">Address</label>
+                    <input type="text" width="150" name="custAddr1" class="form-control" readonly />
+                    <input type="text" width="150" name="custAddr2" class="form-control" readonly />
+                    <label for="custCity" class="control-label">City</label>
+                    <input type="text" width="150" name="custCity" class="form-control" readonly />
+                    <label for="custState" class="control-label">State</label>
+                    <input type="text" width="150" name="custState" class="form-control" readonly />
+                    <label for="custZip" class="control-label">Zip Code</label>
+                    <input type="text" width="150" name="custZip" class="form-control" readonly />
+                    <label for="custAttn" class="control-label">Attention</label>
+                    <input type="text" width="150" name="custAttn" class="form-control" readonly />
+                </div>
+            </div>
+            <div class="form-group col-md-2">
+                <label for="invoiceAmount" class="control-label">Invoice Amount</label>
+                <input type="number" width="150" id="invoiceAmount" name="invoiceAmount" class="form-control" readonly />
+            </div>
+            <div class="form-group col-md-2">
+                <label id="selectedCount"></label>
+            </div>
+        </div>
+    </form>
+    </div>
+    <div id="invoiceBuilderDetails">
+        <table class="display stripe invoice-details" id="DT_invoiceDetailsTable">
+            <thead>
+                <tr>
+                    <th colspan="13"></th>
+                    <th colspan="4" class="secondaryCol" style="text-align:center">Secondary Invoice</th>
+                </tr>
+                <tr id="headerRow-invoiceDetailsTable">
+                    <th class="reqChkbx"></th>
+                    <th class="reqVIN">VIN</th>
+                    <th class="reqGLCode">GL Code</th>
+                    <th class="reqType">Svc Code</th>
+                    <th class="reqState">State</th>
+                    <th class="reqDateFromLH dfilter">Date Submitted</th>
+                    <th class="reqFinished dfilter">Date Shipped</th>
+                    <th class="reqClientRef">Client Ref#</th>
+                    <th class="reqDmvFee currencyFmt sum">DMV Fee</th>
+                    <th class="reqServiceFee currencyFmt sum">Service Fee</th>
+                    <th class="reqOtherFee currencyFmt sum">Other Fee</th>
+                    <th class="reqOtherDesc">Other Desc</th>
+                    <th class="reqTotalFee currencyFmt sum">Total Fee</th>
+                    <th class="reqSecondaryServiceFee currencyFmt sum secondaryCol">Service Fee</th>
+                    <th class="reqSecondaryOtherFee currencyFmt sum secondaryCol">Other Fee</th>
+                    <th class="reqSecondaryOtherDesc secondaryCol">Other Desc</th>
+                    <th class="reqSecondaryTotalFee currencyFmt sum secondaryCol">Total Fee</th>
+                    <th class="reqId">requestId</th>
+                </tr>
+                <tr id="filterRow-invoiceDetailsTable">
+                    <th class="clearFilter" data-toggle="tooltip" title="Clear filter">&nbsp;</th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+                @*
+                    <tr>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th class="currencyFmt sum"></th>
+                        <th class="currencyFmt sum"></th>
+                        <th class="currencyFmt sum"></th>
+                        <th></th>
+                        <th class="currencyFmt sum"></th>
+                    </tr>
+                *@
+            </tfoot>
+        </table>
+    </div>
+    <div class="invoice-footer">
+        <hr />
+        <div style="display:block">
+            <div>
+                <button type="button" class="btn btn-success noEditInvoicingAccess" onclick="vendorCreateBulkInvoice_Action();">Bulk Invoice</button>
+                <button type="button" class="btn btn-success noEditInvoicingAccess" onclick="vendorCreateSingleInvoice_Action();">Single Invoices</button>
+                <button type="button" class="btn btn-default noEditInvoicingAccess" onclick="ClearInvoiceDetail();">Clear</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script asp-add-nonce="true">
+    $(document).ready(function () {
+
+        var userWritePermission = false
+        var userReadPermission = false
+
+        $.fn.dataTable.render.shortDate = datatable_render_shortdate;
+
+        GetBillingAccessData();
+        var table = $('#DT_invoiceDetailsTable').DataTable(
+            {
+                keys: { keys: [ 32 ] },
+                "colReorder": false,
+                bSortCellsTop: true,
+                "scrollX": true,
+                scrollY: false,
+                "select": true,
+                "searching": false,
+                "pageLength": 10,
+                "language": {
+                    select: {
+                        rows: "<span class='info_xrowsselected'>%d rows selected</span>"
+                    }
+                },
+                "lengthMenu": [10,25,50,100],
+                @*fixedColumns: { leftColumns: 1 },*@
+                //order: [
+                //        [ 1, 'asc'],
+                //    ],
+                searchDelay: 500,
+                "createdRow": function (row, data, dataIndex) {
+                },
+                "columnDefs": [
+                    { "targets": "reqChkbx noEditInvoicingAccess", "orderable": false, "className": "select-checkbox", "min-width": "40px", "data": "", "sortable": false, },
+                    { "targets": "reqState", "data": "state" },
+                    { "targets": "reqType", "data": "appType", "width": "40px" },
+                    { "targets": "reqVIN", "type": "text-vin", "width": "150px", "data": "vin", "render": datatable_render_vin },
+                    { "targets": "reqGLCode", "data": "glCode", "sortable": false, "searchable": false, "orderable": true },
+                    { "targets": "reqCode", "data": "code" },
+                    { "targets": "reqDateToVendor", "data": "dateToVendor" },
+                    { "targets": "reqDateFromLH", "data": "dateReceived" },
+                    { "targets": "reqFinished", "data": "dateShipped" },
+                    { "targets": "reqDmvFee", "data": "dmvFee", "className": "numericCol", width: "100px" },
+                    { "targets": "reqServiceFee", "data": "svcFee", "className": "numericCol", width: "100px" },
+                    { "targets": "reqOtherFee", "data": "otherFee", "className": "numericCol", width: "100px" },
+                    { "targets": "reqOtherDesc", "data": "otherDesc" },
+                    { "targets": "reqTotalFee", "data": "totalFee", "className": "numericCol", width: "100px" },
+                    { "targets": "reqSecondaryServiceFee", "data": "svcFee2", "className": "numericCol secondaryCol", width: "100px" },
+                    { "targets": "reqSecondaryOtherFee", "data": "otherFee2", "className": "numericCol secondaryCol", width: "100px" },
+                    { "targets": "reqSecondaryOtherDesc", "data": "otherDesc2", "className": "secondaryCol" },
+                    { "targets": "reqSecondaryTotalFee", "data": "totalFee2", "className": "numericCol secondaryCol", width: "100px" },
+                    { "targets": ["dfilter", "drfilter"], "sortable": true, "width": "100px", "defaultContent": "", "render": datatable_render_date },
+                    { "targets": ["currency", "currencyFmt"], className: "numericCol", "render": $.fn.dataTable.render.number(',', '.', 2, '$ ') },
+                    {
+                        "targets": ["reqNotes"], "sortable": false, "className": "details-control",
+                        "orderable": false, "data": "notesAbbrev", "defaultContent": '', "searchable": false, "autowidth": true, "max-width": "200px", "width": "150px"
+                    },
+                    {
+                        "targets": "reqClientRef", "sortable": true, "searchable": true, "orderable": true,
+                        "data": "clientRef", "max-width": "120px"
+                    },
+                    { "targets": "reqId", "visible": false, "sortable": false, "data": "requestId", "searchable": false },
+                    {
+                        "targets": "_all", "searchable": true, "className": "dt-center", "autowidth": true, "defaultContent": "", "sortable": true,
+                        render: $.fn.dataTable.render.text()
+                    },
+                ],
+                "processing": true,
+                "serverSide": false,
+                //"filter": true,
+                "buttons": [
+                    {
+                        extend: 'selectAll',
+                        className: 'selectall noEditInvoicingAccess',
+                        action: function (e) {
+                            e.preventDefault();
+                            table.rows({ search: 'applied' }).deselect();
+                            table.rows({ search: 'applied' }).select();
+                        }
+                    },
+                    'selectNone',
+                   { text: "Remove", className: "selectOnOff noEditInvoicingAccess", action: function (e) { e.preventDefault(); deleteRowsAndUpdateInvoice(table); } },
+                ],
+                "initComplete": function (settings, json) {
+
+                    setTimeout(() => disableButtons(), 100);
+                   
+                    var api = this.api();
+                    api.columns(['.reqVIN']).every(function () {
+                        var column = this;
+                        var title = "VIN";
+                        var select = $('<input class="customFilter" type="text" placeholder="Search ' + title + '" />')
+                            .appendTo($("#filterRow-invoiceDetailsTable th").eq(column.index()).empty())
+                            .on('change', function () {
+                                var val = $(this).val();
+                                column
+                                    .search(val ? val : '', false, false)
+                                    .draw();
+                        });
+                    });
+                    api.columns(['.reqClientRef']).every(function () {
+                        var column = this;
+                        var title = "Ref#";
+                        var select = $('<input class="customFilter" type="text" placeholder="Search ' + title + '" class="clientRefSearch" />')
+                            .appendTo($("#filterRow-invoiceDetailsTable th").eq(column.index()).empty())
+                            .on('change', function () {
+                                var val = $(this).val();
+                                column
+                                    .search(val) // ? '/' + val + '\b' : '', true, false)
+                                    .draw();
+                            });
+                    });
+                fixupColumnWidths(this);
+                },
+                "footerCallback": function (row, data, start, end, display) {
+                    var api = this.api();
+                    var fmtCurrency = $.fn.dataTable.render.number(',', '.', 2, '$ ');
+
+                    api.columns('.sum', {
+                        page: 'current'
+                    }).every(function () {
+                        var sum = this
+                            .data()
+                            .reduce(function (a, b) {
+                                var x = roundMoney(parseFloat(a)) || 0;
+                                var y = roundMoney(parseFloat(b)) || 0;
+                                return x + y;
+                            }, 0);
+                        let text = fmtCurrency.display(sum);
+                        $(this.footer()).html(text);
+                    });
+                },
+            "dom": "<'row'<'col-sm-6'l><'col-sm-6'<'#buttonContainer.site-datatable-button-container'>>>" + "<'row'<'col-sm-12'tr>>" + "<'row'<'col-sm-5'i><'col-sm-7'p>><'alert row'>B",
+    });
+
+    function disableButtons() {
+        if (userReadPermission && !userWritePermission) {
+            $('.noEditInvoicingAccess').each(function () {
+                $(this).prop('disabled', true);
+            });
+
+            document.querySelectorAll('.noEditInvoicingAccess').forEach((button) => {
+                button.disabled = true;
+            });
+
+        }
+    }
+
+    $('#DT_invoiceDetailsTable').on('key-focus.dt', function (e, datatable, cell) {
+            //table.row(cell.index().row).select();
+        });
+
+        $('#DT_invoiceDetailsTable').on('key-blur.dt', function (e, datatable, cell) {
+            //table.row(cell.index().row).deselect();
+        });
+
+        $('#DT_invoiceDetailsTable').on('key.dt', function (e, datatable, key, cell, originalEvent) {
+            if (key === 32) {
+                // Toggle selection
+                var row = table.row(cell.index().row);
+                if ($(row.node()).hasClass('selected'))
+                    row.deselect();
+                else
+                    row.select();
+            }
+        });
+
+        vendorInvoiceBuilder_Table = table;
+
+        // Add event listener for opening and closing details
+        $('#invoiceDetailsTable tbody').on('click', 'td.details-control', function (e) {
+            e.stopPropagation();
+            var tr = $(this).closest('tr');
+            var row = table.row(tr);
+
+            if (row.child.isShown()) {
+                // This row is already open - close it
+                row.child.hide();
+                tr.removeClass('shown');
+            }
+            else {
+                // Open this row
+                vendorShowNotes(row.data(), tr, row);
+            }
+        });
+        $('#invoiceDetailsTable tbody').on('click', 'td.attDD', function (e) {
+            e.stopPropagation();
+            var tr = $(this).closest('tr');
+            var row = table.row(tr);
+            var rdata = row.data();
+            showAttachments(rdata.requestId, rdata.vin);
+        });
+
+        table.on('select deselect', function (e, dt, type, indexes) {
+            if (type === 'row') {
+                if (table.rows({ selected: true }).indexes().length === 0) {
+                    table.buttons('.selectOnOff').disable();
+                }
+                else {
+                    table.buttons('.selectOnOff').enable();
+                }
+            }
+        });
+        table.buttons('.selectOnOff').disable();
+
+        $("#invoiceBuilderForm").on('submit', (function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: '/Vendor/CreateInvoice',
+                type: 'post',
+                data: $(this).serialize(),
+                success: function (data) {
+                    if (data.success) {
+                        vendor_show_DataTable_alert(table, data.message, 2500, alert_level_info);
+                        ClearInvoiceDetail();
+                    } else {
+                        vendor_show_DataTable_alert(table, data.message, 5000);
+                    }
+                },
+                error: function (xhr) {
+                    processError(xhr);
+                }
+            });
+        }));
+
+        $("#billToList").on('change', (function (e) {
+            populateSelectedBillTo();
+        }));
+
+        $("#custName").on("click", function () {
+                this.classList.toggle("active");
+                var panel = this.nextElementSibling;
+                if (panel.style.display === "block") {
+                    panel.style.display = "none";
+                } else {
+                    panel.style.display = "block";
+                }
+            });
+    });
+</script>
+

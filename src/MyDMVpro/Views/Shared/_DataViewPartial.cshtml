@@ -1,0 +1,28 @@
+﻿@model MyDMVpro.Models.VendorViewModels.VendorViewModel
+<h2>DATA</h2>
+<div class="row gap_15">
+    <div class="col-md-4">
+        <div class="form-group">
+            <label class="control-label">VIN</label>
+            <input type="text" class="form-control" value="@Model.VIN" readonly />
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="form-group">
+            <label class="control-label">Year</label>
+            <input type="text" class="form-control" value="@Model.Year" readonly />
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="form-group">
+            <label class="control-label">Make</label>
+            <input type="text" class="form-control" value="@Model.Make" readonly />
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="form-group">
+            <label class="control-label">Model</label>
+            <input type="text" class="form-control" value="@Model.Model" readonly />
+        </div>
+    </div>
+</div>

@@ -1,0 +1,63 @@
+﻿@model MyDMVpro.Models.RequestEditWrapper
+
+@{
+    ViewData["Title"] = "Details";
+
+    //List<string> fieldNames = new List<string>(new string[]
+    //{
+    //    "DMV District Office Notified",
+    //    "DMV Notification Date",
+    //    "Other Notified Date",
+    //    "Other Notified Name",
+    //    "Police Agency Notified",
+    //    "Police Notification Date",
+    //});
+}
+
+<h2>Request Details</h2>
+
+<div>
+    <hr />
+    <dl class="dl-horizontal">
+        <dt>
+            @Html.DisplayNameFor(model => model.DmvDistrictOfficeNotified)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.DmvDistrictOfficeNotified)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.DmvNotificationDate)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.DmvNotificationDate)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.OtherNotifiedName)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.OtherNotifiedName)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.OtherNotifiedDate)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.OtherNotifiedDate)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.PoliceAgencyNotified)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.PoliceAgencyNotified)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.PoliceNotificationDate)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.PoliceNotificationDate)
+        </dd>
+    </dl>
+</div>
+<div>
+    <a asp-action="Edit" asp-route-id="@Model.RequestId">Edit</a> |
+    <a asp-action="Index">Back to List</a>
+</div>

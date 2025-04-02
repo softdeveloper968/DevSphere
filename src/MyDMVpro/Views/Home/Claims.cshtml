@@ -1,0 +1,31 @@
+﻿@using System.Security.Claims
+@{
+#if DEBUG
+    bool IsDebug() { return true; }
+#else
+    bool IsDebug() { return false; }
+#endif
+    ViewData["Title"] = "Claims";
+}
+@if (IsDebug())
+{
+    @*  THIS IS TEMPORARY AND ONLY FOR DIAGNOSING IDENTITY ISSUES *@
+ <div class="content-bodytext">
+    <h2>@ViewData["Title"].</h2>
+
+    <table class="table-hover table-condensed table-striped">
+        <tr>
+            <th>Claim Type</th>
+            <th>Claim Value</th>
+        </tr>
+
+        @foreach (Claim claim in User.Claims)
+        {
+            <tr>
+                <td>@claim.Type</td>
+                <td>@claim.Value</td>
+            </tr>
+        }
+    </table>
+ </div>
+}

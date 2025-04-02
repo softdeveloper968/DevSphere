@@ -1,0 +1,49 @@
+﻿@using System.Collections.Generic
+@using Microsoft.AspNetCore.Http
+@{
+    ViewData["Title"] = "Completed Inquiries, Docs, Redemptions";
+    string GetUrl(string name)
+    {
+        return MyDMVpro.Controllers.RequestStatusController.GetEndpointUrl(this.Context, name);
+    }
+}
+
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+
+@{ await Html.RenderPartialAsync("_Chat", new Chats()); }
+@{ await Html.RenderPartialAsync("_AttachmentList"); }
+
+@{
+    RequestViewModel list = new RequestViewModel(MyServicesViewType.IDRCompleted)
+    {
+        DataUrl = GetUrl("IDRCompleted"),
+        ListId = "DT_LCCompleted",
+        TableVarName = "LCCompleted",
+        EnableAdvancedSearch = true
+    };
+    list.Columns.Add_Select();
+    list.Columns.Add_Chat();
+    list.Columns.Add_Attachments();
+    list.Columns.Add("", "reqEditRequest");
+    list.Columns.Add_DupeCheck();
+
+    list.Columns.Add_AppType();
+    list.Columns.Add_AppState();
+    list.Columns.Add_VIN();
+    list.Columns.Add_ClientRef();
+    list.Columns.Add_DateToVendor();
+    list.Columns.Add_DateReceivedFromLH();
+    list.Columns.Add_SentToDMV();
+    list.Columns.Add_DateFromDMV();
+    list.Columns.Add_FinishDate();
+    list.Columns.Add_LienExpiration();
+    list.Columns.Add_Notes();
+    list.Columns.Add_SubmittedBy();
+    list.Columns.Add_Vendor();
+
+    list.SortColumns.Add("reqType");
+    list.SortColumns.Add("reqState");
+    list.SortColumns.Add("reqVIN");
+
+    await Html.RenderPartialAsync("_MyServicesRequests", list);
+}

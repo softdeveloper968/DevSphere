@@ -1,0 +1,350 @@
+﻿<h2>COMMUNICATE</h2>
+
+<style> 
+
+    .user-selection-box {
+        position: absolute;
+        border: 1px solid #ccc;
+        max-height: 150px;
+        overflow-y: auto;
+        background-color: #fff;
+        width: 100%;
+        z-index: 10;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .user-list .user-item {
+        cursor: pointer;
+        padding: 8px 12px;
+        border-bottom: 1px solid #eee;
+        font-size: 13px;
+    }
+
+    .user-list .user-item:hover {
+        background-color: #f0f0f0;
+    }
+
+    #clientInternal-SendMessageForm {
+        position: relative;
+    }
+
+    .user-selection-box .user-list {
+        list-style: none;
+        padding: 0;
+    }
+
+    .user-list .user-item b {
+        display: block;
+        font-weight: 600;
+    }
+
+    .highlight-button{
+        background-color: orange;
+    }
+</style>
+
+<div class="form-group">
+    <div id="chatsEditPanel" class="chatsEditPanel" tabindex="-1" style="display:none;">
+        <div class="inner_white_box p_15">
+            <label class="control-label">MIA Chats</label>
+            <div class="panel-body chat-body" style="display:none; max-height: 300px;"></div>
+            <div class="panel-footer chat_footer" style="display:none;">
+                <form asp-controller="Chats" asp-action="Create" method="post" id="chat-SendMessageForm" class="w-100">
+                    <input type="hidden" name="RequestId" id="chat-RequestId" />
+                    <textarea class="form-control" name="Message" id="chat-newMsg" rows="3" width="100%" placeholder="Type message" style="resize:none;"></textarea>
+                    <div class="mt_5 text-right">
+                        <input type="submit" value="Send Chat" class="btn btn-primary" />
+                        <button type="button" id="chatMarkAsRead" class="btn btn-secondary">Mark As Read</button>
+                        @* <button type="button" id="chatRefreshBtn" class="btn custom_btn">Refresh</button> *@
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="form-group">
+    <div class="inner_white_box p_15">
+        <label class="control-label">Notes</label>
+        <div id="notesEditPanel" class="notesEditPanel mb-0 h-100" tabindex="-1" style="display:none;">
+        <div class="panel-body p-0">
+        </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="form-group">
+    <div id="clientInternalNotesPanel" class="clientInternalNotesPanel inner_white_box p_15" tabindex="-1">
+        <label class="control-label">Client Internal Notes</label>
+        <div class="panel-body p-0"></div>
+        <div class="panel-footer chat_footer">
+            <form id="clientInternal-SendMessageForm" class="w-100">
+                <input type="hidden" name="RequestId" id="chat-RequestId" />
+                <input type="hidden" name="SelectedUserId" id="chat-SelectedUserId" />
+                <textarea class="form-control" name="ClientRemarks" id="chat-newInternalMsg" rows="3" placeholder="Type message" style="resize:none;"></textarea>
+                <div id="userSelection" class="user-selection-box" style="display:none;"></div>
+                <div class="mt_5 text-right">
+                    <input type="submit" value="Add Note" class="btn btn-primary" />
+                    <button type="button" id="clientInternalNotesMarkAsRead" class="btn btn-secondary highlight-button"
+                            title="You can mark as read this message if you read this"
+                            style="display: none;">
+                        Mark As Read
+                    </button>
+
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    var getAllClientsUrl = '@Url.Action("GetAllClients", "Chats")';
+    var taggedUsers = [];
+
+    $(document).ready(function () {
+
+        $('#chat-newInternalMsg').on('keyup', function (e) {
+            const message = $(this).val();
+            const mentionSymbol = '@@';
+            const lastWord = message.split(' ').pop();
+
+            if (lastWord.startsWith(mentionSymbol)) {
+                const searchQuery = lastWord.replace(mentionSymbol, '').toLowerCase();
+
+                $.ajax({
+                    url: getAllClientsUrl,
+                    type: 'GET',
+                    headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    success: function (response) {
+                        const filteredUsers = response.filter(user =>
+                            user.displayName.toLowerCase().includes(searchQuery) ||
+                            user.userName.toLowerCase().includes(searchQuery)
+                        );
+
+                        const userListHtml = generateUserListHtml(filteredUsers);
+                        $('#userSelection').html(userListHtml).show();
+                    }
+                });
+
+            } else {
+                $('#userSelection').hide();
+            }
+
+            updateTaggedUsers(message);
+        });
+
+        function generateUserListHtml(users) {
+            let html = '<ul class="user-list">';
+            users.forEach(user => {
+                html += `<li class="user-item"
+                                        data-userid="${user.userId}"
+                                        data-username="${user.userName}"
+                                        data-displayname="${user.displayName}">
+                                            <b>${user.displayName}</b> (${user.userName})
+                                        </li>`;
+            });
+            html += '</ul>';
+            return html;
+        }
+
+        $(document).on('click', '.user-item', function () {
+            const selectedUserId = $(this).data('userid');
+            const displayName = $(this).data('displayname');
+
+            const isUserTagged = taggedUsers.some(user => user.TaggedUserId === selectedUserId);
+            if (!isUserTagged) {
+                taggedUsers.push({ TaggedUserId: selectedUserId, Name: displayName });
+
+                const currentText = $('#chat-newInternalMsg').val();
+                let updatedText = currentText.replace(/@@[^\s]*$/, ''); 
+
+                $('#chat-newInternalMsg').val(updatedText + '@@' + displayName + ' ');
+
+                updateHiddenField();
+            }
+            $('#userSelection').hide();
+        });
+
+        $(document).click(function (e) {
+            if (!$(e.target).closest('#chat-newInternalMsg, #userSelection').length) {
+                $('#userSelection').hide();
+            }
+        });
+
+        function updateTaggedUsers(message) {
+            let mentionedNames = message.match(/@@\w+/g) || [];
+
+            mentionedNames = mentionedNames.map(name => name.replace('@@', '').trim());
+
+            taggedUsers = taggedUsers.filter(user => mentionedNames.includes(user.Name));
+
+            updateHiddenField();
+        }
+
+        function updateHiddenField() {
+            $('#chat-SelectedUserId').val(JSON.stringify(taggedUsers));
+            console.log("Updated Tagged Users:", taggedUsers);
+        }
+
+        $("#clientInternalNotesMarkAsRead").off('click').on('click', function (e) {
+            e.preventDefault();
+            const requestId = $('#chat-RequestId').val();
+            $.ajax({
+                url: '@Url.Action("UpdateNotifyClientData", "Requests")',
+                type: 'POST',
+                data: { requestId: requestId },
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                success: function (response) {
+                    if (response.success) {
+                        window.location.reload();
+                    }
+                    else{
+
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error loading partial view:", error);
+                },
+            });
+
+        });
+
+    });
+
+  
+</script>
+
+
+@* <div class="form-group">
+    <div id="clientInternalNotesPanel" class="clientInternalNotesPanel inner_white_box p_15" tabindex="-1">
+        <label class="control-label">Client Internal Notes</label>
+        <div class="panel-body p-0">
+        </div>
+        <div class="panel-footer chat_footer">
+            <form id="clientInternal-SendMessageForm" class="w-100">
+                <input type="hidden" name="RequestId" id="chat-RequestId" />
+                <input type="hidden" name="SelectedUserId" id="chat-SelectedUserId" /> 
+                <textarea class="form-control" name="ClientRemarks" id="chat-newInternalMsg" rows="3" width="100%" placeholder="Type message" style="resize:none;"></textarea>
+                <div id="userSelection" class="user-selection-box" style="display:none;"></div>
+                <div class="mt_5 text-right">
+                    <input type="submit" value="Send Chat" class="btn btn-primary" />
+                    <button type="button" id="clientInternalNotesMarkAsRead" class="btn btn-secondary">Mark As Read</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    var getAllClientsUrl = '@Url.Action("GetAllClients", "Chats")';
+    var taggedUsers = [];
+   
+    $(document).ready(function () {
+       
+        $('#chat-newInternalMsg').on('keyup', function (e) {
+            const message = $(this).val();
+            const mentionSymbol = '@@';
+            const lastWord = message.split(' ').pop(); 
+
+            if (lastWord.startsWith(mentionSymbol)) 
+            {
+                const searchQuery = lastWord.replace(mentionSymbol, '').toLowerCase(); 
+
+                $.ajax({
+                    url: getAllClientsUrl,
+                    type: 'GET',
+                    headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    success: function (response) {
+                        const filteredUsers = response.filter(user =>
+                            user.displayName.toLowerCase().includes(searchQuery) ||
+                            user.userName.toLowerCase().includes(searchQuery)
+                        );
+
+                        const userListHtml = generateUserListHtml(filteredUsers);
+                        $('#userSelection').html(userListHtml).show();
+                    }
+                });
+
+            } else {
+                $('#userSelection').hide();
+            }
+
+        });
+
+        function updateTaggedUsers(message) {
+            const mentionedUsers = message.match(/@@\S+/g) || [];
+            const mentionedNames = mentionedUsers.map(name => name.replace('@@', '').trim());
+
+            taggedUsers = taggedUsers.filter(user => mentionedNames.includes(user.DisplayName));
+
+            $('#chat-SelectedUserId').val(JSON.stringify(taggedUsers));
+        }
+
+        function generateUserListHtml(users) {
+            let html = '<ul class="user-list">';
+            users.forEach(user => {
+                html += `<li class="user-item"
+                                    data-userid="${user.userId}"
+                                    data-username="${user.userName}"
+                                    data-displayname="${user.displayName}">
+                                        <b>${user.displayName}</b> (${user.userName})
+                                    </li>`;
+            });
+            html += '</ul>';
+            return html;
+        }
+
+        $(document).on('click', '.user-item', function () {
+            const selectedUserId = $(this).data('userid');
+            const displayName = $(this).data('displayname');
+
+            const isUserTagged = taggedUsers.some(user => user.TaggedUserId === selectedUserId);
+
+            if (!isUserTagged) {
+                taggedUsers.push({ TaggedUserId: selectedUserId });
+
+                const currentText = $('#chat-newInternalMsg').val();
+                $('#chat-newInternalMsg').val(currentText + displayName + ' ');
+
+                let updatedText = currentText.replace(/@@\S*$/, '');
+                $('#chat-newInternalMsg').val(updatedText + '@@' + displayName + ' ');
+
+                $('#chat-SelectedUserId').val(JSON.stringify(taggedUsers));
+
+            }
+            $('#userSelection').hide();
+
+        });
+       
+        $(document).click(function (e) {
+            if (!$(e.target).closest('#chat-newInternalMsg, #userSelection').length) {
+                $('#userSelection').hide();
+            }
+        });
+
+        $("#clientInternalNotesMarkAsRead").off('click').on('click', function (e) {
+            e.preventDefault();
+            const requestId = $('#chat-RequestId').val();
+            $.ajax({
+                url: '@Url.Action("UpdateNotifyClientData", "Requests")',
+                type: 'POST',
+                data: { requestId: requestId },
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                success: function (response) {
+
+                        window.location.reload();
+                },
+                error: function (){
+                },
+            });
+
+        });
+    });
+</script> *@

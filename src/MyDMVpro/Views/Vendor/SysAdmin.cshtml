@@ -1,0 +1,73 @@
+﻿@{
+    ViewData["Title"] = "SysAdmin";
+}
+
+<h2>SysAdmin</h2>
+<table>
+    <tr>
+        <td>AutoIMSTriggerUrl</td>
+        <td>
+            @{
+                MyDMVpro.Common.DataHelpers.AutoIMSTriggerUrl?.ToString();
+            }
+        </td>
+    </tr>
+    <tr>
+        <td>EnableSsl</td>
+        <td>
+            @{
+                MyDMVpro.Common.SmtpHelper.EnableSsl.ToString();
+            }
+        </td>
+    </tr>
+    <tr>
+        <td>SmtpServer</td>
+        <td>
+            @{
+                MyDMVpro.Common.SmtpHelper.SmtpServer?.ToString();
+            }
+        </td>
+    </tr>
+    <tr>
+        <td>SmtpUser</td>
+        <td>
+            @{
+                MyDMVpro.Common.SmtpHelper.SmtpUser?.ToString();
+            }
+        </td>
+    </tr>
+    <tr>
+        <td>SmtpPort</td>
+        <td>
+            @{
+                MyDMVpro.Common.SmtpHelper.SmtpPort.ToString();
+            }
+        </td>
+    </tr>
+    <tr>
+        <td>SmtpFrom</td>
+        <td>
+            @{
+                MyDMVpro.Common.SmtpHelper.SmtpFrom?.ToString();
+            }
+        </td>
+    </tr>
+    <tr>
+        <td>BccAddress</td>
+        <td>
+            @{
+                MyDMVpro.Common.SmtpHelper.BccAddress?.ToString();
+            }
+        </td>
+    </tr>
+    <tr>
+        <td>FromDisplayName</td>
+        <td>
+            @{
+                MyDMVpro.Common.SmtpHelper.FromDisplayName?.ToString();
+            }
+        </td>
+
+    </tr>
+
+</table>

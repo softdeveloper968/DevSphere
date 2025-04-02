@@ -1,0 +1,324 @@
+﻿@model MyDMVpro.Models.RequestEditWrapper
+
+<div>
+    <h4>RequestEditWrapper</h4>
+    <hr />
+    <dl class="dl-horizontal">
+        <dt>
+            @Html.DisplayNameFor(model => model.RequestId)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.RequestId)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.DmvDistrictOfficeNotified)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.DmvDistrictOfficeNotified)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.DmvNotificationDate)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.DmvNotificationDate)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.OtherNotifiedName)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.OtherNotifiedName)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.OtherNotifiedDate)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.OtherNotifiedDate)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.PoliceAgencyNotified)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.PoliceAgencyNotified)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.PoliceNotificationDate)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.PoliceNotificationDate)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.State)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.State)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.Auctioneer)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Auctioneer)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.BorrowerAddress)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.BorrowerAddress)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.BorrowerCity)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.BorrowerCity)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.BorrowerLastReg)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.BorrowerLastReg)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.BorrowerName)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.BorrowerName)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.BorrowerState)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.BorrowerState)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.BorrowerZip)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.BorrowerZip)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.ClientIdNumber)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.ClientIdNumber)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.ClientRef)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.ClientRef)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.LegalSaleDate)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.LegalSaleDate)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.LienHolderAddress)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.LienHolderAddress)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.LienHolderCity)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.LienHolderCity)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.LienHolderCounty)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.LienHolderCounty)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.LienHolderLA)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.LienHolderLA)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.LienHolderLC)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.LienHolderLC)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.LienHolderLegalCounty)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.LienHolderLegalCounty)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.LienHolderLegalZip)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.LienHolderLegalZip)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.LienHolderLS)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.LienHolderLS)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.LienHolderName)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.LienHolderName)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.LienHolderPhone)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.LienHolderPhone)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.LienHolderState)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.LienHolderState)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.LienHolderZip)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.LienHolderZip)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.PaTitleNumber)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.PaTitleNumber)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.PersonSubmittingForm)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.PersonSubmittingForm)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.RepoDate)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.RepoDate)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.SecurityContractDate)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.SecurityContractDate)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.ServiceCode)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.ServiceCode)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.ServiceCompanyName)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.ServiceCompanyName)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.StateTitled)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.StateTitled)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.VATitleNumber)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.VATitleNumber)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.VehicleBodyType)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.VehicleBodyType)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.VehicleColor)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.VehicleColor)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.VehicleCylinders)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.VehicleCylinders)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.VehicleMake)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.VehicleMake)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.VehicleMaxGrossWeight)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.VehicleMaxGrossWeight)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.VehicleMileageBrand)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.VehicleMileageBrand)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.VehicleOdometer)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.VehicleOdometer)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.VehicleOdometerNumbers)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.VehicleOdometerNumbers)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.VehicleOwnerNotificationDate)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.VehicleOwnerNotificationDate)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.VehiclePower)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.VehiclePower)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.VehicleUnladenWeight)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.VehicleUnladenWeight)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.VehicleVin)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.VehicleVin)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.VehicleYear)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.VehicleYear)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.VehicleDoors)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.VehicleDoors)
+        </dd>
+    </dl>
+</div>
+<div>
+    @Html.ActionLink("Edit", "Edit", new { /* id = Model.PrimaryKey */ }) |
+    <a asp-action="Index">Back to List</a>
+</div>

@@ -1,0 +1,78 @@
+﻿div.profileEditForm {
+    display: flex;
+    flex-flow: row wrap;
+}
+
+    div.profileEditForm fieldset {
+        flex: 1;
+        border: 1px solid #aaa;
+        margin: 0.5em;
+    }
+
+        div.profileEditForm fieldset legend {
+            padding: 5px 20px;
+            border: 1px solid #aaa;
+            font-weight: bold;
+        }
+
+        div.profileEditForm fieldset.profileName {
+            flex: 2 100%;
+        }
+
+            div.profileEditForm fieldset.profileName legend {
+                background: #bfffbf;
+            }
+
+        div.profileEditForm fieldset.profileType {
+            flex: 2 100%;
+        }
+
+            div.profileEditForm fieldset.profileType legend {
+                background: #ffffbf;
+            }
+
+        div.profileEditForm fieldset.profileValues {
+            flex: 2 100%;
+        }
+
+            div.profileEditForm fieldset.profileValues legend {
+                background: #ffbfbf;
+            }
+
+    div.profileEditForm div.DTE_Field {
+        padding: 5px;
+    }
+
+.bulkProfileEditorCheckbox {
+    position: absolute;
+    left: -5px;
+    margin-right: -5px;
+    top: 5px;
+    margin-bottom: -5px;
+}
+
+html.dark div.profileEditForm fieldset.profileName legend {
+    background: #005c00;
+}
+
+html.dark div.profileEditForm fieldset.profileType legend {
+    background: #6a6a00;
+}
+
+html.dark div.profileEditForm fieldset.profileValues legend {
+    background: #ffff77;
+}
+
+.dteFieldCheckbox {
+    float: right;
+    position: relative;
+    top: -45px;
+    left: -5px;
+    width: 4%;
+    vertical-align: middle;
+}
+
+.inputHolder {
+    display: inline-block;
+    width: 95%;
+}

@@ -1,0 +1,26 @@
+﻿@model FollowUp_NotesHistoryModel
+
+<div height="auto">
+    <table style="table-layout:fixed">
+        <tr>
+            <td class="form-group" style="vertical-align: top; padding: 4px">
+        <label for="FollowUp_NewNote">Note</label>
+                <textarea id="FollowUp_NewNote" name="FollowUp_NewNote" cols="80" placeholder="" class="form-control" style="resize:none;"></textarea>
+                <div height="auto">
+        @{
+            await Html.RenderPartialAsync("_NoteHistory", Model.CurrentNotes);
+        }
+        </div>
+    </td>
+            <td class="form-group" style="vertical-align: top; padding: 4px">
+        <label for="FollowUp_NewRemark">Internal remark</label>
+        <textarea id="FollowUp_NewRemark" name="FollowUp_NewRemark" cols="80" placeholder="" class="form-control" style="resize:none;"></textarea>
+                <div height="auto">
+            @{
+                await Html.RenderPartialAsync("_RemarkHistory", Model.CurrentNotes);
+            }
+        </div>
+    </td>
+        </tr>
+    </table>
+</div>

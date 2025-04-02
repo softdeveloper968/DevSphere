@@ -1,0 +1,161 @@
+﻿@model MyDMVpro.Models.VendorViewModels.VendorFileUploadModel
+<div class="white_box p_15 mb_15">
+    <div class="box-body p-0">
+        <form id="uploadFileForm">
+            <input type="hidden" name="DateToVendor" val="" />
+            <div class="row gap_15">
+                <div class="col-md-3 form-group">
+                    <label for="GroupId" class="control-label">Group</label>
+                    <select id="vendorUploadGroupId" name="GroupId" asp-items="@(Model.GetGroups())" class="form-control" data-required="required">
+                        <option value=""></option>
+                    </select>
+                    <span class="field-validation-valid text-danger" data-valmsg-for="GroupId" data-valmsg-replace="true"></span>
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="UserId" class="control-label text-left">On behalf of</label>
+                    <select id="vendorUploadUserId" name="UserId" class="form-control" data-required="required">
+                        <option value=""></option>
+                    </select>
+                    <span class="field-validation-valid text-danger" data-valmsg-for="UserId" data-valmsg-replace="true"></span>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="DateToVendor" class="control-label text-left">Date Sent to Vendor</label>
+                        <input type="date" name="DateToVendor" class="form-control" data-required="required" />
+                        <span class="field-validation-valid text-danger" data-valmsg-for="DateToVendor" data-valmsg-replace="true"></span>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="control-label text-left hide_mobile">&nbsp;</label>
+                        <input type="file" id="uploadFile" name="file" accept=".xls,.xlsx" class="form-control buttonVisible" />
+                    </div>
+                </div>
+            </div>
+            <div class="form-group m-0">
+                <button type="submit" class="btn btn-primary custom_btn">Upload File</button>
+            </div>
+        </form>
+    </div>
+</div>
+<h3 class="sub_heading">Recent File Uploads</h3>
+<div class="white_box p_15">
+    <div class="box-body p-0">
+        <table class="table table-bordered table-hover" id="DT_FileUploadsTableId" cellspacing="0" align="center">
+            <thead>
+                <tr>
+                    <th class="fuID">Id</th>
+                    <th class="fuFileNm">Filename</th>
+                    <th class="fuNoReq"># Requests</th>
+                    <th class="fuDateUploaded">Date Uploaded</th>
+                    <th class="fuUploadBy">Uploaded on Behalf-of</th>
+                    <th class="fuLienholder">Group</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+<script asp-add-nonce="true">
+    $(document).ready(function () {
+        $("#uploadFileForm").submit(function (evt) {
+            evt.preventDefault();
+            var $thisForm = $(this);
+            var files = $("#uploadFile")[0].files;
+            if (files.length != 1) {
+                alert('File not selected');
+                return;
+            }
+            var data = new FormData();
+            data.append('file', files[0]);
+            data.append('GroupId', $thisForm.find("select[name='GroupId']").val());
+            data.append('UserId', $thisForm.find("select[name='UserId']").val());
+            data.append('DateToVendor', $thisForm.find("input[name='DateToVendor']").val());
+            data.append('requireUserId', false);
+            $.ajax({
+                url: '/Vendor/UploadFile_v2',
+                enctype: 'multipart/form-data',
+                processData: false,
+                contentType: false,
+                type: 'post',
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                data: data
+            }).done(function (data) {
+                if (data.status == 'error') {
+                    alert(data.message);
+                }
+                else {
+                    $("#uploadFile").val('');
+                    $("#uploadFile").change();
+
+                    $("#DT_PendingRequests").DataTable().ajax.reload();
+                    $("#DT_FileUploadsTableId").DataTable().ajax.reload();
+                }
+            });
+            return false;
+        });
+
+        $('#vendorUploadGroupId').on('change', function () {
+            populateUsersList();
+        });
+
+        $('#DT_FileUploadsTableId').DataTable(
+            {
+                "pageLength": 3,
+                bSortCellsTop: true,
+                "scrollX": true,
+                "order": [[3, 'desc']],
+                "columnDefs": [
+                    { "targets": 0, "visible": false, "searchable": false },
+                ],
+                "processing": true,
+                "serverSide": true,
+                "filter": false,
+                "ajax":
+                {
+                    "url": "/Vendor/GetFileUploads",
+                    "type": "POST",
+                    "dataType": "JSON",
+                    headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() }
+                },
+                "columns": [
+                    { "data": "fileUploadId", "name": "FileUploadId", "autoWidth": true },
+                    { "data": "filename", "name": "FileName", "autoWidth": true },
+                    { "data": "requestCount", "name": "RequestCount", "autoWidth": true, "className": "dt-center" },
+                    { "data": "dateUploaded", "name": "DateUploaded", "autoWidth": true, "render": datatable_render_date },
+                    { "data": "uploadedBy", "name": "On-Behalf Of", "autoWidth": true },
+                    { "data": "lienholder", "name": "Lienholder", "autoWidth": true }
+                ],
+                //"dom": "<'row'<'col-sm-6'l><'col-sm-6'<'#buttonContainer.site-datatable-button-container'>f>>" + "<'row'<'col-sm-12'tr>>" + "<'row'<'col-sm-5'i><'col-sm-7'p>>",
+            });
+
+    });
+    function populateUsersList() {
+        var groupId = $('#vendorUploadGroupId').val();
+        var formData = new FormData();
+        formData.append("groupId", groupId);
+        $.ajax({
+            url: "@Url.Action("GetUsers")",
+            type: 'POST',
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            async: true,
+            cache: false,
+            data: formData,
+            dataType: 'json',
+            processData: false,
+            contentType: false,
+        }).done(function (data) {
+            // populate users list
+            $('#vendorUploadUserId').empty();
+            $.each(data, function (i, obj) {
+                var elt = document.createElement('span');
+                elt.textContent = obj.displayName;
+                var div_data = "<option value='" + obj.userId + "'>" + elt.innerHTML + "</option>";
+                $(div_data).appendTo('#vendorUploadUserId');
+            });
+        }).fail(function (jqXHR, textStatus) {
+            // do nothing
+            succeeded = false;
+        });
+    }
+</script>

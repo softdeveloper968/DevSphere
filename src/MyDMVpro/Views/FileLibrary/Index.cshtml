@@ -1,0 +1,425 @@
+﻿@model FileLibraryViewModel
+
+@using  MyDMVpro.Models.AppFormModels
+@*
+    @model ValueTuple<List<FileLibrary>, FileLibraryViewModel>
+*@
+
+@using MyDMVpro.Models.FormsViewModels
+@{
+    const string PageName = FileLibraryPageNames.Index;
+    ViewData["Title"] = "File Library";
+    string GetUrl(string name)
+    {
+        return MyDMVpro.Controllers.RequestStatusController.GetEndpointUrl(this.Context, name);
+    }
+}
+
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+<script src="~/js/filelibrary.js" asp-append-version="true"></script>
+<script src="~/js/AsyncSequenceIterator.js" asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/filelibrary.css" />
+<link rel="stylesheet" href="~/css/filebox.css" />
+@{ await Html.RenderPartialAsync("_Chat", new Chats()); }
+@{ await Html.RenderPartialAsync("_AttachmentList"); }
+
+<div id="modal-DeleteAttachment" class="modal fade hidden-print" tabindex="-1" role="dialog">
+    <div class="container vertical-alignment-helper">
+        <div class="row vertical-align-center">
+            <div class="col-sm-4"></div>
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="myModal-label">Delete Attachment</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label id="selectedCount"></label>
+                        </div>
+                    </div>
+                    <div class="alert alert-danger" style="display:none" role="alert"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-success" id="okButton">OK</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<template id="fl_ConfirmTypeTemplate">
+    <div class="fl_ConfirmTypePanel">
+        <div class="fl_ConfirmType">
+            <span>Confirm Type:</span>
+            <select id="fl_requestedTypes">
+            </select>
+        </div>
+        <div id="fl_ConfirmTypeAlert" class="fl_ConfirmTypeAlert"></div>
+    </div>
+</template>
+<div id="modal-AttachToRequest" class="modal fade hidden-print" tabindex="-1" role="dialog">
+    <div class="container vertical-alignment-helper">
+        <div class="row vertical-align-center">
+            <div class="col-sm-4"></div>
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="myModal-label">Link Attachment to Request</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label id="selectedCount"></label>
+                        </div>
+                        <div style="width:100%">
+                            <span class="error-text" id="AttachToRequest_Error"></span>
+                        </div>
+                    </div>
+                    <div class="alert alert-danger" style="display:none" role="alert"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-success" id="okButton">OK</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row gap_15">
+    <div class="fileLibraryListPanel col-lg-6">
+        <div class="white_box p_15 mb_15">
+            <div class="row gap_15">
+                <div class="col-md-6 col-lg-6">
+                    <div style="font" class="fl_typeSelectionTab">
+                        <select name="fl_uploadFileType" id="fl_uploadFileTypeDefault" class="fl_typeSelection form-control">
+                            <option value="">Select Attachment Type</option>
+                            @foreach (var type in Model.AttachmentTypes)
+                            {
+                                <option value="@type.AttachmentTypeId">@type.Name</option>
+                            }
+                        </select>
+                        <p class="mt_10">Select the default type for your file upload. You can change the type for each upload when attaching to an application.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-6">
+                    <form asp-controller="FileLibrary" asp-action="Upload" class="filebox" method="post" id="fileLibraryUpload" enctype="multipart/form-data">
+                        <div class="filebox__input">
+                            <svg class="filebox__icon" xmlns="http://www.w3.org/2000/svg" width="50" height="43" viewBox="0 0 50 43"><path d="M48.4 26.5c-.9 0-1.7.7-1.7 1.7v11.6h-43.3v-11.6c0-.9-.7-1.7-1.7-1.7s-1.7.7-1.7 1.7v13.2c0 .9.7 1.7 1.7 1.7h46.7c.9 0 1.7-.7 1.7-1.7v-13.2c0-1-.7-1.7-1.7-1.7zm-24.5 6.1c.3.3.8.5 1.2.5.4 0 .9-.2 1.2-.5l10-11.6c.7-.7.7-1.7 0-2.4s-1.7-.7-2.4 0l-7.1 8.3v-25.3c0-.9-.7-1.7-1.7-1.7s-1.7.7-1.7 1.7v25.3l-7.1-8.3c-.7-.7-1.7-.7-2.4 0s-.7 1.7 0 2.4l10 11.6z" /></svg>
+                            <input class="filebox__file" type="file" name="files[]" id="libfile" data-multiple-caption="{count} files selected" multiple="multiple" />
+                            <div width="100%" class="text-center">
+                                <label for="libfile" id="libFileLabel"><span class="btn btn-primary">Choose file(s)</span><span class="filebox__dragndrop"> or drag files here</span>.</label>
+                            </div>
+                            <div class="text-center" style="display:none" id="uploadList">
+                                <button class="btn btn-primary" style="width:115px" type="submit">Upload</button>
+                                <button class="btn btn-default" type="reset">Reset</button>
+                                <div style="margin-top:15px;">
+                                    <ul id="libFilesList"></ul>
+                                </div>
+                            </div>
+                            <div class="filebox_error" style="display:none;width:100%" id="uploadStatusMessage">
+                            </div>
+                        </div>
+                        <div class="filebox__uploading">
+                            <i class="fa fa-spinner fa-spin" style="font-size:36px"></i>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="white_box p_15 mb_15">
+            @{
+                {
+                    RequestViewModel list = new RequestViewModel(MyServicesViewType.FileLibrary, PageName)
+                {
+                    DataUrl = "/FileLibrary/GetFileLibrary",
+                    ListId = "DT_FileLibrary",
+                    TableVarName = "table_FileLibrary",
+                    EnableKeyNavigation = false,
+                    AllowMultilineVin = false,
+                    AllowMultiSelect = true
+                };
+                    list.Columns.Add_Select();
+                    list.Columns.Add("", "reqBlank");
+                    list.Columns.Add("", "reqBlank");
+
+                    list.Columns.Add("Date Added", "colDateAdded dfilter", filterField: "dateAdded");
+                    list.Columns.Add("Filename", "colFileName asearch");
+                    list.Columns.Add("Type", "colAttachmentType");
+                    list.Columns.Add("AttachmentTypeId", "colAttachmentTypeId");
+                    list.Columns.Add("AttachmentId", "colAttachmentId");
+
+                    list.SortColumns.Add("colDateAdded");
+                    list.SortColumns.Add("colAttachmentId");
+
+                    await Html.RenderPartialAsync("_fileLibrary", list);
+                }
+            }
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="applyToListPanel white_box p_15 mb_15" id="matchListPanel">
+            @{
+                {
+                    RequestViewModel list = new RequestViewModel(MyServicesViewType.FileLibraryMatches)
+                {
+                    DataUrl = GetUrl("FileLibraryMatch"),
+                    ListId = "DT_FileLibraryMatch",
+                    TableVarName = "table_FileLibraryMatch",
+                    AllowMultilineVin = false,
+                    EnableAdvancedSearch = false,
+                    AllowMultiSelect = false,
+                    EnableFilter = true,
+                    PageLength = 5,
+                    LengthMenu = "[5,10,15]"
+                };
+
+                    list.Columns.Add_Select();
+                    list.Columns.Add_Chat();
+                    list.Columns.Add_Attachments();
+                    list.Columns.Add_RNo();
+                    list.Columns.Add("Type", "reqType");
+                    list.Columns.Add("State", "reqState");
+                    list.Columns.Add_VIN();
+                    list.Columns.Add_ClientRef();
+
+                    list.SortColumns.Add("reqNo", true);
+                    list.SortColumns.Add("reqVIN");
+
+                    await Html.RenderPartialAsync("~/Views/FileLibrary/_requestMatch.cshtml", list);
+                }
+            }
+        </div>
+        <div id="opStatusPanel" class="opStatusPanel" style="display:none;"></div>
+    </div>
+    <div class="col-lg-6">
+        <div id="docViewPanel" class="docViewPanel white_box p_15"></div>
+    </div>
+</div>
+<div style="display:none">
+    <form id="hiddenform" method="post" action=""></form>
+</div>
+<script>
+    'use strict';
+
+    // ************************ Drag and drop ***************** //
+    var isAdvancedUpload = function () {
+        var div = document.createElement('div');
+        return (('draggable' in div) || ('ondragstart' in div && 'ondrop' in div)) && 'FormData' in window && 'FileReader' in window;
+    }();
+    var droppedFiles = false;
+
+    $(document).ready(function () {
+
+        initializeDragDrop();
+        initializeUpload();
+
+        $("#DT_FileLibraryMatch").DataTable().on('select deselect', function (e, dt, type, indexes) {
+            if (type === 'row') {
+                if (e.type === 'select') {
+                    fileLibrary_match_selected();
+                }
+                else {
+                    fileLibrary_match_deselected();
+                }
+            }
+        });
+
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault()
+        e.stopPropagation()
+    }
+
+    function sizeInKb(size) {
+        if (size) {
+            var kb = Math.round(size / 1024);
+            if (kb == 0) kb = 1;
+            return kb.toLocaleString() + " KB";
+        }
+        else {
+            return "0 KB";
+        }
+    }
+    function initFileList() {
+
+        clearStatusMessage();
+        $("#libFileLabel").hide();
+        $("#uploadList").show();
+
+        const fileUploadElem = document.querySelector("#libfile")
+        const selectedFilesList = document.querySelector("#libFilesList")
+
+        var files = droppedFiles || fileUploadElem.files;
+
+        if (files && files.length > 0) {
+            // careful treating NodeLists like arrays; in old browsers theyre missing many of the properties
+            Array.from(files).forEach((file) => {
+                let listItem = document.createElement('li');
+                listItem.appendChild(document.createTextNode(file.name + ' - ' + sizeInKb(file.size)));
+                selectedFilesList.appendChild(listItem)
+
+                let progressElem = document.createElement('progress')
+                progressElem.setAttribute('value', 0)
+                listItem.appendChild(progressElem)
+
+                // save reference to create DOM element in file
+                file.domElement = listItem
+            });
+        }
+        else {
+            $("#libFileLabel").show();
+        }
+    }
+    function clearStatusMessage() {
+        var $status = $("#uploadStatusMessage");
+        $status.text('');
+        $status.hide();
+    }
+    function setStatusMessage(msg) {
+        var $status = $("#uploadStatusMessage");
+        $status.text(msg);
+        $status.show();
+    }
+    function resetForm() {
+        clearStatusMessage();
+        droppedFiles = false;
+        $("#fileUploadElem").text('');
+        $("#uploadList").hide();
+        $("#libFilesList").text('');
+        $("#libFileLabel").show();;
+    }
+    function initializeUpload() {
+
+        // retrieve important DOM elements
+        const fileUploadElem = document.querySelector("#libfile")
+        const formElem = document.querySelector("#fileLibraryUpload")
+        const selectedFilesList = document.querySelector("#libFilesList")
+
+        // file input change event - create list item for each selected file
+        fileUploadElem.addEventListener("change", (event) => {
+            initFileList();
+        })
+
+        // form submit event
+        formElem.addEventListener("reset", (event) => {
+            event.preventDefault();
+            resetForm();
+        });
+
+        formElem.addEventListener("submit", (event) => {
+            // prevent normal form submit behavior
+            event.preventDefault()
+
+            const files = droppedFiles || fileUploadElem.files;
+
+            // prepare promise execution context
+            const promiseContext = {
+                formElem: formElem,
+                fileUploadElem: fileUploadElem,
+                selectedFilesList: selectedFilesList,
+                files: files
+            }
+
+            // use AsyncSequenceIterator class to upload files sequentially
+            const iterationCount = files.length - 1
+            const fileCount = files.length;
+            clearStatusMessage();
+            new AsyncSequenceIterator(iterationCount, createUploadPromise, promiseContext).whenComplete.then(
+                // success
+                () => {
+                    resetForm();
+                    setStatusMessage(`${fileCount} file(s) uploaded successfully.`);
+                    $("#DT_FileLibrary").DataTable().ajax.reload();
+                },
+                // failure
+                () => {
+                    setStatusMessage('Error during file uploads.');
+                }
+                // disable any further uploads until page refresh
+            ).finally(() => {
+                //
+            })
+
+        })
+    }
+
+    function createUploadPromise(iteration) {
+
+        return new Promise((resolve, reject) => {
+            // create FormData object - add file and form fields manually
+            const formData = new FormData()
+            const file = this.files[iteration];
+            const fileTypeId = $("#fl_uploadFileTypeDefault").val();
+            formData.append('file', file);
+
+            const dt = new Date(file.lastModified);
+            formData.append('filedate', dt.toUTCString());
+            formData.append('allowDuplicates', 'true');
+            formData.append('attachmentTypeId', fileTypeId);
+
+            // dispatch xhr to start file upload - listen to file upload complete event and notify user
+            let xhr = new XMLHttpRequest()
+            var url = '/FileLibrary/Upload';
+            xhr.open('POST', url, true);
+
+            // set onload (i.e. upload completion) callback
+            xhr.onload = () => {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    this.selectedFilesList.querySelectorAll('li')[iteration].style.color = 'darkgreen'
+                    resolve()
+                } else {
+                    this.selectedFilesList.querySelectorAll('li')[iteration].style.color = 'red'
+                    reject()
+                }
+            }
+
+            // watch for file upload progress
+            xhr.upload.addEventListener('progress', (e) => {
+                this.selectedFilesList.querySelectorAll('progress')[iteration].setAttribute("value", (e.loaded / e.total * 100))
+            })
+
+            // initiate AJAX request
+            xhr.open("POST", this.formElem.action)
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            xhr.setRequestHeader('RequestVerificationToken', $('[name="__RequestVerificationToken"]').val())
+
+            xhr.send(formData)
+
+        })
+    }
+    function initializeDragDrop() {
+        // drag&drop files if the feature is available
+        if (isAdvancedUpload) {
+            var form = document.querySelector('#fileLibraryUpload');
+            form.classList.add('has-advanced-upload'); // letting the CSS part to know drag&drop is supported by the browser
+
+            ['drag', 'dragstart', 'dragend', 'dragover', 'dragenter', 'dragleave', 'drop'].forEach(function (event) {
+                form.addEventListener(event, function (e) {
+                    // preventing the unwanted behaviours
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+            });
+            ['dragover', 'dragenter'].forEach(function (event) {
+                form.addEventListener(event, function () {
+                    form.classList.add('is-dragover');
+                });
+            });
+            ['dragleave', 'dragend', 'drop'].forEach(function (event) {
+                form.addEventListener(event, function () {
+                    form.classList.remove('is-dragover');
+                });
+            });
+            form.addEventListener('drop', function (e) {
+                droppedFiles = e.dataTransfer.files; // the files that were dropped
+                //showFiles(droppedFiles);
+                initFileList();
+            });
+        }
+    }
+</script>
+
+

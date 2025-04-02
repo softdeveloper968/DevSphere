@@ -1,0 +1,136 @@
+﻿@* @model List<MyDMVpro.Models.AttachmentReviewModels.MissingAttachmentsViewModel>
+@{
+
+    List<string> columnsToShow = new List<string>
+    {
+        "Select All",
+        "",
+        "Attachment Type",
+        "Hardcopy or Digital",
+        "Attachment Description",
+        "Process Stage",
+        "VIN",
+        "State",
+        "Type",
+        "Date To Vendor",
+        "Request Number"
+    };
+
+}
+
+@functions {
+
+    public string FormatDateForDisplay(DateTime? date)
+    {
+        if (date.HasValue)
+        {
+            return date.Value.ToString("MM-dd-yyyy");
+        }
+        else
+        {
+            return "";
+        }
+    }
+
+    public string GetProcessstageName(int id)
+    {
+        switch (id)
+        {
+            case 2:
+                return "Incoming";
+                break;
+            case 12:
+                return "Not Ready To Process";
+                break;
+            case 99:
+                return "Hold";
+                break;
+            default:
+                return "";
+        }
+    }
+
+    public string GetColumnValue(MyDMVpro.Models.AttachmentReviewModels.MissingAttachmentsViewModel record, string columnName)
+    {
+        switch (columnName.ToLower())
+        {
+            case "attachment type":
+                return record.AttachmentType;
+            case "hardcopy or digital":
+                return record.HardcopyOrDigital ? "Hardcopy" : "Digital";
+            case "attachment description":
+                return record.AttachmentDescription;
+            case "process stage":
+                return GetProcessstageName(record.ProcessStageId);
+            case "vin":
+                return record.VIN;
+            case "state":
+                return record.State;
+            case "type":
+                return record.Type;
+            case "date to vendor":
+                return FormatDateForDisplay(record.DateToVendor);
+            case "request number":
+                return record.RequestNumber.ToString();
+            default:
+                return "";
+        }
+
+    }
+}
+
+<!-- Actual Table for Missing Attachments -->
+<table class="table table-striped" id="missingAttachmentsTable" style="display: none;">
+    <thead>
+        <tr>
+            @foreach (var columnName in columnsToShow)
+            {
+            <th>@columnName</th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var attachment in Model)
+        {
+            <tr class="attachment-id" data-attachmentid="@attachment.AttachmentTypeId">
+                <td><input type="checkbox" class="selectRow" value="@attachment.RequestId" data-id="@attachment.RequestId" /></td> 
+                <td class="  dt-center dt-center noexport">
+                    <a class="editForm edit-icon" tabindex="-1" title="Edit" data-vin="@attachment.VIN" data-requestnumber="@attachment.RequestNumber"  target="_blank"></a>
+                </td>
+                <td>@attachment.AttachmentType</td>
+                <td>@(attachment.HardcopyOrDigital ? "Hardcopy" : "Digital")</td>
+                <td>@attachment.AttachmentDescription</td>
+                <td>@GetProcessstageName(@attachment.ProcessStageId)</td>
+                <td>@attachment.VIN</td>
+                <td>@attachment.State</td>
+                <td>@attachment.Type</td>
+                <td>@attachment.DateToVendor?.ToString("MM-dd-yyyy")</td>
+                <td>@attachment.RequestNumber</td>
+
+            </tr>
+        }
+    </tbody>
+</table>
+<div id="export-button-audit"></div>
+ *@
+
+<table class="table table-striped" id="missingAttachmentsTable">
+    <thead>
+        <tr>
+            <th>Select All</th>
+            <th>Actions</th>
+            <th>Attachment Type</th>
+            <th>Hardcopy or Digital</th>
+            <th>Attachment Description</th>
+            <th>Process Stage</th>
+            <th>VIN</th>
+            <th>State</th>
+            <th>Type</th>
+            <th>Date To Vendor</th>
+            <th>Request Number</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+<div id="export-button-audit"></div>

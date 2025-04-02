@@ -1,0 +1,121 @@
+
+
+@import 'mixins.scss';
+
+// Inline editing
+@import 'inline.scss';
+
+// Bubble form editing
+@import 'bubble.scss';
+
+@import 'upload.scss';
+
+@import 'processing.scss';
+@import 'datatable.scss';
+
+div.modal-content {
+	padding: 20px;
+	background: white;
+	border-radius: 5px;
+
+	div.modal-header {
+		padding-bottom: 20px;
+	}
+
+	div.modal-footer {
+		padding-top: 6px;
+	}
+
+	div.dt-buttons {
+		margin-top: 1em;
+	}
+
+	div.dataTables_info {
+		font-weight: 1;
+		font-size: 0.8em;
+		padding-left: 2px;
+
+		span.select-item {
+			padding-left: 0.5em;
+		}
+	}
+}
+
+div.DTE_Form_Buttons {
+	display: flex;
+	justify-content: flex-end;
+	padding-top: 10px;
+
+	button {
+		margin-left: 0.5em;
+	}
+}
+
+div.card {
+	border-color: #888;
+}
+
+table.dataTable {
+	div.field {
+		margin-bottom: 0px;
+
+		input.input {
+			padding: 0px;
+		}
+		input.is-small {
+			font-size: 1em;
+			height: 2em;
+		}
+	}
+}
+
+div.DTE_Field_Type_checkbox,
+div.DTE_Field_Type_radio {
+	div {
+		label {
+			margin-left: 0.75em;
+		}
+	}
+}
+
+div.DTE_Field_Type_datatable {
+	div.dt-search {
+		margin-top: 0.5em;
+	}
+
+	div.dt-info,
+	div.dataTables_info {
+		margin-top: 0.5em;
+		text-align: left;
+		font-size: 0.8em;
+		line-height: 1.3em;
+		padding-right: 1em;
+		font-weight: normal;
+
+		span.select-info {
+			display: block;
+		}
+	}
+
+	div.dt-buttons {
+		padding-bottom: 0.5em;
+		width: 100%;
+
+		&:empty {
+			display: none;
+		}
+	}
+
+	div.column:empty {
+		display: none;
+	}
+}
+
+
+div.DTE_Bubble {
+	div.DTE_Bubble_Liner {
+		div.DTE_Header {
+			font-size: 18px;
+		}
+	}
+}

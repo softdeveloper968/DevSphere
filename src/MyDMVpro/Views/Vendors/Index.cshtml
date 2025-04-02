@@ -1,0 +1,54 @@
+﻿@model IEnumerable<MyDMVpro.Models.Vendors>
+
+@{
+    ViewData["Title"] = "Vendor Management";
+}
+
+<h2>Vendors</h2>
+
+<p>
+    <a asp-action="Create">Add New Vendor</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Active)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.VendorCode)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.VendorName)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Active)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.VendorCode)
+            </td>
+            <td>
+                <span>@Html.DisplayFor(modelItem => item.VendorName)</span>
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.VendorId">Edit</a>
+            </td>
+            <td>
+                <a asp-action="Details" asp-route-id="@item.VendorId">Users</a>
+            </td>
+            <td>
+                <a asp-action="Delete" asp-route-id="@item.VendorId">Delete</a>
+            </td>
+            <td>
+                <a asp-action="Disable" asp-route-id="@item.VendorId">Disable</a>
+            </td>
+        </tr>
+        }
+    </tbody>
+</table>

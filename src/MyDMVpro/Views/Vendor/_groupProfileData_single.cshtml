@@ -1,0 +1,380 @@
+﻿@model GroupProfileViewModel
+@using MyDMVpro.Models.FormsViewModels;
+@using System.Text.Json;
+
+@{
+    void AddOption(List<Dictionary<string, object>> options, string label, string value)
+    {
+        var entry = new Dictionary<string, object>();
+        entry.Add("label", label);
+        entry.Add("value", value);
+        options.Add(entry);
+    }
+    string BuildDOM()
+    {
+        string dom = "";
+        dom = "<'row'<'col-sm-6'l><'col-sm-6'<'#buttonContainer.site-datatable-button-container'C>>>"
+                + "<'row'<'col-sm-12'tr>>"
+                + "<'row'<'col-sm-5'i><'col-sm-7'p>><'alert row'><'col-sm-12'B>";
+        return dom;
+    }
+
+    var listColumns = Model.ListColumns;
+    string IconColumnWidth()
+    {
+        return "30px";
+    }
+    listColumns.Insert(0, new Dictionary<string, object>()
+    {
+        { "title", "" },
+        { "defaultContent", "" },
+        { "orderable", false },
+        { "className", "select-checkbox nohide iconColumn dt-center noexport"},
+        { "autowidth", false },
+        { "width", $"{IconColumnWidth()}"},
+        { "min-width", $"{IconColumnWidth()}"},
+        { "max-width", $"{IconColumnWidth()}"},
+        { "searchable", false },
+        { "sortable", false }
+    });
+
+<div class="box box-default">
+    <div class="box-header with-border">
+        <h2 class="box-title">@Model.Title</h2>
+        <div class="">
+            <small>@Model.Description</small>
+        </div>
+        <div class="box-tools pull-right">
+            <button class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
+        </div>
+    </div>
+    <div class="box-body" height="80%">
+        <table style="" class="table table-striped table-bordered dt-nowrap" id="@Model.ListId" cellspacing="0" align="left">
+            <thead>
+                <tr id="headerRow-@Model.ListId">
+@if (listColumns.Count > 0)
+{
+    foreach (var c in listColumns)
+    {
+                    <th>@c["title"]</th>
+    }
+}
+                </tr>
+@if (Model.EnableFilter && false)
+{
+                <tr id="filterRow-@Model.ListId">
+    @for (var i = 0; i < listColumns.Count; i++)
+    {
+                    <th>&nbsp;</th>
+    }
+                </tr>
+}
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<link rel="stylesheet" href="~/css/groupprofileedit.css" />
+<div style="display:none">
+    <div  id="profileEditForm-@Model.ListId" class="profileEditForm" style="">
+        <fieldset class="profileValues">
+            @foreach (var item in Model.EditorFields)
+{
+                <editor-field name="@(item["name"] as string)"></editor-field>
+}
+        </fieldset>
+    </div>
+</div>
+
+<script type="text/javascript" asp-add-nonce="true">
+    $(document).ready(function () {
+        function addHiddenEditorColumns(editor) {
+            editor.add({
+                name: "groupId",
+                def: function () {
+                    return $("#vendorGroupId").val();
+                }
+            });
+            editor.add({
+                name: "groupProfileCategoryID",
+                def: function () {
+                        return '@Model.GroupProfileCategoryId';
+                }
+            });
+            editor.add({
+                label: "Profile Name",
+                name: "groupProfileName",
+            });
+            // editor.dependent('groupId', function(val, data, callback) {
+            //     // refresh selects
+            //     //console.log("editor groupId dependent function called");
+            // });
+            editor.on('open', function(e, f) {
+                // refresh selects
+                //console.log("editor groupId dependent function called");
+                let groupId = $("#vendorGroupId").val();
+                updateAttachmentSelects(editor,groupId);
+            });
+        }
+
+        var listId = '@Model.ListId';
+        var tableId = `#${listId}`;
+        var filterRowId = `#filterRow-${listId}`;
+        var profileEditFormId = `profileEditorForm-${listId}`;
+        var profileEditor;
+
+        function getVisibleFields(editor) {
+            var fields = editor.fields();
+            var visibleFields = [];
+            for (var i = 0; i < fields.length; i++) {
+                var field = fields[i];
+                if (field.visible()) {
+                    visibleFields.push(field.name());
+                }
+            }
+            return visibleFields;
+        }
+
+        $.fn.dataTable.render.shortDate = datatable_render_shortdate;
+
+        profileEditor = new DataTable.Editor({
+            ajax: {
+                create: {
+                    url: '@Url.Action("CreateProfile", "GroupProfiles")',
+                    beforeSend: addVerificationToken,
+                    type: 'POST'
+                },
+                edit: {
+                    url: '@Url.Action("UpdateProfile", "GroupProfiles")',
+                    beforeSend: addVerificationToken,
+                    type: 'POST'
+                },
+                remove: {
+                    url: '@Url.Action("DeleteProfile", "GroupProfiles")',
+                    beforeSend: addVerificationToken,
+                    type: 'POST'
+                }
+            },
+            table: tableId,
+            idSrc: "groupProfileID",
+            display: 'lightbox',
+            template: '#profileEditForm-@Model.ListId',
+            fields: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.EditorFields)),
+            formOptions: {
+                main: {
+                    onBackground:  'none',
+                    onBlur: 'none'
+                }
+            }
+        });
+        addHiddenEditorColumns(profileEditor);
+
+        var columnIndex = 0;
+
+        DataTable.ext.search.push(function (settings, data, dataIndex) {
+            if (data[columnIndex] == "true") {
+                return false;
+            }
+            return true;
+        });
+        function getDataUrl() {
+            let groupId = $("#vendorGroupId").val();
+            let dataurl = '@Url.Action("GetProfiles", "GroupProfiles")';
+            if (groupId) {
+                dataurl = dataurl + '/' + groupId + '/@Model.ProfileCategoryName' + '?includeInactive=true';
+            }
+            else {
+                dataurl = dataurl + '/@Model.ProfileCategoryName' + '?includeInactive=true';
+            }
+            return dataurl;
+        }
+        var table = $(tableId).DataTable({
+                ajax: {
+                    url: `${getDataUrl()}`,
+                    type: "POST",
+                    dataType: "JSON",
+                    headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() }
+                },
+                scrollX: true,
+                dom: "@Html.Raw(BuildDOM())",
+                lengthMenu: [
+                    [10, 25, 50, -1],
+                    [10, 25, 50, 'All'],
+                ],
+                createdRow: function( row, data, dataIndex ) {
+                },
+                fixedColumns: {
+                    leftColumns: 1
+                },
+                rowId: 'groupProfileID',
+                autoWidth: true,
+                sort: true,
+                buttons: [
+                    {
+                        extend: 'selectAll',
+                        className: 'selectall',
+                        action: function (e) {
+                            e.preventDefault();
+                            table.rows({ search: 'applied' }).deselect();
+                            table.rows({ search: 'applied' }).select();
+                        }
+                    },
+                    'selectNone',
+                    { 
+                        extend: "edit", 
+                        editor: profileEditor,
+                        className: 'selectOnOff selectOne'
+                    },
+                    { 
+                        text: 'New', 
+                        extend: 'create', 
+                        editor: profileEditor
+                    },
+                    {
+                        text: 'Delete',
+                        extend: 'remove',
+                        editor: profileEditor,
+                        className: 'selectOnOff selectOne'
+                    },
+                    {
+                        text: 'Reset Filter',
+                        className: 'clearFilter',
+                        action: function (e) {
+                            vendorProfileResetFilter(table);
+                        }
+                    },
+                    { text: "", titleAttr: "Refresh", className: "listRefresh", action: function (e) { e.preventDefault(); refreshList(); } }
+                ],
+                initComplete: function () {
+                    vendorProfileResetFilter(this.api());
+                },
+                @*columns: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ListColumns)),*@
+                columns: [
+@foreach (var col in listColumns.AsEnumerable())
+{
+                <text>
+                {
+                </text>
+            foreach (var attr in col.Keys)
+            {
+                var attrVal = col[attr];
+                if (attrVal is OptionsFunction)
+                {
+                    var optAttr = attrVal as OptionsFunction;
+                    <text>
+                    "@attr": @Html.Raw(optAttr.Text),
+                    </text>
+                }
+                else if (attr == "render")
+                {
+                                <text>
+                                render: @Html.Raw(col[attr]),
+                                </text>
+                }
+                else if (attrVal is bool bVal)
+                {
+                                <text>
+                                "@attr": @(bVal ? "true" : "false"),
+                                </text>
+                }
+                else if (attrVal is string sVal)
+                {
+                                <text>
+                                "@attr": "@sVal",
+                                </text>
+                }
+                else
+                {
+                    <text>
+                    "@attr": "@attrVal",
+                    </text>
+                }
+            }
+                        <text>
+                        },
+                        </text>
+        }],
+                select: {
+                    style: 'os',
+                    items: "row",
+                    selector: 'td:not(.norowselect)',
+                    info: true
+                }
+            });
+            @if (!string.IsNullOrEmpty(Model.TableVarName))
+{
+                <text>
+                @Model.TableVarName = table;
+                </text>
+}
+        function refreshList() {
+            let groupId = $("#vendorGroupId").val();
+            table.ajax.url(getDataUrl()).load();
+        }
+        $("#vendorGroupId").change(function () {
+            refreshList();
+        });
+
+        table.on('draw', function () {
+            if (table.rows({ selected: true }).indexes().length === 0) {
+                table.buttons('.selectOnOff').disable();
+            }
+            else if (table.rows({ selected: true }).indexes().length === 1) {
+                table.buttons('.selectOnOff').enable();
+            }
+            else {
+                table.buttons('.selectOnOff').enable();
+                table.buttons('.selectOnOff.selectOne').disable();
+            }
+        });
+        table.on('select deselect', function (e, dt, type, indexes) {
+            if (type === 'row') {
+                if (table.rows({ selected: true }).indexes().length === 0) {
+                    table.buttons('.selectOnOff').disable();
+                }
+                else if (table.rows({ selected: true }).indexes().length === 1) {
+                    table.buttons('.selectOnOff').enable();
+                }
+                else {
+                    table.buttons('.selectOnOff').enable();
+                    table.buttons('.selectOnOff.selectOne').disable();
+                }
+            }
+        });
+        table.buttons('.selectOnOff').disable();
+        $(filterRowId).find('.clearFilter').on('click', function (e) {
+            e.preventDefault();
+            $(filterRowId).find('.customFilter').val('');
+            table.search('').columns().search('').draw();
+        });
+        $(filterRowId).find('.advancedFilter').on('click', function (e) {
+            e.preventDefault();
+            $(filterRowId).find('.filterToggle').toggleClass('advancedOn');
+            table.columns.adjust().draw();
+            table.draw();
+        });
+        $(tableId).find('.DTE_Field_InputControl > input').on('change', function (e) {
+            let v = $(this).val();
+            let checkbox = $(this).closest('input[type=checkbox]');
+            if (v == '') {
+                checkbox.show();
+            }
+            else {
+                checkbox.hide();
+            }
+        });
+        $(tableId).find('.dteFieldCheckbox').on('click', function (e) {
+            e.preventDefault();
+            var checkbox = $(this).find('input[type=checkbox]');
+            if (checkbox.prop('checked')) {
+                checkbox.prop('checked', false);
+            }
+            else {
+                checkbox.prop('checked', true);
+            }
+        });
+    });
+</script>
+
+}

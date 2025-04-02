@@ -1,0 +1,815 @@
+﻿@using MyDMVpro.Models.VendorViewModels
+@model MyDMVpro.Models.VendorViewModels.VendorViewModel
+@{
+    string PageName = "MyServices";
+    ViewData["Title"] = "Request Lookup";
+}
+@{
+    ViewBag.HasFoundInProgress = false; // Initialize the flag
+}
+
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+
+<style>
+    .status-buttons {
+        display: flex;
+        gap: 2px;
+        margin-bottom: 10px;
+        justify-content: center;
+    }
+
+        .status-buttons button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+    .completed {
+        background-color: green;
+    }
+
+    .in-progress {
+        background-color: blue;
+    }
+
+    .issue {
+        background-color: red;
+    }
+
+    .pending {
+        background-color: #808080;
+    }
+
+    .header-item {
+        font-weight: 600;
+        margin: 0 0 5px;
+    }
+
+    .content-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .content-item {
+        flex: 1;
+    }
+    .content-item textarea {
+        width: 100%;
+        height: 100px;
+    }
+
+    .content-item .note {
+        display: block;
+        color: red;
+        font-size: 12px;
+        text-align: center;
+        margin-top: 5px;
+    }
+
+    .field-container {
+        margin-bottom: 20px;
+    }
+
+    textarea {
+        resize: none;
+    }
+
+    .notes-container .note-box {
+        border: 1px solid #d2d6de;
+        border-radius: 4px;
+        padding: 4px 8px;
+        font-size: 12px;
+        line-height: 15px;
+        margin-bottom: 7px;
+    }
+
+    .notes-container .note-box p {
+        margin: 0;
+    }
+
+    .inner_white_box {
+        border: 1px solid #ededed;
+        padding: 10px;
+        box-shadow: 0 0 10px rgb(0 0 0 / 5%);
+        border-radius: 5px;
+        height: 100%;
+    }
+
+    .inner_white_box h4 {
+        margin: 3px 0 7px;
+    }
+
+    .documentsEditPanel #attUploadPanel .form-control[type="file"] {
+        height: 54px;
+        padding: 15px;
+    }
+
+    .group-profile-select {
+        height: 30px;
+        font-size: 14px;
+        font-weight: 600;
+        padding: 1px 5px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+    }
+
+    .panel-footer.chat_footer {
+        background: none;
+    }
+
+    .calc_h_100 {
+        height: calc(100% - 42px) !important;
+    }
+
+    .content-item.item_1 {
+        flex: 0 0 25%;
+        min-width: 150px;
+    }
+
+    .fields-notes .form-control {
+        font-size: 13px;
+        line-height: 18px;
+        padding: 6px 10px;
+        height: 46px;
+    }
+
+    .fields-notes .flex_row {
+        border: 1px solid #ededed;
+        border-radius: 4px;
+        padding: 7px 2px 0px;
+        box-shadow: 0 0 10px rgb(0 0 0 / 5%);
+        margin: 0 0px 10px !important;
+    }
+</style>
+
+<div class="row gap_15">
+    <div class="client-record-page mt_10">
+        <div class="status-buttons">
+            @{
+                Html.RenderPartial("_StatusButton", Model);
+            }
+        </div>
+    </div>
+
+ <div class="col-md-12 mt_10">
+      <div class="white_box p_15">
+        <table class="client_record_summary table">
+            <thead>
+                <tr>
+                    <th colspan="2">Application State</th>
+                    <th>&nbsp;</th>
+                    <th class="dt-center">Application Type</th>
+                    <th>&nbsp;</th>
+                    <th class="dt-center">VIN</th>
+                    <th>&nbsp;</th>
+                    <th>Client Reference(#)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td colspan="2">@Model.State</td>
+                    <td>&nbsp;</td>
+                    <td class="dt-center">@Model.AppType</td>
+                    <td>&nbsp;</td>
+                    <td class="dt-center">@Model.VIN</td>
+                    <td>&nbsp;</td>
+                    <td>@Model.ReferenceNumber</td>
+                </tr>
+            </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="col-md-12 mt_10">
+        @if (Model.StatusId != 9 && Model.StatusId != 10) // 9 is status for Hold
+        {
+            <div class="white_box p_15 mb_15">
+                @if (ViewBag.HelpLink != null)
+                {
+                    <div style="position:absolute;top: 4px;right: 14px;"><a href="@ViewBag.HelpLink" target="_blank"><span style="font-family:FontAwesome;font-size:large">&#x0f05a;</span></a></div>
+                }
+                <div class="custom-container">
+                <label class="mb_10 d-block">What do you need to know?</label>
+                <div class="content-row">
+                    <div class="content-item item_1">
+                        <div class="header-item">Stage</div>
+                        <p>@Model.ProcessStageName</p>
+                    </div>
+                    
+                    <div class="content-item">
+                        <div class="header-item">Summary</div>
+                        <p>@Model.ProcessStageSummary</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        }
+    </div>
+    
+    <div class="col-md-12 mb_15" id="dataFieldWidgetContainer" style="display: none;">
+        <div class="white_box p_15">
+            <div id="dataFieldWidget" class="dataFieldWidget h-100" tabindex="-1">
+                <h2 class="text-center">Data Widget</h2>
+                <div class="panel-body p-0 h-100 calc_h_100 ">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-12 mb_15">
+        <div class="white_box p_15">
+            <div class="row gap_15 flex_row">
+                <div class="col-md-6">
+                    <div id="informationEditPanel" class="informationEditPanel h-100" tabindex="-1">
+                        <h2 class="text-center">Information Needed</h2>
+                        <div class="panel-body p-0 h-100 calc_h_100 ">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div id="documentsEditPanel" class="documentsEditPanel h-100 mb-0" tabindex="-1">
+                        <h2 class="text-center">Documents</h2>
+                        <div id="attachmentsEditPanel" class="attachmentsEditPanel calc_h_100 mb-0" tabindex="-1" style="display:none;">
+                            <div class="inner_white_box p_15">
+                                <h4>Attachments</h4>
+                                <div class="panel-body p-0" style="display:none;">
+                                </div>
+                                <div class="panel-footer attachment_footer mt_10" style="display:none;">
+                                    <form id="att-addAttachment" asp-controller="Requests" asp-action="UploadAttachment" method="post" enctype="multipart/form-data">
+                                        <input type="hidden" name="id" id="att-RequestId" />
+                                        <div id="attUploadPanel">
+                                            <h4 class="hrheader">Upload Attachments</h4>
+                                            <div class="form-group">
+                                                <input type="file" name="file" class="form-control" required />
+                                            </div>
+                                            <div class="form-group" id="attachmentTypePanel">
+                                                <label for="attachmentTypeId">Type:</label>
+                                                <select name="attachmentTypeId" id="attachmentTypeId" class="form-control" required>
+                                                </select>
+                                                <span style="font-size:small">Please confirm the type of document you are attaching. If you do not see an option that describes your document, choose the “extra” type</span>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="att-FileDesc" class="control-label">Description (optional): </label>
+                                                <input type="text" class="form-control" name="filedesc" id="att-FileDesc" />
+                                            </div>
+                                            <div class="form-group">
+                                                <button type="submit" class="btn btn-success custom_btn">Upload File</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                    @*  <div class="text-right">
+                                    <button type="button" class="btn btn-default custom_btn" id="btnAttUpload">Upload Attachment&nbsp;<span style="font-family:FontAwesome;">&#x0F078;</span></button>
+                                    <button type="button" style="display:none;" class="btn btn-default custom_btn" id="btnAttUploadClose"><span style="font-family:FontAwesome;">&#x0F077;</span></button>
+                                    </div> *@
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+         </div>
+        <div class="mt_15">
+            <div class="white_box p_15 mb_15">
+                @Html.Partial("_CommunicatePartial")
+            </div>
+        </div>
+        <div class="mt_15">
+            <div id="detailsEditPanel" class="detailsEditPanel" tabindex="-1" style="display:none;">
+                <div class="white_box">
+                    <div class="panel-body edit_details">
+                    </div>
+                    <div class="panel-footer" style="background-color:inherit;">
+                        <button type="button" class="btn btn-success custom_btn" id="okButton">Save Form</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div style="display:none">
+            <form id="hiddenform" method="post" action=""></form>
+        </div>
+</div>
+
+@section Scripts
+    {
+        @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    }
+
+<script>
+    $(document).ready(function () {
+       
+        $("#chat-SendMessageForm").submit(function (e) {
+            e.preventDefault();
+            let $chatForm = $("#chat-SendMessageForm");
+            if ($("#chat-newMsg").val() != '') {
+                $.ajax({
+                    url: $chatForm.attr('action'),
+                    type: 'POST',
+                    data: $chatForm.serialize()
+                }).done(function (data) {
+                    $("#chat-newMsg").val('');
+                    var $form = $("#chatsEditPanel");
+                    var $body = $form.find(".panel-body");
+                    $body.html(data);
+                    $body.animate({ scrollTop: $body.prop("scrollHeight") }, 1000);
+
+                    var reqid = $("#chat-RequestId").val();
+                    refreshChat(reqid);
+                });
+            }
+            return false;
+        });
+
+        $("#chatRefreshBtn").on('click', function (e) {
+            e.preventDefault();
+            var reqid = $("#chat-RequestId").val();
+            requestLookup_showChat(reqid);
+        });
+
+        $("#chatCloseBtn").off('click').on('click',function (e) {
+            e.preventDefault();
+            var reqid = $("#chat-RequestId").val();
+            refreshChat(reqid);
+        });
+
+        $("#chatMarkAsRead").off('click').on('click',function (e) {
+            e.preventDefault();
+            var reqid = $("#chat-RequestId").val();
+            var lastcreated = $("#chatsEditPanel").find("[data-lastcreated]").data("lastcreated");
+
+            var formdata = new FormData();
+            formdata.append('id', reqid);
+            formdata.append('lastcreated', lastcreated);
+            $.ajax({
+                url: '/Chats/MarkAsRead',
+                type: 'POST',
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                data: formdata,
+                cache: false,
+                contentType: false,
+                processData: false
+            }).done(function (data) {
+                var reqid = $("#chat-RequestId").val();
+                refreshChat(reqid);
+            });
+
+            return false;
+        });
+
+        $("#att-addAttachment").submit(function (e) {
+            e.preventDefault();
+
+            var $attForm = $("#att-addAttachment");
+            var formData = new FormData();
+            var id = $attForm.find("#att-RequestId").val();
+            var desc = $attForm.find("#att-FileDesc").val();
+            var attachmentTypeId = $attForm.find("#attachmentTypeId").val();
+
+            if (attachmentTypeId == null || attachmentTypeId == "") {
+                alert("Please select a type for the attachment");
+                return;
+            }
+            formData.append("id", id);
+            formData.append("filedesc", desc);
+            formData.append("attachmentTypeId", attachmentTypeId);
+
+            var $file = $attForm.find("input[type='file']")[0];
+            if ($file.length == 0) {
+                alert("Please select a file for upload");
+                return;
+            }
+            formData.append("file", $file.files[0]);
+
+            $.ajax({
+                url: $attForm.attr('action'),
+                type: 'POST',
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                processData: false,
+                contentType: false,
+                data: formData
+            }).done(function (data) {
+                var $input = $attForm.find("input[type='file']");
+                $input.replaceWith($input.val('').clone(true));
+                // $attForm.find('#attUploadPanel').hide();
+                $attForm.find("#att-FileDesc").val('');
+
+                showUploadPanel(false);
+                requestLookup_showAttachments(id);
+
+            });
+            return false;
+        });
+       
+        $("#btnAttUpload").off('click').on('click', function (e) {
+            e.preventDefault();
+            uploadBtnClick();
+        });
+
+        $("#btnAttUploadClose").off('click').on('click', function (e) {
+            e.preventDefault();
+            $modalForm = $("#attachmentsEditPanel");
+            // $modalForm.find('#attUploadPanel').hide();
+            $modalForm.find('#btnAttUpload').show();
+            $modalForm.find('#btnAttUploadClose').hide();
+        });
+
+        var reqid = '@ViewData["RequestId"]';
+        var vin = '@ViewData["VIN"]';
+        var reqno = '@ViewData["RequestNo"]';
+
+        if (reqid != '') {
+            $("#globalRequestSearch").data('requestid', reqid);
+            $("#globalRequestSearch").data('reqno', reqno);
+            $("#globalRequestSearch").val(vin);
+        }
+
+            // Example of dynamically setting the RequestId
+        $('#chat-RequestId').val(reqid);
+
+        requestLookup_fill_form(reqid, reqno, vin);
+    });
+
+    function requestLookup_fill_form(requestId, reqno, vin) {
+        if (requestId.length == 36) {
+            requestLookup_editRequestInline(requestId);
+            requestLookup_showNotes(requestId);
+            requestLookup_showChat(requestId);
+            requestLookup_showAttachments(requestId);
+            requestLookup_showStatus(requestId);
+            requestLookup_showInformation(requestId)
+            requestLookup_showClientInternalNotes(requestId);
+            getNotifyData(requestId)
+
+        }
+        else {
+            requestLookup_clearEditForm();
+        }
+    }
+
+    function getNotifyData(requestId) {
+        $.ajax({
+            url: '@Url.Action("GetNotifyClientData", "Requests")',
+            type: 'POST',
+            data: { requestId: requestId },
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            success: function (response) {
+                var data = response.data;
+
+                var button = $("#clientInternalNotesMarkAsRead");
+                if (data.length > 0) {
+                    button.show();
+                    button.prop("disabled", false);
+                } else {
+                    button.hide();
+                }
+            },
+            error: function () {
+                console.error("Error loading partial view:", error);
+            },
+        });
+    }
+
+    function requestLookup_clearEditForm() {
+        var $pnl = $("#detailsEditPanel");
+        $pnl.find(".panel-body").empty().html('');
+        $pnl.hide();
+
+        var $pnl = $("#notesEditPanel");
+        $pnl.find(".panel-body").empty().html('');
+        $pnl.hide();
+
+        var $pnl = $("#chatsEditPanel");
+        $pnl.find(".panel-body").empty().html('');
+        $pnl.find(".panel-footer").hide();
+        $pnl.hide();
+
+        var $pnl = $("#attachmentsEditPanel");
+        $pnl.find(".panel-body").empty().html('');
+        $pnl.find(".panel-footer").hide();
+        $pnl.hide();
+
+        var $pnl = $("#statusViewPanel");
+        $pnl.find(".panel-body").empty().html('');
+        $pnl.hide();
+
+        var $pnl = $("#clientInternalNotesPanel");
+        $pnl.find(".panel-body").empty().html('');
+        $pnl.hide();
+
+    }
+
+    function requestLookup_editRequestInline(reqid) {
+        var $panel = $("#detailsEditPanel");
+        $panel.find(".panel-body").hide();
+        $panel.data("reqid", reqid);
+        $panel.find(".panel-body").empty().html('');
+        $panel.hide();
+
+        var succeeded = false;
+        $.ajax({
+            url: '/AppForm/Open/' + reqid,
+            type: 'GET',
+            async: true,
+            dataType: 'text',
+            cache: false,
+            contentType: false,
+            processData: false,
+        }).done(function (res) {
+            if ($panel.data("reqid") == reqid) {
+                $panel.find(".panel-body").html(res);
+
+                $panel = $("#detailsEditPanel"); //refresh after reload
+
+                var $form = $panel.find('.panel-body').find('form');
+                var $saveBtn = $panel.find('#detailsEditPanel_saveButton');
+                resetFormValidator("#dynamicAppForm");
+
+                $form.off('submit').on('submit', function (e) {
+                    e.preventDefault();
+                    $saveBtn.attr('disabled', true);
+                    var $thisForm = $(this);
+                    $.ajax({
+                        url: $thisForm.attr('action'),
+                        type: 'POST',
+                        headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                        data: $thisForm.serialize()
+                    }).done(function (data) {
+                        // now match attachment with request
+                        $saveBtn.attr('disabled', false);
+                        try {
+                            formAnalyzer_update_request(uploadId, reqid, null);
+                        } catch(e){};
+                    });
+                    return false;
+                });
+                $saveBtn.prop('disabled', false);
+                $panel.find(".panel-body").show();
+                $panel.show();
+            }
+        });
+        return false;
+    }
+
+    function requestLookup_showInformation(requestId) {
+        var $panel = $("#informationEditPanel");
+        $panel.hide();
+        $panel.data("reqid", requestId);
+        $panel.find(".panel-body").empty().html('');
+
+        $.ajax({
+            url: '/Requests/InformationCodes/'+ requestId,
+            type: 'POST',
+            async: true,
+            //data: formData,
+            dataType: 'text',
+            cache: false,
+            contentType: false,
+            processData: false,
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+        }).done(function (data) {
+            $panel.find('.panel-body').html(data);
+            $panel.find('.btn-close').hide();
+            $panel.show();
+        });
+    }
+    
+    function requestLookup_showNotes(requestId) {
+        var $panel = $("#notesEditPanel");
+        $panel.hide();
+        $panel.data("reqid", requestId);
+        $panel.find(".panel-body").empty().html('');
+
+        $.ajax({
+            url: '/Requests/ViewNotes/' + requestId + '?v=s',
+            type: 'GET',
+            async: true,
+            //data: formData,
+            dataType: 'text',
+            cache: false,
+            contentType: false,
+            processData: false,
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+        }).done(function (data) {
+            $panel.find('.panel-body').html(data);
+            $panel.find('.btn-close').hide();
+            $panel.show();
+        });
+    }
+
+    $("#clientInternal-SendMessageForm").submit(function (e) {
+            const clientRemarks = $('#chat-newInternalMsg').val();
+            const requestId = $('#chat-RequestId').val();
+            const selectedUserIds = $('#chat-SelectedUserId').val();
+            const selectedUsers = JSON.stringify(taggedUsers);
+
+            $.ajax({
+                url: '@Url.Action("CreateClientInternalNotes", "Requests")',
+                type: 'POST',
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                contentType: 'application/json',
+                data: JSON.stringify({ clientRemarks, users: taggedUsers, RequestId: requestId }),
+                success: function (response) {
+                    jqToast.success({ text: 'Message sent successfully!' });
+                    $('#chat-newInternalMsg').val('');
+                    requestLookup_showClientInternalNotes(requestId);
+                    taggedUsers = [];
+
+                },
+                error: function (error) {
+                    jqToast.error({ text: 'An error occurred while saving the data.' });
+                }
+
+            });
+        });
+
+    function requestLookup_showClientInternalNotes(requestId) {
+        var $panel = $("#clientInternalNotesPanel");
+        $panel.hide();
+        $panel.data("reqid", requestId);
+        $panel.find(".panel-body").empty().html('');
+        var succeeded = false;
+
+        $.ajax({
+            url: '/Requests/ViewClientInternalNotes/' + requestId + '?v=s',
+            type: 'GET',
+            async: true,
+            //data: formData,
+            dataType: 'text',
+            cache: false,
+            contentType: false,
+            processData: false,
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+        }).done(function (data) {
+            //$('#notes-container').html(data);
+            $panel.find("#chat-RequestId").val(requestId);
+            $panel.find('.panel-body').html(data);
+            $panel.find('.btn-close').hide();
+            $panel.show();
+
+         });
+          
+       return false;
+    }
+
+    function requestLookup_showChat(requestId) {
+        var $panel = $("#chatsEditPanel");
+        $panel.find(".panel-body").hide();
+        $panel.find(".panel-footer").hide();
+        $panel.data("reqid", requestId);
+        $panel.find(".panel-body").empty().html('');
+
+        var succeeded = false;
+        $.ajax({
+            url: '/Chats/View/' + requestId,
+            type: 'GET',
+            async: true,
+            dataType: 'text',
+            cache: false,
+            contentType: false,
+            processData: false,
+        }).done(function (data) {
+            $panel.find("#chat-RequestId").val(requestId);
+            var $body = $panel.find(".panel-body");
+            $body.html(data);
+            $body.show();
+            $body.animate({ scrollTop: $body.prop("scrollHeight") }, 1000);
+            //$body.scrollTop = $body.scrollHeight;
+            $panel.find(".panel-footer").show();
+            $panel.show();
+
+            var hasUnreadChats = $panel.find("[data-unreadchats]").data("unreadchats");
+            if (typeof hasUnreadChats !== 'undefined') {
+                $panel.find('#chatMarkAsRead').attr("disabled", hasUnreadChats != '1');
+            }
+            else {
+                $panel.find('#chatMarkAsRead').attr("disabled", false);
+            }
+        });
+        return false;
+    }
+
+    function removeAttachment(requestid,id) {
+        var formData = new FormData();
+        formData.append("id", id);
+
+        if (!confirm("Are you sure?"))
+            return;
+
+        var succeeded = false;
+        $.ajax({
+            url: '/Requests/RemoveAttachment',
+            type: 'POST',
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            data: formData,
+            dataType: 'text',
+            cache: false,
+            contentType: false,
+            processData: false,
+        }).done(function (data) {
+            requestLookup_showAttachments(requestid);
+        }).failed(function (data) {
+            requestLookup_showAttachments(requestid);
+        });
+        return false;
+    }
+
+    function requestLookup_showAttachments(requestId) {
+        var formData = new FormData();
+        formData.append("id", requestId);
+
+        var succeeded = false;
+        $.ajax({
+            url: '/Requests/Attachments',
+            type: 'POST',
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            data: formData,
+            dataType: 'text',
+            cache: false,
+            contentType: false,
+            processData: false,
+        }).done(function (data) {
+            var $form = $("#attachmentsEditPanel");
+            $form.find("#att-RequestId").val(requestId);
+            var $body = $form.find(".panel-body");
+            $body.html(data);
+            $body.show();
+            showUploadPanel(false);
+            $form.find(".panel-footer").show();
+            $form.show();
+        });
+        return false;
+    }
+   
+    function showUploadPanel(f) {
+        if (f) {
+            let content = $("#attachmentTypeOptionsTemplate").html();
+            $("#attachmentTypeId").html(content);
+            // $('#attUploadPanel').show();
+            $('#btnAttUpload').hide();
+            $('#btnAttUploadClose').show();
+        }
+        else {
+            // $('#attUploadPanel').hide();
+            $('#btnAttUpload').show();
+            $('#btnAttUploadClose').hide();
+        }
+    }
+  
+    function uploadBtnClick() {
+        //var f = $("#attUploadPanel").is(':visible');
+        showUploadPanel(!f);
+    }
+   
+    function requestLookup_showStatus(requestId) {
+        var $panel = $("#statusViewPanel");
+        $panel.hide();
+        $panel.data("reqid", requestId);
+        $panel.find(".panel-body").empty().html('');
+
+        var succeeded = false;
+        $.ajax({
+            url: '/AppForm/ViewStatus/' + requestId,
+            type: 'GET',
+            async: true,
+            dataType: 'text',
+            cache: false,
+            contentType: false,
+            processData: false,
+        }).done(function (res) {
+            var $panel = $("#statusViewPanel");
+            var $panel_body = $panel.find(".panel-body");
+            $panel_body.html(res);
+
+            var $form = $panel_body.find("form");
+            var $saveBtn = $panel.find('#okButton');
+
+            $form.off('submit').on('submit', function (e) {
+                e.preventDefault();
+                var $thisForm = $(this);
+                $btnSave.attr('disabled', true);
+                $.ajax({
+                    url: $thisForm.attr('action'),
+                    type: 'POST',
+                    headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                    data: $thisForm.serialize()
+                }).done(function (data) {
+                    // todo
+                    $saveBtn.attr('disabled', false);
+                });
+                return false;
+            });
+
+            $saveBtn.off('click').on('click',function (e) {
+                e.preventDefault();
+                $form.trigger("submit");
+            });
+            $panel.show();
+        }).fail(function (xhr) {
+            processError(xhr);
+        });
+        return false;
+    }
+</script>

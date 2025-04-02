@@ -1,0 +1,194 @@
+﻿@{
+    ViewBag.Title = "Organizations";
+}
+<h2>Organizations</h2>
+
+<table id="organizationsTable" class="display" style="width:100%">
+    <thead>
+        <tr>
+            <th class="reqChkbx"</th>
+            <th>Organization Id</th>
+            <th>Organization Name</th>
+            <th>Processor</th>
+            <th>Mailing Address</th>
+            <th>Authority States</th>
+            <th>Website</th>
+            <th>General Notes</th>
+        </tr>
+    </thead>
+</table>
+<div id="customOrganizationForm">
+    @Html.AntiForgeryToken()
+    <fieldset class="name">
+        <legend>Organization Name</legend>
+        <div data-editor-template="organizationName" />
+    </fieldset>
+    <fieldset class="">
+        <legend>Mailing Address</legend>
+        <div data-editor-template="mailingZip" />
+        <div data-editor-template="mailingState" />
+        <div data-editor-template="mailingCity" />
+        <div data-editor-template="mailingAddress" />
+        <div data-editor-template="mailingAttn" />
+    </fieldset>
+    <fieldset class="">
+        <legend>Other</legend>
+        <div data-editor-template="generalNotes" />
+        <div data-editor-template="website" />
+        <div data-editor-template="authorityStates" />
+        <div data-editor-template="isProcessingVendor" />
+    </fieldset>
+</div>
+<datalist id="PreferredShipperList">
+    <option value="FedEx" />
+    <option value="UPS" />
+    <option value="USPS" />
+</datalist>
+<script>
+    function Editor_HandleEvents(editor) {
+        // editor.on('postSubmit', function (e, json, data) {
+        //     alert('Submit completed');
+        // });
+    }
+    $(document).ready(function () {
+        var editor = new DataTable.Editor({
+            ajax: {
+                create: {
+                    url: '@Url.Action("CreateOrganization", "Organizations")',
+                    beforeSend: addVerificationToken,
+                    type: 'POST'
+                },
+                edit: {
+                    url: '@Url.Action("UpdateOrganization", "Organizations")',
+                    beforeSend: addVerificationToken,
+                    type: 'POST'
+                },
+                remove: {
+                    url: '@Url.Action("DeleteOrganization", "Organizations")',
+                    beforeSend: addVerificationToken,
+                    type: 'POST'
+                }
+            },
+            idSrc: "organizationId",
+            table: "#organizationsTable",
+            template: "#customOrganizationForm",
+            display: 'lightbox',
+            fields: [
+                { label: "Organization Name", name: "organizationName" },
+                { label: "ATTN", name: "mailingAttn" },
+                { label: "Address", name: "mailingAddress" },
+                { label: "City", name: "mailingCity" },
+                { label: "State", name: "mailingState" },
+                { label: "Zip", name: "mailingZip" },
+                { label: "Website", name: "website" },
+                { label: "Preferred Shipper", 
+                    name: "preferredShipper",
+                    type: "text",
+                    attr: {
+                        list: 'PreferredShipperList'  // Reference to the datalist's id
+                    }
+                },
+                { label: "Authority States", name: "authorityStates" },
+                { label: "Notes", name: "generalNotes", type: "textarea" }
+            ]
+        });
+
+        var table = $('#organizationsTable').DataTable({
+            ajax: '@Url.Action("GetOrganizations", "Organizations")',
+            rowId: "organizationId",
+            scrollX: true,
+            columnDefs: [
+                {
+                    targets: "reqChkbx",
+                    orderable: false,
+                    className: "select-checkbox",
+                    "min-width": "40px",
+                    "max-width": "40px",
+                    data: "",
+                    sortable: false,
+                }
+            ],
+            columns: [
+                {
+                    data: null,
+                    className: "select-checkbox",
+                    render: function () {
+                        return '';
+                    }
+                },
+                { data: "organizationId", visible: false },
+                { data: "organizationName" },
+                {
+                    data: 'isProcessingVendor', className: 'dt-center',
+                    render: function (data, type, row) {
+                        if (type === 'display') {
+                            // Return a disabled checkbox (remove disabled if you want it interactive)
+                            return '<input type="checkbox" ' + (data ? 'checked' : '') + ' disabled />';
+                        }
+                        return data;
+                    }
+                },
+                {
+                    data: null, sortable: false,
+                    render: function (data, type, row) {
+                        // Combine the first and last names into a single table field
+                        let addr = `${data.mailingAddress}\r\n${data.mailingCity}, ${data.mailingState} ${data.mailingZip}`;
+                        if (data.mailingAttn != null && data.mailingAttn != '') {
+                            addr = `${data.mailingAttn}\r\n${addr}`;
+                        }
+                        addr = addr.replace(/(^[,\s]+)|([,\s]+$)/g, '');
+
+                        return addr;
+                    }
+                },
+                // { data: "mailingAttn" },
+                // { data: "mailingAddress" },
+                // { data: "mailingCity" },
+                // { data: "mailingState" },
+                // { data: "mailingZip" },
+                { data: "authorityStates" },
+                { data: "website" },
+                { data: "generalNotes", sortable: false }
+            ],
+            select: {
+                style: "os",
+                selector: 'td:not(.norowselect)',
+                items: "row",
+                info: true
+            },
+            dom: "lfrtipB",
+            buttons: [
+                { extend: "create", editor: editor },
+                { extend: "edit", editor: editor },
+                { extend: "remove", editor: editor }
+            ]
+            // layout: {
+            // topStart: {
+            //     buttons: [
+            //         { extend: "create", editor: editor },
+            //         { extend: "edit", editor: editor },
+            //         { extend: "remove", editor: editor }
+            //     ]
+            // }
+            // }
+        });
+
+        // table.on('click', 'td.editor-edit button', function (e) {
+        //     editor.edit(e.target.closest('tr'), {
+        //         title: 'Edit Organization',
+        //         buttons: 'Update'
+        //     });
+        // });
+
+        // // Delete a record
+        // table.on('click', 'td.editor-delete button', function (e) {
+        //     editor.remove(e.target.closest('tr'), {
+        //         title: 'Delete Organization',
+        //         message: 'Are you sure you wish to remove this organization?',
+        //         buttons: 'Delete'
+        //     });
+        // });
+        Editor_HandleEvents(editor);
+
+    });
+</script>

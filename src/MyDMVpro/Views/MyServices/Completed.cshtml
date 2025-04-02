@@ -1,0 +1,78 @@
+﻿@using System.Collections.Generic
+@using Microsoft.AspNetCore.Http
+@{
+    ViewData["Title"] = "Completed";
+    string GetUrl(string name)
+    {
+        return MyDMVpro.Controllers.RequestStatusController.GetEndpointUrl(this.Context, name);
+    }
+}
+
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+
+@{ await Html.RenderPartialAsync("_Chat", new Chats()); }
+@{ await Html.RenderPartialAsync("_AttachmentList"); }
+@{
+    RequestViewModel completedList = new RequestViewModel(MyServicesViewType.Completed)
+    {
+        DataUrl = GetUrl("Completed"),
+        ListId = "DT_CompletedRequests",
+        TableVarName = "CompletedRequests",
+        EnableAdvancedSearch = true
+    };
+    completedList.Columns.Add_Select();
+    completedList.Columns.Add_Chat();
+    completedList.Columns.Add_Attachments();
+    completedList.Columns.Add("", "reqEditRequest");
+    completedList.Columns.Add_DupeCheck();
+    if (completedList.EnablePDF)
+    {
+        completedList.Columns.Add("", "reqViewSign dfilter");
+    }
+    completedList.Columns.Add_AppType();
+    completedList.Columns.Add_AppState();
+    completedList.Columns.Add_VIN();
+    completedList.Columns.Add_Auction();
+    completedList.Columns.Add_ClientRef();
+
+    if (completedList.LienholderInfo.ManuallySign)
+    {
+        completedList.Columns.Add_DateToVendor();
+        completedList.Columns.Add_DateReceivedFromLH();
+
+        if (completedList.EnablePDF)
+        {
+            completedList.Columns.Add("Received By Vendor", "reqDateFromLH dfilter");
+        }
+    }
+    else
+    {
+        completedList.Columns.Add_DateSigned();
+        completedList.Columns.Add_DateReceivedFromLH();
+
+        if (completedList.EnablePDF)
+        {
+            completedList.Columns.Add_PrintDate();
+        }
+    }
+    completedList.Columns.Add_SentToDMV();
+    completedList.Columns.Add_LH_ETA();
+    completedList.Columns.Add_TitleIssued();
+    completedList.Columns.Add_DateReceivedFromDMVAtMaggardOffice();
+    completedList.Columns.Add_Make();
+    completedList.Columns.Add_Year();
+    completedList.Columns.Add_ShippedToAuction();
+    completedList.Columns.Add_Tracking();
+    completedList.Columns.Add_Courier();
+    completedList.Columns.Add_Notes();
+    completedList.Columns.Add_SubmittedBy();
+    completedList.Columns.Add_Vendor();
+    completedList.Columns.Add_FromLHCourier();
+    completedList.Columns.Add_FromLHTracking();
+
+    completedList.SortColumns.Add("reqType");
+    completedList.SortColumns.Add("reqState");
+    completedList.SortColumns.Add("reqVIN");
+
+    await Html.RenderPartialAsync("_MyServicesRequests", completedList);
+}

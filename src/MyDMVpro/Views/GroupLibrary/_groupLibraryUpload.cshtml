@@ -1,0 +1,124 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+<div id="modal-glDelete" class="modal fade hidden-print" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Delete Document</h4>
+            </div>
+            <div class="modal-body">
+                <form id="gl_deleteDocument" asp-controller="GroupLibrary" asp-action="Delete" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="groupId" id="gl_groupId" />
+                    <input type="hidden" name="attachmentId" id="gl_attachmentId" />
+                    <div class="form-group">
+                        <input type="text" id="gl_fileName" name="fileName" readonly />
+                    </div>
+                    <div class="form-group">
+                        <label for="gl_displayName" style="float:left" class="control-label">Display name: </label>
+                        <input type="text" class="form-control" name="displayName" id="gl_displayName" readonly />
+                    </div>
+                    <div class="form-group">
+                        <label for="gl_lienholderName" style="float:left" class="control-label">Lienholder Name (optional): </label>
+                        <input type="text" class="form-control" name="lienholderName" id="gl_lienholderName" readonly />
+                    </div>
+                    <div class="form-group">
+                        <label for="gl_description" style="float:left" class="control-label">Description (optional): </label>
+                        <input type="text" class="form-control" name="description" id="gl_description" readonly />
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <div class="alert alert-danger" style="display:none" role="alert"></div>
+                <button type="button" class="btn btn-success" id="okButton">Delete</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="modal-glUpload" class="modal fade hidden-print" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Upload Document - <span id="gl_groupNameHeader"></span></h4>
+            </div>
+            <div class="modal-body">
+                <form id="gl_uploadDocument" asp-controller="GroupLibrary" asp-action="Upload" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="groupId" id="gl_groupId" />
+                    <div class="form-group">
+                        <input type="file" name="file" class="form-control" accept="application/pdf" required  />
+                    </div>
+                    <div class="form-group">
+                        <label for="gl_displayName" style="float:left" class="control-label">Display name: </label>
+                        <input type="text" class="form-control" name="displayName" id="gl_displayName" />
+                    </div>
+                    <div class="form-group">
+                        <label for="gl_lienholderName" style="float:left" class="control-label">Lienholder Name (optional): </label>
+                        <input type="text" class="form-control" name="lienholderName" id="gl_lienholderName" />
+                    </div>
+                    <div class="form-group">
+                        <label for="gl_description" style="float:left" class="control-label">Description (optional): </label>
+                        <input type="text" class="form-control" name="description" id="gl_description" />
+                    </div>
+                    <div class="form-group">
+                        <label for="gl_attachmentTypeId" style="float:left" class="control-label">Attachment Type</label>
+                        <select id="gl_attachmentTypeId" name="attachmentTypeId">
+                            <option value="">Select Attachment Type</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <div class="alert alert-danger" style="display:none" role="alert"></div>
+                <button type="button" class="btn btn-success" id="okButton">Upload</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="modal-glEdit" class="modal fade hidden-print" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Edit Document - <span id="gl_groupNameHeader"></span></h4>
+            </div>
+            <div class="modal-body">
+                <form id="gl_editDocument" asp-controller="GroupLibrary" asp-action="Edit" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="groupId" id="gl_groupId" />
+                    <input type="hidden" name="attachmentId" id="gl_attachmentId" />
+                    <div class="form-group">
+                        <input type="file" name="file" class="form-control" accept="application/pdf" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="gl_displayName" style="float:left" class="control-label">Display name: </label>
+                        <input type="text" class="form-control" name="displayName" id="gl_displayName" />
+                    </div>
+                    <div class="form-group">
+                        <label for="gl_lienholderName" style="float:left" class="control-label">Lienholder Name (optional): </label>
+                        <input type="text" class="form-control" name="lienholderName" id="gl_lienholderName" />
+                    </div>
+                    <div class="form-group">
+                        <label for="gl_description" style="float:left" class="control-label">Description (optional): </label>
+                        <input type="text" class="form-control" name="description" id="gl_description" />
+                    </div>
+                    <div class="form-group">
+                        <label for="gl_attachmentTypeId" style="float:left" class="control-label">Attachment Type</label>
+                        <select id="gl_attachmentTypeId" name="attachmentTypeId">
+                            <option value="">Select Attachment Type</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <div class="alert alert-danger" style="display:none" role="alert"></div>
+                <button type="button" class="btn btn-success" id="okButton">Upload</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,390 @@
+﻿@model IEnumerable<DocumentReceived>
+@{
+    const string PageName = "Document Received - No Request";
+    string GetUrl(string name)
+    {
+        return MyDMVpro.Controllers.DocumentsReceivedNoRequestController.GetEndpointUrl(this.Context, name);
+    }
+}
+
+<style> 
+    .selected {
+        background-color: #f8d7da !important; /* Light Red */
+    }
+
+
+</style>
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addDocumentModal">
+    Add Document
+</button>
+
+
+<div class="modal fade" id="addDocumentModal" tabindex="-1" aria-labelledby="addDocumentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h5 class="modal-title" id="addDocumentModalLabel">Add Document</h5>
+            </div>
+            <div class="modal-body">
+                <form id="addDocumentForm" asp-action="Create" method="post" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label>VIN</label>
+                        <input name="VIN" class="form-control" required />
+                    </div>
+                  <div class="form-group">
+                        <label class="control-label font-600">Select Group</label>
+                        <select id="GroupId_NoRequest" class="form-control">
+                            <option value="">Select Group</option>
+
+                            @foreach (var state in ViewBag.Groups)
+                            {
+                                <option value="@state.GroupId">@state.GroupName</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="control-label font-600">Select Attachment Type</label>
+                        <select id="AttachmentType_NoRequest" class="form-control">
+                            <option value="">Select Attachment Type</option>
+                            @foreach (var attachment in ViewBag.AttachmentTypes)
+                            {
+                                <option value="@attachment.AttachmentTypeId">@attachment.Name</option>
+                            }
+                        </select>
+                    </div>
+               
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea name="Notes" class="form-control"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>PDF Upload</label>
+                        <input type="file" name="pdfUpload" class="form-control" accept="application/pdf" />
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-2">Save</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div>
+    <div class="white_box p_15 mb_20 mt_15">
+        <div class="d-flex justify-between">
+            <h2 class="sub_heading">Documents Received – No Request</h2>
+            <div>
+                <a href="#" data-toggle="popover" data-content="Highlighted records are alreay present in the application." data-placement="left">
+                    <span id="helpIcon"
+                          style="font-family:FontAwesome;font-size:large; cursor:pointer; position:relative;"
+                          onclick="showTooltip(event)">
+                        &#x0f05a;
+                    </span>
+                </a>
+                
+            </div>
+        </div>
+        @{
+            {
+                VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.DocumentsReceived_NoRequest, PageName)
+                {
+                    QueueTitle = "",
+                    DataUrl = GetUrl("DocumentsReceivedNoRequest"),
+                    ListId = "DocumentsReceived_NoRequest",
+                    TableVarName = "DocumentsReceived_NoRequest_Table",
+                    TableClass = "DocumentsReceived_NoRequestTable",
+                    AllowAutoIMSRefresh = false,
+                    AddLastModified = false,
+                    AddLastModifiedBy = false,
+                    EnableReportBuilder = false,
+                    EnableAdvancedSearch = false,
+                    EnableBulkEdit = false,
+                    EnableUniversalExport = false,
+                    AllowDirectToBilling = false,
+                    AllowAddToInvoice = false,
+                    AllowCancel = false,
+                    AllowDelete = false,
+                    AllowMultilineVin = false,
+                    AllowReassign = false,
+                    AllowSort = true,
+                    AllowStatusEdit = false,
+                    EnablePresets = false,
+                    AddIncludeArchivedOption = false,
+                    AddExpandNotesOption = false,
+                    AddLinkIcon = true,
+                };
+
+                list.Columns.Add_Select();
+                list.Columns.Add_VIN();
+                list.Columns.Add_DateReceived();
+                list.Columns.Add_NoRequest_Notes();
+                list.Columns.Add_NoRequest_Document();
+                list.Columns.Add_Group().SetExportable(false);
+
+                await Html.RenderPartialAsync("_VendorRequestList", list);
+                await Html.RenderPartialAsync("_downloadFile", list);
+            }
+        }
+    </div>
+</div>
+
+<div>
+    <div class="white_box p_15 mb_20 mt_15">
+        <h2 class="sub_heading">Documents Shipped – No Request</h2>
+        @{
+            {
+                VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.DocumentsShipped_NoRequest, PageName)
+                {
+                    QueueTitle = "",
+                    DataUrl = GetUrl("DocumentsShippedNoRequest"),
+                    ListId = "DocumentsShipped_NoRequest",
+                    TableVarName = "DocumentsShipped_NoRequest_Table",
+                    TableClass = "DocumentsShipped_NoRequestTable",
+                    AllowAutoIMSRefresh = false,
+                    AddLastModified = false,
+                    AddLastModifiedBy = false,
+                    EnableReportBuilder = false,
+                    EnableAdvancedSearch = false,
+                    EnableBulkEdit = false,
+                    EnableUniversalExport = false,
+                    AllowDirectToBilling = false,
+                    AllowAddToInvoice = false,
+                    AllowCancel = false,
+                    AllowDelete = false,
+                    AllowMultilineVin = false,
+                    AllowReassign = false,
+                    AllowSort = true,
+                    AllowStatusEdit = false,
+                    EnablePresets = false,
+                    AddIncludeArchivedOption = false,
+                    AddExpandNotesOption = false,
+                    AddLinkIcon = true,
+                };
+
+                list.Columns.Add_Select();
+                list.Columns.Add_VIN();
+                list.Columns.Add_DateReceived();
+                list.Columns.Add_NoRequest_Notes();
+                list.Columns.Add_NoRequest_Document();
+                list.Columns.Add_Tracking();
+                list.Columns.Add_DateShipped();
+                list.Columns.Add_ShippingNote();
+                list.Columns.Add_Group().SetExportable(false);
+
+                await Html.RenderPartialAsync("_VendorRequestList", list);
+                await Html.RenderPartialAsync("_downloadFile", list);
+            }
+        }
+    </div>
+</div>
+
+<div class="modal fade" id="viewPdfModal" tabindex="-1" aria-labelledby="viewPdfModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewPdfModalLabel">View Document</h5>
+                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <iframe id="pdfIframe" style="width: 100%; height: 500px;"></iframe>
+                <button id="downloadPdfBtn" class="btn btn-primary mt-2">Download PDF</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="shipModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Mark as Shipped</h4>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="shipDocumentId">
+                <div class="form-group">
+                    <label>Tracking Number</label>
+                    <input type="text" id="trackingNumber" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Shipment Date</label>
+                    <input type="date" id="dateShipped" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")">
+                </div>
+                <div class="form-group">
+                    <label>Shipment Notes</label>
+                    <textarea id="shippedNote" class="form-control"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="confirmShip" class="btn btn-primary">Confirm</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="duplicateModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Duplicate Records</h4>
+            </div>
+            <div class="modal-body">
+                <h5 style="color:darkgreen">Below are all the records in the application with the same VIN. You may select any of them to attach the document.</h5>
+                <table id="duplicateTable" class="table mt_10">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>VIN</th>
+                            <th>Request Number</th>
+                            <th>App Type</th>
+                            <th>State</th>
+                            <th>Group Name</th>
+
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table> 
+               
+            </div>
+            <div class="modal-footer">
+                <div id="record-count"></div>
+                <button type="button" id="attachRequest" class="btn btn-primary">Attach</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('[data-toggle="popover"]').popover();
+
+            $(document).on('click', '.view-pdf', function (e) {
+                e.preventDefault();
+
+                var pdfId = $(this).data('pdf-id');
+                var pdfName = $(this).data('pdf-name');
+
+                $('#viewPdfModal').modal('show');
+
+                $.ajax({
+                    url: '@Url.Action("GetDocument", "DocumentsReceivedNoRequest")', // Replace with your action URL
+                    type: 'GET',
+                    data: { documentId: pdfId },
+                    success: function (response) {
+                        var blob = new Blob([response], { type: 'application/pdf' });
+                        var url = URL.createObjectURL(blob);
+
+                        $('#pdfIframe').attr('src', url);
+
+                        $('#downloadPdfBtn').off('click').on('click', function () {
+                            var link = document.createElement('a');
+                            link.href = url;
+                            link.download = pdfName;
+                            link.click();
+                        });
+                    },
+                    error: function () {
+                        alert('Error fetching PDF.');
+                    }
+                });
+            });
+
+            $(document).on("click", "#attachRequest", function () {
+                attachRequest();
+            });
+        });
+
+        var selectedRecords = [];
+        var requestIdForAttach;
+
+        function showDuplicatePopup(duplicates, originalRowData) {
+            var tbody = $("#duplicateTable tbody");
+            tbody.empty();
+
+            if (duplicates.length === 0) {
+                tbody.append('<tr><td colspan="6">No duplicates found</td></tr>');
+                $("#attachRequest").prop("disabled", true);
+            } else {
+                duplicates.forEach(function (item) {
+                    var row = `<tr data-requestid="${item.requestId}" data-groupid="${item.groupId}" data-requestnumber="${item.requestNumber}" data-vin="${item.vin}">
+
+                            <td><input type="checkbox" class="selectRow" value="${item.vin}" data-vin="${item.vin}" /></td>
+                            <td>${item.vin}</td>
+                            <td>${item.requestNumber}</td>
+                            <td>${item.appType}</td>
+                            <td>${item.state}</td>
+                            <td>${item.groupName}</td>
+                        </tr>`;
+                    tbody.append(row);
+                    $("#attachRequest").prop("disabled", true);
+                });
+            }
+            var $form = $("#duplicateModal");
+            var recordCount = $form.find("#record-count");
+            recordCount.text(`Total documents: ${duplicates.length}`);
+
+
+            $("#duplicateModal").modal("show");
+
+            $(document).on("change", "#duplicateTable tbody input.selectRow", function () {
+                $("#duplicateTable tbody input.selectRow").not(this).prop("checked", false);
+                $("#duplicateTable tbody tr").removeClass("selected");
+
+                var isChecked = $(this).prop("checked");
+
+                if (isChecked) {
+                    $(this).closest("tr").addClass("selected");
+                    var selectedRow = $(this).closest('tr');
+                    var row = $(this).closest("tr");
+                    requestIdForAttach = row.data("requestid"),
+                    selectedRecords = {
+                        requestId: row.data("requestid"),
+                        groupId: row.data("groupid"),
+                        vin: row.data("vin"),
+                        requestNumber: row.data("requestnumber")
+                    };
+                    $("#attachRequest").prop("disabled", false);
+                } else {
+                    $(this).closest("tr").removeClass("selected");
+                    $("#attachRequest").prop("disabled", true);
+                }
+            });
+
+        }
+
+        function attachRequest(){
+
+            const payload = {
+                DataToAttached: dataToAttached[0],
+                OriginalData: selectedRecords[0],
+                RequestId: requestIdForAttach
+            };
+
+
+            $.ajax({
+                url: '/DocumentsReceivedNoRequest/AttachRequestData',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(payload),
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                success: function () {
+
+                    $("#duplicateModal").modal("hide");
+                    var table = $('#DocumentsReceived_NoRequest').DataTable();
+                    table.ajax.reload();
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error attaching data:", error);
+                }
+            });
+        }
+
+    </script>
+}

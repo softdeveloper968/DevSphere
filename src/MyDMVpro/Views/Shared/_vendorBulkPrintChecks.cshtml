@@ -1,0 +1,37 @@
+﻿@model string
+
+<h2 class="sub_heading">Bulk Print Checks</h2>
+<div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.BulkChecksForDownload, Model)
+                {
+                    QueueTitle = "Check Downloads",
+                    QueueName = "BulkPrintChecks",
+                    ControllerName = "BulkPrint",
+                    //DataUrl = $"/BulkPrint/Vendor_BulkPrintChecks_{Model}",
+                    ListId = "DT_BulkPrintChecks",
+                    //TableVarName = "bulkPrintChecksTable",
+                    PageLength = 25,
+                    EnableKeyNavigation = false,
+                    EnableAdvancedSearch = false,
+                    RefreshDropdownFiltersOnDraw = true
+                };
+
+            list.Columns.Add("", "reqChkbx");
+            //list.Columns.Add("", "");
+            list.Columns.Add("", "bulkPdf");
+            list.Columns.Add("Date Requested", "fileDateRequested");
+            list.Columns.Add("Time to Complete", "fileElapsedTime");
+            list.Columns.Add("Filename", "filename asearch");
+            list.Columns.Add("Count", "fileReqCount");
+            list.Columns.Add("App Type", "fileAppType afilter");
+            list.Columns.Add("State", "fileState afilter");
+            list.Columns.Add("Created By", "fileCreatedBy afilter");
+
+            list.SortColumns.Add("fileDateRequested", true);
+
+            await Html.RenderPartialAsync("_bulkFilesDownload", list);
+        }
+    }
+</div>

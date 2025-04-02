@@ -1,0 +1,12 @@
+﻿body {
+}
+
+input.taggedField {
+    border-color: red;
+    border-width: 3px;
+}
+
+select.taggedField {
+    border-color: red;
+    border-width: 3px;
+}

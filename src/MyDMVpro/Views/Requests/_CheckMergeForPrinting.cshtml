@@ -1,0 +1,86 @@
+﻿<div id="modal-request-checkmerge-selection" class="modal fade hidden-print" tabindex="-1" role="">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Generate Checks</h4>
+            </div>
+            <div class="modal-body">
+            </div>
+            <div class="modal-footer">
+                <div class="alert alert-danger" role="alert" style="display:none"></div>
+                <button type="button" class="btn btn-default" id="btnStartBulkMerge">Generate Checks</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal" id="btnClose">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script asp-add-nonce="true">
+    var bulkCheckMergeForm = $("#modal-request-checkmerge-selection");
+
+    bulkCheckMergeForm.find("#btnStartBulkMerge").off('click').on('click', function (e) {
+        e.preventDefault();
+
+        //$("#myModal").text("Confirmation");
+        let $modal = $("#modal-request-checkmerge-selection");
+        $(this).hide();
+        $modal.find("#bulkMergeStep1").hide();
+        $modal.find("#bulkMergeStep2").fadeIn();
+
+        var formData = new FormData();
+        $(vendorBulkMerge_Items).each(function (i, v) {
+            formData.append("requestIds", v.requestId);
+        });
+        let createNew = [];
+        $modal.find("[name='createNewCheck']").each(function (i, v) {
+            let ctl = $(this);
+            let requestId = ctl.data('requestid');
+            if (ctl.is(":checked")) {
+                formData.append("createNewCheck", requestId);
+                createNew.push(requestId);
+            }
+        });
+        $modal.find("input[type='radio']").each(function (i, v) {
+            let ctl = $(this);
+            let requestId = ctl.data('requestid');
+            if (ctl.is(":checked")) {
+                if (!createNew.includes(requestId)) {
+                    formData.append("useExistingCheck", requestId + '|' + ctl.data('checkno'));
+                }
+            }
+        });
+
+        $.ajax({
+            url: '/BulkPrint/BulkMergeChecks',
+            type: 'POST',
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            data: formData,
+            dataType: 'json',
+            cache: false,
+            contentType: false,
+            processData: false,
+        }).done(function (data) {
+
+            if (data.status == "error") {
+                vendor_show_alert($modal, data.message, -1);
+            }
+            else {
+                $modal.find("#bulkFileName").text(data.data);
+                // refresh list
+                AjaxReloadList($("#DT_BulkPrintApplications").DataTable(), false);
+            }
+        }).fail(function (xhr) {
+            vendor_show_alert($modal, xhr.responseText, -1);
+        })
+        return false;
+    });
+
+    bulkCheckMergeForm.find("#btnClose").click(function () {
+        //$("#myModal").text("Attachments");
+
+        bulkCheckMergeForm.find("#btnStartBulkMerge").show();
+        bulkCheckMergeForm.find("#bulkMergeStep1").show();
+        bulkCheckMergeForm.find("#bulkMergeStep2").hide();
+    });
+</script>

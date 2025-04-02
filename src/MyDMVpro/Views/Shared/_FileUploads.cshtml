@@ -1,0 +1,516 @@
+﻿<h2 class="sub_heading">Recent File Uploads</h2>
+<div class="white_box p_15 mb_15" id="uploadsDiv">
+    <div>
+        <table class="display nowrap stripe" id="DT_FileUploadsTableId" cellspacing="0" align="left">
+            <thead>
+                <tr>
+                    <th class="fuID">Id</th>
+                    <th class="fuFileNm">Filename</th>
+                    <th class="fuNoReq"># Requests</th>
+                    <th class="fuDateUploaded">Date Uploaded</th>
+                    <th class="fuUploadBy">Uploaded By</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot></tfoot>
+        </table>
+    </div>
+    <form id="uploadFileForm">
+        <div class="row gap_15 mt_5">
+            <div class="col-sm-2 mb_10">
+                <button type="submit" class="btn btn-primary btn-block custom_btn" disabled>
+                    <i class="icon-upload icon-white"></i> Upload
+                </button>
+            </div>
+            <div class="col-sm-10 mb_10">
+                <span class="control-fileupload">
+                    <label for="file1" class="text-left">Choose a file :</label>
+                    <input type="file" id="uploadFile" class="form-control" name="file" accept=".xls,.xlsx">
+                </span>
+            </div>
+            <div class="col-sm-12">
+                <label for="requireUserId" class="text-muted d-inline-flex gap-2 font-500">
+                    <input class="m-0" id="requireUserId" name="requireUserId" type="checkbox" />
+                    Use current user for blank or invalid User ID values
+                </label>
+            </div>
+            <div class="col-sm-10 errorMessage" id="uploadErrorMessage">
+            </div>
+        </div>
+    </form>
+    <div class="row gap_15">
+        <hr />
+        <style>
+            tr.invalidUserId {
+                background-color: pink !important;
+            }
+
+                tr.invalidUserId td {
+                    background-color: pink !important;
+                }
+
+            .validUserId {
+                background-color: white;
+            }
+
+            .errorMessage {
+                color: red;
+            }
+        </style>
+        <div class="col-sm-12 d-inline-flex mb_10" style="display:none;" id="previewLegend">
+            <div style="border: 1px solid red;padding:1px 10px">
+                Invalid User ID values are <span class="invalidUserId">highlighted</span>&nbsp;(<span id="blankCount"></span>) blank, (<span id="invalidCount"></span>) invalid
+            </div>
+        </div>
+        <div class="col-sm-12">
+            <table class="display nowrap stripe" id="DT_FileUploadPreviewTableId" cellspacing="0" align="left">
+                <thead><tr></tr></thead>
+                <tfoot><tr></tr></tfoot>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script asp-add-nonce="true">
+    $(document).ready(function () {
+
+        $("#uploadFileForm").submit(function (evt) {
+            evt.preventDefault();
+            var $thisForm = $(this);
+            var $fileCtl = $("#uploadFile")[0];
+            var files = $fileCtl.files;
+            if (files.length != 1) {
+                alert('File not selected');
+                return;
+            }
+            var $submitButton = $thisForm.find("button[type='submit']");
+            $submitButton.prop('disabled', true);
+            var data = new FormData();
+            data.append('file', files[0]);
+
+            data.append('requireUserId', !($("#requireUserId").prop('checked')));
+            $.ajax({
+                url: '/Request/Upload_v2',
+                enctype: 'multipart/form-data',
+                processData: false,
+                contentType: false,
+                type: 'post',
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                data: data
+            }).done(function (data) {
+                if (data.status == 'error') {
+                    alert(data.message);
+                }
+                else {
+                    $("#uploadFile").val('');
+                    $("#uploadFile").change();
+
+                    $("#DT_FileUploadsTableId").DataTable().ajax.reload(null, false);
+                    $('#DT_PendingRequests').DataTable().ajax.reload(null, false);
+                }
+            }).always(function (data) {
+                $submitButton.prop('disabled', false);
+            });
+            return false;
+        });
+
+        $('#DT_FileUploadsTableId').DataTable(
+            {
+                @*keys: { keys: [13 /* ENTER */, 38 /* UP */, 40 /* DOWN */ ] },*@
+                "scrollX": true,
+                "pageLength": 3,
+                "order": [[3, 'desc']],
+                "columnDefs": [
+                    { "targets": 0, "visible": false, "searchable": false },
+                ],
+                "processing": true,
+                "serverSide": true,
+                "filter": false,
+                "ajax":
+                    {
+                        "url": "@Url.Action("GetFileUploads", "MyServices")",
+                        "type": "POST",
+                        "dataType": "JSON",
+                        headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() }
+                    },
+                "columns": [
+                    { "data": "fileUploadId", "name": "FileUploadId", "autoWidth": true },
+                    { "data": "filename", "name": "FileName", "autoWidth": true },
+                    { "data": "requestCount", "name": "RequestCount", "autoWidth": true, "className": "dt-center" },
+                    {
+                        "data": "dateUploaded", "name": "DateUploaded", "autoWidth": true,
+                        "render": datatable_render_date
+                    },
+                    { "data": "uploadedBy", "name": "UploadedBy", "autoWidth": true },
+                ],
+                //"dom": "<'row'<'col-sm-6'l><'col-sm-6'<'#buttonContainer.site-datatable-button-container'>f>>" + "<'row'<'col-sm-12'tr>>" + "<'row'<'col-sm-5'i><'col-sm-7'p>>",
+            });
+        //$('#DT_FileUploadsTableId').on('key-focus.dt', function (e, datatable, cell) {
+        //    table.row(cell.index().row).select();
+        //});
+
+        //$('#DT_FileUploadsTableId').on('key-blur.dt', function (e, datatable, cell) {
+        //    table.row(cell.index().row).deselect();
+        //});
+    });
+</script>
+
+<script asp-add-nonce="true">
+    var droppedFiles = [];
+
+    //In the following drop handler, if the browser supports DataTransferItemList interface, the getAsFile() method is used to access each file; otherwise the DataTransfer interface's files property is used to access each file.
+    function dropHandler(ev, whichimage) {
+        //console.log('File(s) dropped');
+        $(".drop-zone-" + whichimage).removeClass("dropping");
+        var caption = "";
+        badFiles = "";
+        $(".fileErrNames-" + whichimage).html('');
+        $("#fileErr-" + whichimage).hide();
+        // Prevent default behavior (Prevent file from being opened)
+        ev.preventDefault();
+
+        if (whichimage == 'h') {
+            maxFilesItems = 1
+            maxFilesFiles = 1
+        } else {
+            if (ev.dataTransfer.items)
+                maxFilesItems = ev.dataTransfer.items.length
+            if (ev.dataTransfer.files)
+                maxFilesFiles = ev.dataTransfer.files.length
+        }
+
+        if (ev.dataTransfer.items) {
+            // Use DataTransferItemList interface to access the file(s)
+            for (var i = 0; i < maxFilesItems; i++) {
+                // If dropped items aren't files, reject them
+                if (ev.dataTransfer.items[i].kind === 'file') {
+                    var file = null;
+                    try {
+                        file = ev.dataTransfer.items[i].getAsFile();
+                    } catch (e) {
+                        var dti = ev.dataTransfer.items[i];
+                        var data = dti.getAsString();
+                        var b = new Blob([data], { type: dti.Type });
+                        b.name = dti.name;
+                        b.lastModifiedDate = new Date();
+                        file = b;
+                    }
+                    if (ev.dataTransfer.items[i].type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+                        caption = caption + makeCaption(file.name, i, whichimage);
+                        //console.log(file.size)
+                        //var dti = ev.dataTransfer.items[i];
+                        //var file = dti.getAsFile();
+                        droppedFiles.push(file);
+                    } else {
+                        badFiles = badFiles + file.name + ", ";
+                    }
+                }
+            }
+            $("#captions-" + whichimage).removeClass("hideMe").append(caption);
+            if (badFiles != '') {
+                $("#fileErr-" + whichimage).show();
+                $(".fileErrNames-" + whichimage).html(badFiles)
+            }
+            //            n = n + i;
+
+            // Pass event to removeDragData for cleanup
+            removeDragData(ev)
+        } else {
+            // Use DataTransfer interface to access the file(s)
+            for (var i = 0; i < maxFilesFiles; i++) {
+                var file = ev.dataTransfer.files[i];
+
+                var reader = new FileReader();
+
+                //reader.readAsArrayBuffer(file);
+                reader.onload = function (e) {
+                    //data = reader.result;
+                    var data = null;
+                    if (!e) {
+                        var data = reader.content;
+                        var b = new Blob([data], { type: file.type });
+                        //b.name = dti.name;
+                        b.lastModifiedDate = new Date();
+                        //droppedFiles.push(b);
+                        var pseudoFile = { name: file.name, blob: b, isPseudoFile: true };
+                        droppedFiles.push(pseudoFile);
+                    }
+                    else {
+                        var data = e.target.result;
+                        var b = new Blob([data], { type: file.type });
+                        //b.name = dti.name;
+                        b.lastModifiedDate = new Date();
+                        var pseudoFile = { name: file.name, blob: b, isPseudoFile: true };
+                        droppedFiles.push(pseudoFile);
+                    }
+
+                    //console.log('... file[' + i + '].name = ' + ev.dataTransfer.files[i].name);
+                    caption = caption + makeCaption(file.name, i, whichimage);
+
+                    $("#captions-" + whichimage).removeClass("hideMe").append(caption);
+                    if (badFiles != '') {
+                        $("#fileErr-" + whichimage).show();
+                        $(".fileErrNames-" + whichimage).html(badFiles)
+                    }
+                    //                    n = n + i;
+
+                    // Pass event to removeDragData for cleanup
+                    removeDragData(ev)
+                }
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+    }
+
+    function removeDragData(ev) {
+        //console.log('Removing drag data')
+
+        if (ev.dataTransfer) {
+            if (ev.dataTransfer.items) {
+                // Use DataTransferItemList interface to remove the drag data
+                ev.dataTransfer.items.clear();
+            } else {
+                // Use DataTransfer interface to remove the drag data
+                ev.dataTransfer.clearData();
+            }
+        }
+    }
+    $(".continue .btn").on("click", function () {
+        $(this).parent().hide();
+        $(this).parent().next().show().addClass("continue-show");
+        window.scrollTo(0, document.body.scrollHeight);
+    })
+
+    $(".countMe").each(function (index) {
+        step = index + 1;
+        $(this).find(".section-count span.section-number").html(step);
+        $(this).find(".section-count span.section-total").html($(".countMe").length);
+    });
+
+    function removeDragDataAndClosePanel() {
+        $("#dragDropUploadPanel").hide();
+        $("#showUploadPanelButton").show();
+    }
+    function showUploadPanel() {
+        $("#showUploadPanelButton").hide();
+        $("#dragDropUploadPanel").show();
+    }
+
+
+    function makeCaption(filename, index, photoType) {
+        var n = 0;
+        c = "<div class='caption-box' id='captionBox" + (index + n) + "'><label>File: " + filename + "</label></div>";
+        return c;
+    }
+
+    function captionLength(i) {
+        var m = $(i).attr("data-max");
+        $(i).parent().next().html(i.value.length + " / " + m);
+    }
+
+    function removeCaption(c) {
+        $("#captionBox" + c).remove();
+    }
+
+    function dragOverHandler(ev, whichimage) {
+        //console.log('File(s) in drop zone');
+
+        $(".drop-zone-" + whichimage).addClass("dropping");
+
+
+        // Prevent default behavior (Prevent file from being opened)
+        ev.preventDefault();
+    }
+
+    function dragLeaveHandler(ev, whichimage) {
+        //console.log('File(s) in drop zone');
+
+        $(".drop-zone-" + whichimage).removeClass("dropping");
+
+        // Prevent default behavior (Prevent file from being opened)
+        ev.preventDefault();
+    }
+</script>
+
+<style asp-add-nonce="true">
+    .pending {
+        background: lightblue;
+    }
+
+    .drop-zone-p, .drop-zone-h {
+        width: 100%;
+        background: #efefef;
+        border: 1px dashed #666;
+        height: 100px;
+        border-radius: 5px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 1em 0;
+    }
+
+    .dropping {
+        background: #999;
+    }
+    #DT_FileUploadPreviewTableId.dataTable td {
+        padding-right: 10px;
+    }
+</style>
+<script asp-add-nonce="true">
+    var containsInvalidUserIDs = true;
+    $(document).ready(function () {
+        $('#requireUserId').change(function (e) {
+            var checked = $(this).prop('checked');
+            var $btn = $("#uploadFileForm").find("button[type='submit']");
+            if (checked) {
+                $btn.prop('disabled', false);
+            }
+            else {
+                $btn.prop('disabled', containsInvalidUserIDs);
+            }
+        });
+        $('#uploadFile').change(function (evt) {
+            var labelText = 'Choose a file...';
+            var t = $(this).val();
+            if (t != '') {
+                var selectedFile = evt.target.files[0];
+                labelText = 'File : ' + selectedFile.name;
+                var reader = new FileReader();
+                reader.onload = function (event) {
+                    var data = event.target.result;
+
+                    if ($.fn.DataTable.isDataTable('#DT_FileUploadPreviewTableId')) {
+                        $('#DT_FileUploadPreviewTableId').DataTable().clear().destroy();
+                    }
+                    $('#DT_FileUploadPreviewTableId thead tr').empty();
+                    $("#previewLegend").hide();
+
+                    var workbook = XLSX.read(data, { type: 'binary' });
+
+                    workbook.SheetNames.forEach(function (sheetName) {
+                        var XL_row_object = XLSX.utils.sheet_to_row_object_array(workbook.Sheets[sheetName], { raw: false, defval: "" });
+                        // Validate "User ID" values
+                        var html = "";
+                        var dict = new Object();
+                        dict["blank"] = { "userId": "", "count": 0 };
+                        XL_row_object.forEach(function (item, index) {
+                            var userId = item["User ID"];
+                            if (userId) {
+                                userId = userId.toLowerCase();
+                                if (dict[userId]) {
+                                    dict[userId].count++;
+                                }
+                                else {
+                                    dict[userId] = { userId: userId, count: 1 };
+                                }
+                            }
+                            else {
+                                dict["blank"].count++;
+                            }
+                        });
+                        Object.keys(dict).forEach(function (item, index) {
+                            var user = dict[item];
+                            if (item == "blank") {
+                                html += "(" + user.count + ") empty<br/>";
+                            }
+                            else {
+                                html += "(" + user.count + ") " + user.userId + "<br/>";
+                            }
+                        });
+
+                        var cols = Object.keys(XL_row_object[0]);
+                        var dtColumns = [];
+                        $.each(cols, function (key, value) {
+                            $('#DT_FileUploadPreviewTableId thead tr:first-child').append($('<th>', {
+                                text: value
+                            }));
+                            var c = { data: value, "defaultContent": "" };
+                            dtColumns.push(c);
+                        });
+                        {
+                            var jdata = JSON.stringify(XL_row_object);
+                            var fdata = new FormData();
+                            fdata.append('excelJson', jdata);
+
+                            $.ajax({
+                                url: '/Request/ValidateUpload',
+                                enctype: 'multipart/form-data',
+                                processData: false,
+                                contentType: false,
+                                type: 'post',
+                                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                                data: fdata
+                            }).done(function (data) {
+                                if (data.status == 'error') {
+                                    $("#uploadErrorMessage").text(data.message);
+                                }
+                                else {
+                                    $("#uploadErrorMessage").text('');
+                                    // markup invalid rows
+                                    var f = data;
+                                    if (data.counts.invalidCount > 0 || data.counts.blankCount > 0) {
+                                        containsInvalidUserIDs = true;
+                                        data.validation = data.validation || []; 
+                                        data.validation.forEach(function (item, index) {
+                                            if (item.valid) {
+                                                XL_row_object[index]["validated"] = true;
+                                            }
+                                            else {
+                                                // mark row in table
+                                                XL_row_object[index]["validated"] = false;
+                                            }
+                                        });
+                                        $("#blankCount").text(""+data.counts.blankCount);
+                                        $("#invalidCount").text(""+data.counts.invalidCount);
+                                        $("#previewLegend").show();
+                                    }
+                                    else {
+                                        containsInvalidUserIDs = false;
+                                        $("#previewLegend").hide();
+                                    }
+
+                                    $("#requireUserId").change(); // trigger change event to enable/disable submit
+                                    $('#DT_FileUploadPreviewTableId').DataTable({
+                                        data: XL_row_object,
+                                        columns: dtColumns,
+                                        rowCallback: function( row, data, index ) {
+                                            if (data.validated == true) {
+                                                $(row).removeClass('invalidUserId');
+                                                $(row).addClass('validUserId');
+                                            }
+                                            else if (data.validated == false) {
+                                                $(row).removeClass('validUserId');
+                                                $(row).addClass('invalidUserId');
+                                            }
+                                            else {
+                                                // not yet validated
+                                                $(row).removeClass('validUserId');
+                                                $(row).removeClass('invalidUserId');
+                                            }
+                                        }
+                                    });
+                                }
+                            }).always(function (data) {
+                                // anything to do here?
+                            });
+                        }
+                        $("#uploadFileForm").find("button[type='submit']").prop('disabled', false);
+                    });
+                };
+                reader.readAsBinaryString(selectedFile);
+            }
+            else {
+                $("#uploadFileForm").find("button[type='submit']").prop('disabled', true);
+                if ($.fn.DataTable.isDataTable('#DT_FileUploadPreviewTableId')) {
+                    $('#DT_FileUploadPreviewTableId').DataTable().clear().destroy();
+                }
+                $('#DT_FileUploadPreviewTableId thead tr').empty();
+                $("#previewLegend").hide();
+            }
+
+            $(this).prev('label').text(labelText);
+        });
+    });
+</script>

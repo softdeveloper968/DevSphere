@@ -1,0 +1,92 @@
+﻿@model MyDMVpro.Models.Vendors
+
+@{
+    ViewData["Title"] = "Vendor Agents";
+    ICollection<MyDMVpro.Models.VendorInvite> invites = (ICollection<MyDMVpro.Models.VendorInvite>)ViewData["Invites"];
+}
+
+<h2>Vendor Details</h2>
+
+<div>
+    <hr />
+    <dl class="dl-horizontal">
+        <dt>
+            @Html.DisplayNameFor(model => model.VendorName)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.VendorName)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.VendorCode)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.VendorCode)
+        </dd>
+    </dl>
+    <hr />
+    <div style="margin-left: 40px">
+        <h4>Vendor Agents</h4>
+        <table class="table" style="max-width:600px">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Is Admin</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var agent in Model.VendorAgent)
+                {
+                    <tr>
+                        <td>@Html.DisplayFor(model => agent.Agent.DisplayName)</td>
+                        <td>@Html.DisplayFor(model => agent.Agent.UserPrincipalName)</td>
+                        <td>@Html.DisplayFor(model => agent.IsVendorAdmin)</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot></tfoot>
+        </table>
+        <div><a asp-controller="Vendors" asp-action="Invite" asp-route-vendorId="@Model.VendorId">Send user invite</a></div>
+    </div>
+    <hr />
+    <div>
+        @if (invites.Count == 0)
+        {
+            <div>No pending Invites</div>
+        }
+        else
+        {
+            <div>Pending Invites</div>
+            <table class="table" style=" background-color:#FFFFFF; border: solid 2px #6D7B8D; padding: 5px;width: 99%;table-layout:fixed;" cellpadding="2" cellspacing="2">
+                <thead>
+                    <tr>
+                        <th style="width:60px">Admin</th>
+                        <th style="width:auto">Created</th>
+                        <th style="width:auto">User Email</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var invite in invites)
+                    {
+                        <tr data-inviteid="@invite.Id">
+                            <td>@Html.DisplayFor(modelItem => invite.MakeVendorAdmin)</td>
+                            <td>@invite.DateCreated</td>
+                            <td>@invite.UserEmail</td>
+                            <td>
+                                <input type="button" value="Resend" class="link" style="margin-right: 20px" onclick="return resendInvite('@invite.Id');" />
+                                <input type="button" value="Remove" class="link" onclick="return removeInvite('@invite.Id');" />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                </tfoot>
+            </table>
+        }
+    </div>
+</div>
+<div>
+    <a asp-action="Edit" asp-route-id="@Model.VendorId">Edit</a> |
+    <a asp-action="Index">Back to List</a>
+</div>

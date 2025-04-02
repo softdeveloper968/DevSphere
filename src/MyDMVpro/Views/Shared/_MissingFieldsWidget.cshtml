@@ -1,0 +1,348 @@
+﻿@model MyDMVpro.Models.RequestCode
+@{
+    Dictionary<string, string> fieldValues = null;
+    Dictionary<string, string> fieldValuesBefore = null;
+
+    void initFieldValues()
+    {
+        if (fieldValues == null && !string.IsNullOrWhiteSpace(ViewBag.BeforeValues))
+        {
+            try
+            {
+                fieldValues = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(ViewBag.BeforeValues);
+                fieldValuesBefore = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(ViewBag.BeforeValues);
+            }
+            catch (Exception ex)
+            {
+                // log error
+                System.Diagnostics.Trace.TraceError("Error deserializing JRequest: " + ex.Message);
+            }
+        }
+    }
+
+    string GetFieldValue(string xlName)
+    {
+        if (fieldValues.ContainsKey(xlName))
+        {
+            return fieldValues[xlName].ToString();
+        }
+        return "";
+    }
+
+    initFieldValues();
+}
+
+<div class="row gap_15">
+    <div class="col-md-8">
+        <h4 class="text-center">Current Issue</h4>
+        <div class="row gap_15">
+            <div class="col-md-6">
+                <input type="hidden" name="FieldId" value="@Model?.Fields?.FirstOrDefault()?.FieldId" class="form-control" readonly="true" />
+                <input type="hidden" name="RequestCodeId" value="@Model?.RequestCodeId" class="form-control" readonly="true" />
+                <input type="hidden" name="MissingFieldRequestId" value="@Model?.Request.RequestId" class="form-control" readonly="true" />
+
+                <div class="form-group">
+                    <label>Field:</label>
+                    <input type="text" name="Field" value="@Model?.Fields?.FirstOrDefault()?.Field?.ExcelName" class="form-control" readonly="true" />
+                </div>
+                <div class="form-group">
+                    <label>Note:</label>
+                    <input type="text" name="Note" value="@Model.Note" class="form-control" readonly="true" />
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Current Value:</label>
+                    <input type="text" name="CurrentValue" class="form-control" readonly="true" />
+                </div>
+                <div class="form-group">
+                    <label>Suggested Resolution:</label>
+                    <input type="text" name="SuggestedResolution" value="@Model.Note" class="form-control" readonly="true" />
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <h4 class="text-center">Submit Updated Data</h4>
+        <div class="form-group">
+            <label>New Value:</label>
+            <input type="text" name="NewValue" class="form-control" />
+        </div>
+        <div class="form-group">
+            <label>Note About New Value:</label>
+            <input type="text" name="NoteAboutNewValue" class="form-control" />
+        </div>
+        <div class="text-right">
+            <button type="submit" class="btn btn-success custom_btn" id="missingFieldsWidget_saveButton">
+                SUBMIT
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+
+    $(document).ready(function () {
+        var inpValue = '@Model.Fields?.FirstOrDefault()?.Field?.ExcelName' || '';
+        var fieldValuesBefore = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(fieldValuesBefore ?? new Dictionary<string, string>()));
+        var inputValue = '@Html.Raw(GetFieldValue(@Model.Fields?.FirstOrDefault()?.Field?.ExcelName))';
+        $("input[name='CurrentValue']").val(inputValue);
+
+        $("#missingFieldsWidget_saveButton").click(function (e) {
+            e.preventDefault();
+            console.log($("input[name='MissingFieldRequestId']")); 
+            console.log($("input[name='MissingFieldRequestId']").val()); 
+            let x = $("input[name='MissingFieldRequestId']").prop('value');
+
+            var proposedUpdates = {
+                RequestCodeId: $("input[name='RequestCodeId']").val(), 
+                NewValue: $("input[name='NewValue']").val(),
+                NewNote: $("input[name='NoteAboutNewValue']").val(),
+                RequestId: $("input[name='MissingFieldRequestId']").val(), 
+                FieldId: $("input[name='FieldId']").val(), 
+            };
+
+            $.ajax({
+                url: '/MyServices/AddProposedUpdates',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(proposedUpdates),
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                success: function (response) {
+                    jqToast.success({
+                        text: 'File uploaded successfully.'
+                    });
+
+                    const uploadDocumentSection = document.getElementById('missing-DataWidget');
+                    if (uploadDocumentSection) {
+                        uploadDocumentSection.style.display = 'none';
+                    }
+
+                    const dataFieldWidgetContainer = document.getElementById('dataFieldWidgetContainer');
+                    if (dataFieldWidgetContainer) {
+                        dataFieldWidgetContainer.style.display = 'none';
+                    }
+
+                    window.location.reload();
+                  
+                },
+                error: function (xhr, status, error) {
+                    alert("An error occurred while submitting data.");
+                    console.error(error);
+                }
+            });
+
+        });
+    });
+
+    function checkForDigitalDocumentsDynamicRenderText() {
+        let HasDataPoints = false;
+        const tableRows = $('#missingAttachmentsTable tbody tr');
+        if (tableRows.length > 0) 
+        { 
+            HasDataPoints = true
+            const warningSection = document.getElementById('warningContainer_data');
+            warningSection.style.display = 'block';
+            var htmlText = "Thank you for submitting your updated data, it will be reviewed by a member of our team ASAP! Please select another needed data point in the list below to continue 😊"
+            $('#warningContainer_missingData').find('.panel-body').html(htmlText);
+
+        }
+        else {
+            const warningSection = document.getElementById('warningContainer_data');
+            warningSection.style.display = 'block';
+            var htmlText = "Thank you for submitting your updated data, it will be reviewed by a member of our team ASAP! It looks like there are no more data updates needed from you at this time. Check back here later to see if you need to provide any new data at that time 😊"
+            $('#warningContainer_missingData').find('.panel-body').html(htmlText);
+
+        }
+    }
+
+    function requestLookup_showInformation(requestId) {
+        var $panel = $("#informationEditPanel");
+        $panel.hide();
+        $panel.data("reqid", requestId);
+        $panel.find(".panel-body").empty().html('');
+
+        $.ajax({
+            url: '/Requests/InformationCodes/' + requestId,
+            type: 'POST',
+            async: true,
+            //data: formData,
+            dataType: 'text',
+            cache: false,
+            contentType: false,
+            processData: false,
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+        }).done(function (data) {
+            $panel.find('.panel-body').html(data);
+            $panel.find('.btn-close').hide();
+            $panel.show();
+        });
+    }
+
+    function GetFieldValue(xlName) {
+        return fieldValuesBefore?.[xlName] || "";
+    }
+
+    function loadDataPartialView() {
+
+        $.ajax({
+            url: "/MyServices/NeededDataRequestCodes",
+            type: 'POST',
+            async: true,
+            dataType: 'html',
+            cache: false,
+            contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+            processData: true,
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            success: function (response) {
+
+                var data = JSON.parse(response)
+                messageParts.dataRequests = (data && data.length > 0) ? `${data.length} data requests` : "";
+                updateMessageContainer();
+
+                if ($.fn.DataTable.isDataTable('#missingDataTable')) {
+                    $('#missingDataTable').DataTable().clear().destroy();
+                    $('#missingDataTable tbody').empty();
+                }
+
+                var table = $('#missingDataTable').DataTable({
+                    data: data,
+                    "autoWidth": false,
+                    "paging": true,
+                    "pageLength": 10,
+                    "scrollX": true,
+                    "scrollY": "400px",
+                    "scrollCollapse": true,
+                    "searching": true,
+                    "info": true,
+                    "lengthChange": true,
+                    "ordering": true,
+                    "language": {
+                        emptyTable: "No missing attachments available"
+                    },
+                    "buttons": [
+                        {
+                            extend: 'collection',
+                            className: 'btn-export-auditlookup',
+                            text: 'Export',
+                            buttons: [
+                                {
+                                    extend: 'copy',
+                                    text: 'Copy',
+                                    exportOptions: {
+                                        columns: ':visible'
+                                    }
+                                },
+                                {
+                                    extend: 'excelHtml5',
+                                    text: 'Excel',
+                                    autoFilter: true,
+                                    sheetName: 'myDMV.pro',
+                                    exportOptions: {
+                                        columns: ':visible'
+                                    }
+                                },
+                                {
+                                    extend: 'pdfHtml5',
+                                    text: 'PDF',
+                                    orientation: 'landscape',
+                                    pageSize: 'LEGAL',
+                                    exportOptions: {
+                                        columns: ':visible'
+                                    }
+                                },
+                                {
+                                    extend: 'print',
+                                    text: 'Print',
+                                    exportOptions: {
+                                        columns: ':visible'
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    columns: [
+                        { data: 'requestNumber', title: '', render: function (data) { return `<input type="checkbox" class="selectRow" value="${data}" data-id="${data}" />`; } },
+                        { data: null, title: '', render: getfn_datatable_render_group_editrequest() }, // Dynamically render the edit form link
+                        { data: 'tagName', title: 'Tag Name' },
+                        { data: 'note', title: 'Note' },
+                        { data: 'resolution', title: 'Resolution' },
+                        { data: 'processStageId', title: 'Process Stage Name', render: function (data) { return getProcessstageName(data); } },
+                        { data: 'vin', title: 'VIN' },
+                        { data: 'state', title: 'State' },
+                        { data: 'type', title: 'Type' },
+                        { data: 'dateToVendor', title: 'Date To Vendor', render: function (data) { return data ? formatDateForDisplay(data) : ''; } },
+                        { data: 'requestNumber', title: 'Request Number' }
+                    ]
+                });
+
+                function formatDateForDisplay(date) {
+                    return new Date(date).toLocaleDateString();
+                }
+
+                function getProcessstageName(id) {
+                    switch (id) {
+                        case 2:
+                            return "Incoming";
+                            break;
+                        case 12:
+                            return "Not Ready To Process";
+                            break;
+                        case 99:
+                            return "Hold";
+                            break;
+                        default:
+                            return "";
+                    }
+                }
+
+                table.buttons().container().appendTo('#export-button-data-needed');
+
+                table.columns.adjust();
+
+                const uploadDocumentSection = document.getElementById('missing-DataWidget');
+
+                $('#missingDataTable').on('click', '.selectRow', function () {
+                    $('.selectRow').not(this).prop('checked', false);
+                    $('.selectRow').not(this).closest('tr').removeClass('selected');
+
+                    var isChecked = $(this).prop('checked');
+                    var id = $(this).prop("data-id");
+
+                    if (isChecked) {
+                        $(this).closest('tr').addClass('selected');
+                        var selectedRow = $(this).closest('tr');
+                        const rowData = table.row(selectedRow).data();
+                        updateSelectAllCheckbox(rowData.requestCodeId, rowData.fieldId);
+
+                    }
+                    else {
+                        $(this).closest('tr').removeClass('selected');
+                        uploadDocumentSection.style.display = 'none';
+                        const warningSection = document.getElementById('warningContainer');
+                        warningSection.style.display = 'none';
+
+                    }
+
+                });
+
+                function updateSelectAllCheckbox(checkboxValue, dataFieldId) {
+                    var totalRows = $('.selectRow').length;
+                    var selectedRows = $('.selectRow:checked').length;
+                    $('#selectAll').prop('checked', totalRows === selectedRows);
+
+                    fetchRequestFieldData(checkboxValue, dataFieldId)
+                }
+
+            },
+            error: function (xhr, status, error) {
+                container.html("<div class='error'>Failed to load data. Please try again.</div>");
+                console.error("Error loading partial view:", error);
+            }
+        });
+    }
+
+</script>
+
+

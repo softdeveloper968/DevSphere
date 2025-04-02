@@ -1,0 +1,80 @@
+﻿@model MyDMVpro.Models.NoticesView
+
+<div class="row">
+    <div class="col-md-12">
+        <form asp-controller="Requests" asp-action="UpdateNotices" method="post" id="requestNoticeForm">
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            @Html.HiddenFor(r => r.Request.RequestId)
+            <div>
+                <h4>Police Agency</h4>
+                <div class="form-group">
+                    <label asp-for="Request.PoliceAgencyNotified" class="control-label">Name</label>
+                    <input asp-for="Request.PoliceAgencyNotified" class="form-control" list="PoliceAgencyList" />
+                    <datalist id="PoliceAgencyList">
+                        @foreach (var agency in Model.PoliceAgencies)
+                        {
+                            <option value="@(agency.NameAndAddress)" />
+                        }
+                    </datalist>
+                    <span asp-validation-for="Request.PoliceAgencyNotified" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Request.PoliceNotificationDate" class="control-label">Date</label>
+                    <input asp-for="Request.PoliceNotificationDate" class="form-control" />
+                    <span asp-validation-for="Request.PoliceNotificationDate" class="text-danger"></span>
+                </div>
+                <hr />
+            </div>
+            <div>
+                <h4>DMV District Office</h4>
+                <div class="form-group">
+                    <label asp-for="Request.DmvDistrictOfficeNotified" class="control-label">Name</label>
+                    <input asp-for="Request.DmvDistrictOfficeNotified" class="form-control" list="DmvDistrictOfficeList" />
+                    <datalist id="DmvDistrictOfficeList">
+                        @foreach (var dmv in Model.Dmvoffices)
+                        {
+                            <option value="@(dmv.NameAndAddress)" />
+                        }
+                    </datalist>
+                    <span asp-validation-for="Request.DmvDistrictOfficeNotified" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Request.DmvNotificationDate" class="control-label">Date</label>
+                    <input asp-for="Request.DmvNotificationDate" class="form-control" />
+                    <span asp-validation-for="Request.DmvNotificationDate" class="text-danger"></span>
+                </div>
+                <hr />
+            </div>
+            <div>
+                <h4>Other</h4>
+                <div class="form-group">
+                    <label asp-for="Request.OtherNotifiedName" class="control-label">Name</label>
+                    <input asp-for="Request.OtherNotifiedName" class="form-control" />
+                    <span asp-validation-for="Request.OtherNotifiedName" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Request.OtherNotifiedDate" class="control-label">Date</label>
+                    <input asp-for="Request.OtherNotifiedDate" class="form-control" />
+                    <span asp-validation-for="Request.OtherNotifiedDate" class="text-danger"></span>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script asp-add-nonce="true">
+    $(function () {
+        $("#requestNoticeForm").submit(function (e) {
+            e.preventDefault();
+            $form = $("#requestNoticeForm");
+            $.ajax({
+                url: $form.attr('action'),
+                type: 'POST',
+                data: $form.serialize()
+            }).done(function (data) {
+            });
+            return false;
+        });
+    });
+</script>

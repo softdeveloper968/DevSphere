@@ -1,0 +1,647 @@
+﻿@model IEnumerable<dynamic>
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+<script src="~/js/taxcalculator.js" asp-append-version="true"></script>
+
+<h2 class="sub_heading">Tax Rate Configuration</h2>
+<div id="stateConfigPanel" class="white_box p_15 mb_20" style="display: flex; justify-content: space-between; align-items: center;">
+    <div style="display:flex;align-items:start;gap:5px">
+        <input type="checkbox" id="enableTaxRateFetchFromApiCheckbox"> Enable Tax Rate Fetching from API
+    </div>
+    <div style="display:flex;align-items:start;gap:5px">
+        <input type="checkbox" id="includeCityTaxCheckbox"> Include City Tax
+    </div>
+    <div style="display:flex;align-items:start;gap:5px">
+        <input type="checkbox" id="includeCountyTaxCheckbox"> Include County Tax
+    </div>
+    <div style="display:flex;align-items:start;gap:5px">
+        <input type="checkbox" id="includeSpecialDistrictTaxCheckbox"> Include Special District Tax
+    </div>
+    <div style="display:flex;align-items:start;gap:5px">
+        <input type="checkbox" id="includeStateTaxCheckbox"> Include State Tax
+    </div>
+</div>
+
+
+<div style="display: flex;justify-content: space-between;align-items: end;">
+    <h2 class="sub_heading">Tax Rules</h2>
+        <button id="saveTaxRulesBtn" class="btn btn-success custom_btn" style="display:none; margin-bottom:5px;height:30px">
+            Save
+        </button>
+</div>
+<div class="table-responsive white_box p_15 mb_20">
+    <table id="taxRulesTable" class="table">
+        <thead>
+            <tr>
+                <th>Item Name</th>
+                <th>Is Applicable</th>
+                <th>Requires Tax Rate Fetch</th>
+                <th>Taxable</th>
+                <th>Tax Rate</th>
+                <th>Max Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr class="@(item.ItemID % 2 == 0 ? "tax-row-even" : "tax-row-odd")">
+                    <td>@item.ItemName</td>
+                    <td>
+                        <input type="checkbox" name="IsApplicable_@item.ItemID" @(item.TaxRule != null && item.TaxRule.IsApplicable ? "checked" : "") />
+                    </td>
+                    <td>
+                        <input type="checkbox" name="RequiresTaxRateFetch_@item.ItemID" @(item.TaxRule != null && item.TaxRule.RequiresTaxRateFetch ? "checked" : "") />
+                    </td>
+                    <td>
+                        <input type="number" step="0.01" name="Taxable_@item.ItemID"
+                               value="@(item.TaxRule != null && item.TaxRule.Taxable != null ? item.TaxRule.Taxable.ToString("0.########") : "")"
+                               placeholder="0"
+                               class="form-control" />
+                    </td>
+                    <td>
+                        <input type="number" step="0.01" name="TaxRate_@item.ItemID"
+                               value="@(item.TaxRule != null && item.TaxRule.TaxRate != null ? item.TaxRule.TaxRate.ToString("0.########") : "")"
+                               placeholder="0"
+                               class="form-control" />
+                    </td>
+                    <td class="tax-max-value">
+                        <div class="d-flex items-center" style="display: flex;">
+                            <span class="tax-currency-symbol">$</span>
+                            <input type="number" step="0.01" name="MaxValue_@item.ItemID"
+                                   value="@(item.TaxRule != null && item.TaxRule.MaxTaxableAmount != null ? item.TaxRule.MaxTaxableAmount.ToString("0.########") : "")"
+                                   placeholder="0"
+                                   class="form-control tax-padded-input" />
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+
+<h2 class="sub_heading">Create Formula</h2>
+<div class="white_box p_15 mb_20">
+    <div class="white_box p_15 mb_20" style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display:flex;align-items:start;gap:5px">
+            <input type="radio" name="formula" value="totalTaxableAmount" id="totalTaxableAmountRadio" checked> Total Taxable Amount
+        </div>
+        <div style="display:flex;align-items:start;gap:5px">
+            <input type="radio" name="formula" value="totalTaxDue" id="totalTaxDueRadio"> Total Tax Due
+        </div>
+        <div style="display:flex;align-items:start;gap:5px">
+            <input type="radio" name="formula" value="totalTaxPaidOtherState" id="totalTaxPaidOtherStateRadio"> Total Tax Paid to Other State
+        </div>
+        <div style="display:flex;align-items:start;gap:5px">
+            <input type="radio" name="formula" value="totalLeftOverTitlingState" id="totalLeftOverTitlingStateRadio"> Total Left Over to Titling State
+        </div>
+    </div>
+    <div id="formulaCreation">
+        <div class="row flex_row items-end">
+            <!-- Items Box -->
+            <div id="itemsBox" class="white_box p_15 mb_20" style="width:100%;margin: 10px;">
+                <div class="p-3 border rounded bg-white shadow-sm">
+                    <h1 class="sub_heading">Items</h1>
+                    <div class="d-flex flex-wrap justify-content-center gap-2">
+                        @foreach (var item in Model)
+                        {
+                            <button class="btn btn-outline-secondary item-btn" data-item-id="@item.ItemID" style="margin:5px">@item.ItemName</button>
+                        }
+                    </div>
+                </div>
+            </div>
+            <!-- Operators Box -->
+            <div style="margin: 10px;">
+                <div id="operatorsBox" class="white_box p_15 mb_20" style="display:inline-flex !important">
+                    <div class="p-3 border rounded bg-white shadow-sm">
+                        <h1 class="sub_heading">Operators</h1>
+                        <div class="d-flex flex-wrap justify-content-center gap-2" style="display:block !important">
+                            <button class="btn btn-outline-secondary operator-btn" data-operator="+">+</button>
+                            <button class="btn btn-outline-secondary operator-btn" data-operator="-">-</button>
+                            <button class="btn btn-outline-secondary operator-btn" data-operator="*">*</button>
+                            <button class="btn btn-outline-secondary operator-btn" data-operator="/">/</button>
+                            <button class="btn btn-outline-secondary operator-btn" data-operator="(">(</button>
+                            <button class="btn btn-outline-secondary operator-btn" data-operator=")">)</button>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <button id="saveFormula" class="btn btn-primary custom_btn">Save Formula</button>
+                    <button id="clearLast" class="btn btn-danger custom_btn">Clear Last</button>
+                </div>
+            </div>
+        </div>
+        <!-- Current Formula Display -->
+        <div style="margin-top: 20px;">
+            <div>
+                <span>Current Formula:</span>
+                <span class="sub_heading" id="currentFormulaDisplay"></span>
+            </div>
+            <div>
+                <span>New Formula:</span>
+                <span class="sub_heading" id="formulaDisplay"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<h2 class="sub_heading">All Formula(s)</h2>
+<div class="white_box p_15 mb_20">
+    <div class="white_box" style="padding: 10px;margin:5px;">
+        <span>Total Taxable Amount:</span>
+        <span class="sub_heading" id="totalTaxableAmount" style="color:#1499e5"></span>
+    </div>
+    <div class="white_box" style="padding: 10px;margin:5px;">
+        <span>Total Tax Due:</span>
+        <span class="sub_heading" id="totalTaxDue" style="color:#1499e5"></span>
+    </div>
+    <div class="white_box" style="padding: 10px;margin:5px;">
+        <span>Total Tax Paid to Other State:</span>
+        <span class="sub_heading" id="totalTaxPaidOtherState" style="color:#1499e5"></span>
+    </div>
+    <div class="white_box" style="padding: 10px;margin:5px;">
+        <span>Total Left Over to Titling State:</span>
+        <span class="sub_heading" id="totalLeftOverTitlingState" style="color:#1499e5"></span>
+    </div>
+</div>
+
+<button type="button" class="btn btn-primary" onclick="toggleSection()" style="margin:0 0 15px 0">
+    Test Calculator
+</button>
+
+<div id="calculateSection" style="display: none;">
+    <div class="table-responsive white_box p_15 mb_20">
+        <div style="display: flex; justify-content: space-between; margin:inherit">
+            <div><i class="fa fa-info-circle info-icon" id="infoIconTR"></i></div>
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 20px;">
+                <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                    <label for="streetAddress" class="form-label" style="white-space: nowrap;">Street Address:</label>
+                    <input type="text" id="streetAddressTR" class="form-control" placeholder="Enter Street Address" style="flex: 1;">
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                    <label for="zipCode" class="form-label" style="white-space: nowrap;">Zip Code:</label>
+                    <input type="text" id="zipCodeTR" class="form-control" placeholder="Enter Zip Code" style="flex: 1;">
+                </div>
+            </div>
+            <div>
+            <button type="button" class="btn btn-primary custom_btn" id="calculateButton" onclick="calculateTax()">Calculate</button>
+            <button type="button" class="btn btn-info custom_btn" onclick="setRandomValues()"><i class="fas fa-dice"></i></button>
+            <button type="button" class="btn btn-warning custom_btn" onclick="resetFields()">Reset</button>
+            <button type="button" class="btn btn-secondary custom_btn" onclick="toggleSection()">Close</button>
+            </div>
+        </div>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Item Name</th>
+                    <th>Value</th>
+                    <th>Taxable Amount</th>
+                    <th>Tax Due</th>
+                </tr>
+            </thead>
+            <tbody id="itemGrid">
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.ItemName</td>
+                        <td>
+                            <div class="d-flex items-center" style="display: flex;">
+                                <span class="tax-currency-symbol">$</span>
+                            <input type="number" class="form-control" placeholder="Enter value" name="itemValue_@item.ItemID" data-item-name="@item.ItemName" />
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex items-center" style="display: flex;">
+                                <span class="tax-currency-symbol">$</span>
+                                <input type="text" class="form-control taxable-amount" name="taxableAmount_@item.ItemID" data-item-name="@item.ItemName" readonly />
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex items-center" style="display: flex;">
+                                <span class="tax-currency-symbol">$</span>
+                            <input type="text" class="form-control tax-due" name="taxDue_@item.ItemID" data-item-name="@item.ItemName" readonly />
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <div >
+            <label>Total Taxable Amount:</label>
+            <input type="text" id="calTotalTaxableAmount" class="form-control" readonly />
+
+            <label>Total Tax Due:</label>
+            <input type="text" id="calTotalTaxDue" class="form-control" readonly />
+
+            <label>Total Tax Paid (Other State):</label>
+            <input type="text" id="calTotalTaxPaidOtherState" class="form-control" readonly />
+
+            <label>Total Leftover (Titling State):</label>
+            <input type="text" id="calTotalLeftOverTitlingState" class="form-control" readonly />
+        </div>
+    </div>
+</div>
+
+<div id="taxBreakdownModalTR" class="tax-modal">
+    <div class="tax-modal-content">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+            <h3 class="sub_heading">Tax Breakdown</h3>
+            <button class="close-modal" style="font-size:25px">&times;</button>
+        </div>
+        <div id="taxBreakdownTR"></div>
+    </div>
+</div>
+
+
+<script>
+       $(document).ready(function () {
+                   let modalTimeout;
+             $("#infoIconTR").off('mouseenter').on('mouseenter', function () {
+        clearTimeout(modalTimeout);
+        $modalForm = $("#taxBreakdownModalTR");
+        $modalForm.find('#taxBreakdownTR').html($("#taxBreakdownTR").html());
+        positionModal($('#infoIconTR'), $('#taxBreakdownModalTR'));
+        $modalForm.fadeIn();
+            bindExpandFunctionality();
+    });
+
+    $("#taxBreakdownModalTR").off('mouseenter').on('mouseenter', function () {
+        clearTimeout(modalTimeout);
+    });
+
+    $("#taxBreakdownModalTR").off('mouseleave').on('mouseleave', function () {
+        modalTimeout = setTimeout(() => {
+            $("#taxBreakdownModalTR").fadeOut();
+        }, 500);
+    });
+
+    $(".close-modal").off('click').on('click', function (e) {
+        e.preventDefault();
+        $("#taxBreakdownModalTR").fadeOut();
+    });
+        let currentFormula = [];
+        let addedItems = new Set();
+        const items = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model));
+        resetFields();
+        const radioButtons = document.querySelectorAll('input[name="formula"]');
+        radioButtons.forEach((radio) => {
+            radio.addEventListener('change', () => {
+                reloadTaxFormulaSection();
+                addedItems = new Set();
+                updateItemBox();
+                currentFormula = [];
+            });
+        });
+
+        reloadTaxFormulaSection();
+        reloadAllFormulaSection();
+
+            $('#enableTaxRateFetchFromApiCheckbox').on('change', function () {
+        toggleTaxOptions();
+    });
+        $("input[name^='RequiresTaxRateFetch_']").change(function () {
+        var checkbox = $(this);
+        var itemId = checkbox.attr('name').split('_')[1];
+        var enableTaxRateFetchCheckbox = $("#enableTaxRateFetchFromApiCheckbox");
+
+        // Check if "Enable Tax Rate Fetching from API" is checked
+        if (checkbox.prop('checked') && !enableTaxRateFetchCheckbox.prop('checked')) {
+            checkbox.prop('checked', false); // Prevent checking the box
+            jqToast.error({text:"Please enable the Tax Rate Fetching from API first."});
+        }
+    });
+        fetchStateConfig();
+
+        // Save state config when any checkbox is changed
+        $('#stateConfigPanel input[type="checkbox"]').change(function () {
+         saveStateConfig();
+        });
+
+        // Store initial values of the rows to detect changes
+        $('#taxRulesTable tbody tr').each(function () {
+            var row = $(this);
+            var itemId = row.find("input[name^='Taxable_']").attr('name').split('_')[1]; // Extract itemId safely
+
+            row.data('originalIsApplicable', row.find("input[name='IsApplicable_" + itemId + "']").prop('checked').toString());
+            row.data('originalRequiresTaxRateFetch', row.find("input[name='RequiresTaxRateFetch_" + itemId + "']").prop('checked').toString());
+            row.data('originalTaxable', row.find("input[name='Taxable_" + itemId + "']").val());
+            row.data('originalTaxRate', row.find("input[name='TaxRate_" + itemId + "']").val());
+            row.data('originalMaxValue', row.find("input[name='MaxValue_" + itemId + "']").val());
+        });
+
+        // Event listener for "Is Applicable" checkbox changes
+        $("input[name^='IsApplicable_']").change(function () {
+            var checkbox = $(this);
+            var itemId = checkbox.attr('name').split('_')[1]; 
+            var taxableInput = $("input[name='Taxable_" + itemId + "']");
+
+            // Set the Taxable field based on the checkbox state
+            if (checkbox.prop('checked')) {
+                taxableInput.val(1);
+            } else {
+                taxableInput.val(0);
+            }
+        });
+        // Save button click functionality
+        $('#saveTaxRulesBtn').click(function (e) {
+            e.stopImmediatePropagation();
+            var allRules = []; // Array to store all rules data
+            var changesDetected = false; // Flag to check if changes exist
+
+            $('#taxRulesTable tbody tr').each(function () {
+                var row = $(this);
+                var nameAttr = row.find("input[name^='Taxable_']").attr('name');
+
+                // Skip this row if name attribute is undefined
+                if (!nameAttr) {
+                    return; // Continue to the next iteration
+                }
+
+                var itemId = nameAttr.split('_')[1]; // Extract itemId safely
+
+                // Check if the row was changed
+                if (checkForChanges(row, itemId)) {
+                    changesDetected = true; // Set flag to true if any change is detected
+                }
+
+                // Gather data for the current row
+                var rule = {
+                    ItemID: itemId,
+                    IsApplicable: $("input[name='IsApplicable_" + itemId + "']").prop('checked'),
+                    RequiresTaxRateFetch: $("input[name='RequiresTaxRateFetch_" + itemId + "']").prop('checked'),
+                    Taxable: $("input[name='Taxable_" + itemId + "']").val() || null,
+                    TaxRate: $("input[name='TaxRate_" + itemId + "']").val() || null,
+                    MaxValue: $("input[name='MaxValue_" + itemId + "']").val() || null,
+                    StateID: $('#stateSelect').val(),
+                    JurisdictionId: $('#jurisdictionSelect').val()
+                };
+                allRules.push(rule); // Add the rule to the array
+            });
+            if (changesDetected) {
+                // Send the updated rules to the server via AJAX
+                $.ajax({
+                    url: '@Url.Action("SaveTaxRules", "Tax")', // The action to save rules
+                    type: 'POST',
+                    headers: {
+                        'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val()
+                    },
+                    data: JSON.stringify(allRules), // Send the updated rules
+                    contentType: 'application/json',
+                    success: function(response) {
+                        if (response.success) {
+                            jqToast.success({
+                                text: 'Tax rules saved successfully!'
+                            });
+                            reloadTaxRulesSection();
+                        } else {
+                            jqToast.error({
+                                text: response.message || 'An error occurred while saving the tax rules.'
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        jqToast.error({
+                            text: 'An error occurred while saving the tax rules.'
+                        });
+                    }
+                });
+            } else {
+                jqToast.error({
+                    text: 'No changes were made to the tax rules.'
+                });
+            }
+        });
+
+        // Function to update the item box (now with clickable items)
+        function updateItemBox() {
+            // Clear the item box and add the container structure
+            $('#itemsBox').empty().append(`
+            <div class="p-3 border rounded bg-white shadow-sm" style="width:100%">
+                <h1 class="sub_heading">Items</h1>
+                <div class="d-flex flex-wrap justify-content-center gap-2" style="display:block !important">
+        `);
+
+            // Iterate over the items and add them as buttons
+            items.forEach(item => {
+                if (!addedItems.has(item.ItemName)) {
+                    $('#itemsBox .d-flex').append(`<button class="btn btn-outline-secondary item-btn" data-item-id="${item.ItemID}" style="margin:5px">${item.ItemName}</button>`);
+                }
+            });
+
+            // Close the div tags
+            $('#itemsBox').append('</div></div>');
+        }
+
+
+        // Add selected item/operator to formula when clicked
+        $(document).on('click', '.item-btn', function () {
+            const selectedItem = $(this).text(); // Get the text of the clicked item
+            // Check for consecutive items or operators
+            if (currentFormula.length > 0) {
+                const lastElement = currentFormula[currentFormula.length - 1];
+
+                // Check for consecutive items (numbers or items from the list)
+                if (items.some(item => item.ItemName === lastElement) && items.some(item => item.ItemName === selectedItem)) {
+                    jqToast.error({
+                        text: 'You cannot have consecutive items.'
+                    });
+                    return;
+                }
+
+                // Check for consecutive operators
+                if (['+', '-', '*', '/'].includes(lastElement) && ['+', '-', '*', '/'].includes(selectedItem)) {
+                    jqToast.error({
+                        text: 'You cannot have consecutive operators.'
+                    });
+                    return;
+                }
+            }
+
+            // Add the selected item to the formula
+            if (selectedItem) {
+                currentFormula.push(selectedItem);
+                addedItems.add(selectedItem);
+                $('#formulaDisplay').text(currentFormula.join(' '));
+
+                // Update the item box to disable the selected item
+                updateItemBox();
+            }
+        });
+
+        $(document).on('click', '.operator-btn', function () {
+            const selectedOperator = $(this).data('operator'); // Get the data operator of the clicked button
+
+            // Validation: Ensure parentheses placement is correct
+            if (selectedOperator === '(' && currentFormula.length > 0) {
+                const lastElement = currentFormula[currentFormula.length - 1];
+                if (!['+', '-', '*', '/'].includes(lastElement)) {
+                    jqToast.error({
+                        text: 'You must add an operator before adding "(".'
+                    });
+                    return;
+                }
+            }
+
+            if (selectedOperator === ')' && currentFormula.length > 0) {
+                const lastElement = currentFormula[currentFormula.length - 1];
+                if (!items.some(item => item.ItemName === lastElement)) {
+                    jqToast.error({
+                        text: 'You must add an item before adding ")".'
+                    });
+                    return;
+                }
+            }
+
+            if (selectedOperator === ")" && (currentFormula.length === 0 || currentFormula[currentFormula.length - 1] === "(")) {
+                jqToast.error({
+                    text: 'Invalid placement of closing parenthesis.'
+                });
+                return;
+            }
+
+            if (selectedOperator === "(" && currentFormula.length > 0 && !isNaN(currentFormula[currentFormula.length - 1])) {
+                jqToast.error({
+                    text: 'Invalid placement of opening parenthesis.'
+                });
+                return;
+            }
+
+            // Check for consecutive operators
+            if (currentFormula.length > 0) {
+                const lastElement = currentFormula[currentFormula.length - 1];
+                if (['+', '-', '*', '/'].includes(lastElement) && ['+', '-', '*', '/'].includes(selectedOperator)) {
+                    jqToast.error({
+                        text: 'You cannot have consecutive operators.'
+                    });
+                    return;
+                }
+            }
+
+            // Add the selected operator to the formula
+            if (selectedOperator) {
+                currentFormula.push(selectedOperator);
+                $('#formulaDisplay').text(currentFormula.join(' '));
+            }
+        });
+
+        // Remove the last element from the formula
+        $('#clearLast').click(function () {
+            if (currentFormula.length > 0) {
+                const removedElement = currentFormula.pop();
+                if (addedItems.has(removedElement)) {
+                    addedItems.delete(removedElement);
+                }
+                $('#formulaDisplay').text(currentFormula.join(' '));
+                updateItemBox();
+            }
+        });
+
+        // Save the formula to the database
+        $('#saveFormula').click(function () {
+            if (currentFormula.length === 0) {
+                jqToast.error({
+                    text: 'No formula to save!'
+                });
+                return;
+            }
+
+            // Basic validation for matching parentheses
+            const openParentheses = currentFormula.filter((item) => item === '(').length;
+            const closeParentheses = currentFormula.filter((item) => item === ')').length;
+
+            if (openParentheses !== closeParentheses) {
+                jqToast.error({
+                    text: 'Mismatched parentheses in the formula.'
+                });
+                return;
+            }
+            var selectedFormula = document.querySelector('input[name="formula"]:checked').value;
+
+            var formula = {
+                Id: selectedFormula,
+                Formula: currentFormula.join('') || "",
+                StateID: $('#stateSelect').val(),
+                JurisdictionId: $('#jurisdictionSelect').val()
+            };
+            // Save the formula to the database
+            $.ajax({
+                url: '@Url.Action("SaveFormula", "Tax")',
+                type: 'POST',
+                headers: {
+                    'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val()
+                },
+                data: JSON.stringify(formula),
+                contentType: 'application/json',
+                success: function (response) {
+                if (response.success) {
+                    reloadTaxFormulaSection();
+                    reloadAllFormulaSection();
+                    addedItems = new Set();
+                    updateItemBox();
+                    currentFormula = [];
+                    jqToast.success({
+                        text: 'Formula saved successfully!'
+                    });
+                } else {
+                    jqToast.error({
+                        text: response.message || 'An error occurred while saving the formula.'
+                    });
+                }
+            },
+            error: function () {
+                jqToast.error({
+                    text: 'An error occurred while saving the formula.'
+                });
+            }
+            });
+        });
+
+     document.getElementById('calculateButton').addEventListener('click', function() {
+        var selectedStateId = $('#stateSelect').val();
+        var selectedJurisdictionId = $('#jurisdictionSelect').val();
+
+        var streetAddress = $('#streetAddressTR').val().trim();
+        var zipCode = $('#zipCodeTR').val().trim();
+        var enableTaxFetch = document.getElementById('enableTaxRateFetchFromApiCheckbox').checked;
+
+        // If checkbox is checked, enforce mandatory fields
+        if (enableTaxFetch) {
+            if (!streetAddress) {
+                jqToast.error({text:"Street Address is required when fetching tax rates from API."});
+                return;
+            }
+            if (!zipCode) {
+                jqToast.error({text:"Zip Code is required when fetching tax rates from API."});
+                return;
+            }
+        }
+
+        const itemValues = {};
+
+        // Collect input values for each item
+        const inputs = document.querySelectorAll('input[name^="itemValue_"]');
+        inputs.forEach(input => {
+            const value = parseFloat(input.value) || 0;
+            const itemName = input.getAttribute('data-item-name');
+            itemValues[itemName] = value;
+        });
+        calculateTax(selectedStateId, selectedJurisdictionId, itemValues, '', streetAddress, zipCode)
+            .then(response => {
+                updateTaxUI(response);
+                populateTaxData(response.totalCollectionTaxDetails, "TR");
+                 jqToast.success({text:"Tax calculated successfully!!"});
+            })
+            .catch(error => {
+                jqToast.error({
+                    text: error.message
+                });
+            });
+    });
+
+        // Initial update of the item box
+        updateItemBox();
+    });
+
+</script>

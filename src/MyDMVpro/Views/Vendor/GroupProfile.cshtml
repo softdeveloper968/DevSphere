@@ -1,0 +1,486 @@
+﻿@model GroupProfileDataViewModel
+@using MyDMVpro.Models.VendorViewModels;
+
+@{
+	ViewData["Title"] = "Manage Group Profile Data";
+}
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+<script src="~/js/grouplibrary.js" asp-append-version="true"></script>
+<script src="~/js/vendorlibrary.js" asp-append-version="true"></script>
+
+<link rel="stylesheet" href="~/css/grouplibrary.css" />
+<link rel="stylesheet" href="~/css/filebox.css" />
+
+<div class="row" style="padding-left:20px">
+    <div class="col-md-3">
+		<div>Select a Group</div>
+        <div class="box">
+            <div class="box-body table-responsive" height="80%">
+                <select id="vendorGroupId" asp-items="@(Model.Groups)" class="form-control" data-required="required">
+                    <option value=""></option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+@{
+    var listColumns = Model.ListColumns;
+    string IconColumnWidth() {
+        return "30px";
+    }
+    listColumns.Insert(0, new Dictionary<string, object>()
+    {
+        { "data", "_softdelete" },
+        { "name", "_softdelete" },
+        { "title", "Deleted" },
+        { "defaultContent", "false" },
+        { "visible", false }
+    });
+    listColumns.Insert(1, new Dictionary<string, object>()
+    {
+        { "title", "" },
+        { "defaultContent", "" },
+        { "orderable", false },
+        { "className", "select-checkbox nohide iconColumn dt-center noexport"},
+        { "autowidth", false },
+        { "width", $"{IconColumnWidth()}"},
+        { "min-width", $"{IconColumnWidth()}"},
+        { "max-width", $"{IconColumnWidth()}"},
+        { "searchable", false },
+        { "sortable", false }
+    });
+    listColumns.Insert(2, new Dictionary<string, object>()
+    {
+        { "title", "Profile Name" },
+        { "data", "groupProfileName" },
+        { "defaultContent", "" },
+        { "orderable", false },
+        { "className", "noexport"},
+        { "autowidth", false },
+        { "width", "100"},
+        { "min-width", "100"},
+        { "max-width", "200"},
+        { "sortable", true }
+    });
+    listColumns.Insert(3, new Dictionary<string, object>()
+    {
+        { "data", "groupProfileTypeName" },
+        { "title", "Profile Type" },
+        { "defaultContent", "" },
+        { "orderable", false },
+        { "className", "noexport"},
+        { "autowidth", false },
+        { "width", "100"},
+        { "min-width", "100"},
+        { "max-width", "200"},
+        { "sortable", true }
+    });
+    var editorFields = Model.EditorFields;
+    editorFields.Insert(0, new Dictionary<string, object>()
+            {
+                { "name",  "groupProfileTypeID" },
+                { "label", "Profile Type" },
+                { "def", ""},
+                { "type", "select" },
+                { "options", new Dictionary<string, object>() }
+            });
+    var field = editorFields[0];
+    var options = new List<Dictionary<string, object>>();
+    field["options"] = options;
+    AddOption(options, "Any Type", "");
+    foreach (var item in Model.ProfileTypes)
+    {
+        AddOption(options, item.Text, item.Value);
+    }
+    editorFields.Insert(0, new Dictionary<string, object>()
+            {
+                { "name",  "groupProfileName" },
+                { "label", "Profile Name" },
+                { "options", new Dictionary<string, object>() }
+            });
+    editorFields.Insert(0, new Dictionary<string, object>()
+            {
+                { "name",  "_softdelete" },
+                { "label", "Deleted" },
+                { "type", "hidden" }
+        });
+    void AddOption(List<Dictionary<string, object>> options, string label, string value)
+    {
+        var entry = new Dictionary<string, object>();
+        entry.Add("label", label);
+        entry.Add("value", value);
+        options.Add(entry);
+    }
+    string BuildDOM()
+    {
+        string dom = "";
+        dom = "<'row'<'col-sm-6'l><'col-sm-6'<'#buttonContainer.site-datatable-button-container'C>>>"
+                + "<'row'<'col-sm-12'tr>>"
+                + "<'row'<'col-sm-5'i><'col-sm-7'p>><'alert row'><'col-sm-12'B>";
+        return dom;
+    }
+}
+<div class="box">
+    <div class="box-body" height="80%">
+        <table style="" class="table table-striped table-bordered" id="@Model.ListId" cellspacing="0" align="left">
+            <thead>
+                <tr id="headerRow-@Model.ListId">
+                    @if (listColumns.Count > 0)
+                    {
+                        foreach (var c in listColumns)
+                        {
+                            <th>@c["title"]</th>
+                        }
+                    }
+                </tr>
+                @if (Model.EnableFilter && false)
+                {
+                    <tr id="filterRow-@Model.ListId">
+                        @for (var i = 0; i < listColumns.Count; i++)
+                        {
+                            <th>&nbsp;</th>
+                        }
+                    </tr>
+                }
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+                <tr id="footerRow-@Model.ListId">
+                    @if (listColumns.Count > 0)
+                    {
+                        foreach (var c in listColumns)
+                        {
+                            <th></th>
+                        }
+                    }
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+<style>
+    #@Model.ListId th, td {
+        white-space: nowrap;
+    }
+</style>
+@{
+    await Html.RenderPartialAsync("_GroupProfileSingleEdit", Model.EditorFields);
+}
+<script asp-add-nonce="true">
+    function refreshList() {
+        let groupId = $("#vendorGroupId").val();
+        vendor_initGroupAttachmentNames(groupId);
+        vendor_initVendorAttachmentNames();
+        updateAttachmentSelects(profileEditor,groupId);
+        vendorLoadProfileData(groupId, $('#@Model.ListId').DataTable());
+        vendorLoadGroupLibraryData(groupId, $('#DT_GroupLibrary').DataTable());
+    }
+	$("#vendorGroupId").change(function () {
+        refreshList();
+	});
+    var bulkDataEdited = @Html.Raw(Json.Serialize(Model.ListData));
+    function getVisibleFields(editor) {
+        var fields = editor.fields();
+        var visibleFields = [];
+        for (var i = 0; i < fields.length; i++) {
+            var field = fields[i];
+            if (field.visible()) {
+                visibleFields.push(field.name());
+            }
+        }
+        return visibleFields; 
+    }
+    var profileEditor;
+
+    $(document).ready(function () {
+        $.fn.dataTable.render.shortDate = datatable_render_shortdate;
+        var tableId = '#'+'@Model.ListId';
+        profileEditor = new $.fn.dataTable.Editor( {
+                table: tableId,
+                idSrc: "groupProfileID",
+                display: 'lightbox',
+                template: '#profileEditForm',
+                fields: @Html.Raw(Json.Serialize(Model.EditorFields))
+            } );
+
+        configureProfileEditor(profileEditor, tableId, bulkDataEdited);
+        $(tableId).on( 'click', 'tbody td.editable', function (e) {
+            profileEditor.inline( this );
+        } );
+        var columnIndex = 0;
+        // for (let i = 0; i < table.columns().length; i++) {
+        //     if (table.column(i).dataSrc() === '_softdelete') {
+        //         columnIndex = i;
+        //         break;
+        //     }
+        // }
+        // Example usage
+        DataTable.ext.search.push(function (settings, data, dataIndex) {
+            if (data[columnIndex] == "true") {
+                return false;
+            }
+            return true;
+        });
+        var table = $(tableId)
+            .DataTable({
+                dom: "@Html.Raw(BuildDOM())",
+                lengthMenu: [
+                    [10, 25, 50, -1],
+                    [10, 25, 50, 'All'],
+                ],
+                createdRow: function( row, data, dataIndex ) {
+                },
+                fixedColumns: {
+                    leftColumns: 1
+                },
+                rowCallback: bulkedit_row_callback,
+                rowId: 'groupProfileID',
+                autoWidth: true,
+                scrollX: true,
+                sort: true,
+                buttons: [
+                    @if (Model.AddSelectDeselectButtons) 
+                    {
+                        <text>
+                        {
+                            extend: 'selectAll',
+                            className: 'selectall',
+                            action: function (e) {
+                                e.preventDefault();
+                                table.rows({ search: 'applied' }).deselect();
+                                table.rows({ search: 'applied' }).select();
+                            }
+                        },
+                        'selectNone',
+                        </text>
+                    }
+                    { extend: "edit", editor: profileEditor },
+                    { text: 'Save', className: 'save', action: function (e) { vendorSaveBulkProfileEdits(profileEditor,table); } },
+                    { text: 'Undo', className: 'undo', action: function (e) { vendorUndoBulkEdits(table); } },
+					{ text: 'New', extend: 'create', editor: profileEditor },
+                    {
+                        extend: 'selected',
+                        text: 'Delete',
+                        action: function (e, dt, node, config) {
+                            var rows = table.rows({ selected: true }).indexes();
+                            var currentlyVisibleFields = profileEditor.fields();// getVisibleFields(editor);
+                            profileEditor
+                                .hide(currentlyVisibleFields)
+                                .one('close', function () {
+                                    setTimeout(function () {
+                                        // Wait for animation
+                                        profileEditor.show(currentlyVisibleFields).hide('_softdelete');
+                                    }, 500);
+                                })
+                                .edit(rows, {
+                                    title: 'Delete',
+                                    message:
+                                        rows.length === 1
+                                            ? 'Are you sure you wish to delete this row?'
+                                            : 'Are you sure you wish to delete these ' + rows.length + ' rows',
+                                    buttons: 'Delete'
+                                })
+                                .val('_softdelete', "true");
+                            table.draw();
+                        }
+                    },
+                    { extend: 'colvis', text: 'Show/Hide Columns'},
+                    {
+                        text: 'Reset Filter',
+                        className: 'clearFilter',
+                        action: function (e) {
+                            vendorProfileResetFilter(table);
+                        }
+                    },
+                    { text: "", titleAttr: "Refresh", className: "listRefresh", action: function (e) { e.preventDefault(); refreshList(); } }
+                ],
+                initComplete: function () {
+                    vendorProfileResetFilter(this.api());
+                },
+                data: bulkDataEdited,
+                columns: [
+                    @foreach (var col in listColumns.AsEnumerable())
+                    {
+                        <text>
+                        {
+                        </text>
+                        foreach (var attr in col.Keys)
+                        {
+                            var attrVal = col[attr];
+                            if (attrVal is OptionsFunction)
+                            {
+                                var optAttr = attrVal as OptionsFunction;
+                                <text>
+                                "@attr": @Html.Raw(optAttr.Text),
+                                </text>
+                            }
+                            else if (attr == "render")
+                            {
+                                <text>
+                                render: @Html.Raw(col[attr]),
+                                </text>
+                            }
+                            else if (attrVal is bool bVal)
+                            {
+                                <text>
+                                "@attr": @(bVal ? "true" : "false"),
+                                </text>
+                            }
+                            else if (attrVal is string sVal)
+                            {
+                                <text>
+                                "@attr": "@sVal",
+                                </text>
+                            }
+                            else
+                            {
+                                <text>
+                                "@attr": "@col[attr]",
+                                </text>
+                            }
+                        }
+                        <text>
+                        },
+                        </text>
+                    }],
+                select: {
+                    style: 'os',
+                    items: "row",
+                    selector: 'td:first-child',
+                    info: true
+                }
+            });
+            @if (!string.IsNullOrEmpty(Model.TableVarName))
+            {
+                <text>
+                @Model.TableVarName = table;
+                </text>
+            }
+        table.on('draw', function () {
+            if (table.rows({ selected: true }).indexes().length === 0) {
+                table.buttons('.selectOnOff').disable();
+            }
+            else if (table.rows({ selected: true }).indexes().length === 1) {
+                table.buttons('.selectOnOff').enable();
+            }
+            else {
+                table.buttons('.selectOnOff').enable();
+                table.buttons('.selectOnOff.selectOne').disable();
+            }
+        });
+        table.on('select deselect', function (e, dt, type, indexes) {
+            if (type === 'row') {
+                if (table.rows({ selected: true }).indexes().length === 0) {
+                    table.buttons('.selectOnOff').disable();
+                }
+                else if (table.rows({ selected: true }).indexes().length === 1) {
+                    table.buttons('.selectOnOff').enable();
+                }
+                else {
+                    table.buttons('.selectOnOff').enable();
+                    table.buttons('.selectOnOff.selectOne').disable();
+                }
+            }
+        });
+        table.buttons('.selectOnOff').disable();
+        $('#filterRow-@Model.ListId').find('.clearFilter').on('click', function (e) {
+            e.preventDefault();
+            $('#filterRow-@Model.ListId').find('.customFilter').val('');
+            table.search('').columns().search('').draw();
+        });
+        $('#filterRow-@Model.ListId').find('.advancedFilter').on('click', function (e) {
+            e.preventDefault();
+            $('#filterRow-@Model.ListId').find('.filterToggle').toggleClass('advancedOn');
+            table.columns.adjust().draw();
+            table.draw();
+        });
+        $('.DTE_Field_InputControl > input').on('change', function (e) {
+            let v = $(this).val();
+            let checkbox = $(this).closest('input[type=checkbox]');
+            if (v == '') { 
+                checkbox.show();
+            }
+            else {
+                checkbox.hide();
+            }
+        });
+        $('.dteFieldCheckbox').on('click', function (e) {
+            e.preventDefault();
+            var checkbox = $(this).find('input[type=checkbox]');
+            if (checkbox.prop('checked')) {
+                checkbox.prop('checked', false);
+            }
+            else {
+                checkbox.prop('checked', true);
+            }
+        });
+    });
+</script>
+@{ await Html.RenderPartialAsync("~/Views/GroupLibrary/_groupLibraryUpload.cshtml"); }
+<div class="box">
+    <div class="box-body" style="background-color:#c2d6d6">
+        <div class="col-md-6 col-lg-6">
+            <div class="row">
+            @{{
+                    GroupLibraryModel glModel = new GroupLibraryModel()
+                    {
+                        DataUrl = "/GroupLibrary/GetLibrary",
+                        ListId = "DT_GroupLibrary",
+                        TableVarName = "table_GroupLibrary",
+                        EnableKeyNavigation = false,
+                        AllowMultilineVin = false,
+                        AllowMultiSelect = false,
+                        EnableFilter = true
+                    };
+                    glModel.Columns.Add_Select();
+
+                    #if DEBUG
+                    glModel.Columns.Add("Group", "colGroupName asearch");
+                    #endif
+                    glModel.Columns.Add("Display Name", "colDisplayName asearch");
+                    glModel.Columns.Add("Type", "colAttachmentTypeName asearch");
+                    glModel.Columns.Add("Description", "colDescription asearch");
+                    glModel.Columns.Add("Lienholder Name", "colLienholderName asearch");
+                    glModel.Columns.Add("Filename", "colFileName asearch");
+
+                    glModel.SortColumns.Add("colDisplayName");
+
+                    await Html.RenderPartialAsync("_groupLibrary", glModel);
+                }}
+            </div>
+            <div class="row">
+            @{{
+                VendorLibraryModel vlModel = new VendorLibraryModel()
+                {
+                    DataUrl = "/VendorLibrary/GetLibrary",
+                    ListId = "DT_VendorLibrary",
+                    TableVarName = "table_VendorLibrary",
+                    EnableKeyNavigation = false,
+                    AllowMultilineVin = false,
+                    AllowMultiSelect = false,
+                    EnableFilter = true
+                };
+                vlModel.Columns.Add_Select();
+
+                vlModel.Columns.Add("Display Name", "colDisplayName asearch");
+                vlModel.Columns.Add("Type", "colAttachmentTypeName asearch");
+                vlModel.Columns.Add("Description", "colDescription asearch");
+                vlModel.Columns.Add("Filename", "colFileName asearch");
+
+                vlModel.SortColumns.Add("colDisplayName");
+
+                await Html.RenderPartialAsync("_vendorLibrary", vlModel);
+            }}
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-6" style="height:100%">
+            <div id="docViewPanel" class="docViewPanel">
+            </div>
+        </div>
+        <div style="display:none">
+            <form id="hiddenform" method="post" action=""></form>
+        </div>
+    </div>
+</div>
+@{ await Html.RenderPartialAsync("~/Views/VendorLibrary/_vendorLibraryUpload.cshtml"); }

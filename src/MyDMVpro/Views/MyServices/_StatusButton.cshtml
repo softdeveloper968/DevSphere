@@ -1,0 +1,236 @@
+﻿@model MyDMVpro.Models.VendorViewModels.VendorViewModel
+
+@{
+    bool hasFoundInProgress = false; // Flag to track the first "null" date
+    string statusMessage = "";
+
+    var data = new List<Tuple<string, string, DateTime?>>
+    {
+        Tuple.Create("Date to vendor","Request Sent to Maggard", Model.DateToVendor),
+        Tuple.Create("Date Received","Required Documents and Data Received", Model.DateReceived),
+        Tuple.Create("Date to dmv","Request Processed by Maggard", Model.DateToDmv),
+        Tuple.Create("ETA","ETA", Model.Eta),
+        Tuple.Create("Date title issued", "Request Processed by State", Model.DateTitleIssued) ,
+        Tuple.Create("Received from dmv", "Title or Documents Received From State", Model.DateFromDmv) ,
+        Tuple.Create("Finish date", "Request Complete", Model.DateShipped)
+    };
+
+    var statusConst = new
+    {
+        pending = "pending",
+        inProgress = "in-progress",
+        completed = "completed"
+    
+    };
+     
+
+}
+
+@if ((Model.ProcessStageName == "Incoming" || Model.ProcessStageName == "Not Ready to Process") && (Model.StatusId != 9 && Model.StatusId != 10 && (Model.StatusId != 2)))
+{
+    @foreach (var item in data)
+    {
+        var label = item.Item2;
+        var date = item.Item3;
+
+        string statusClass;
+
+        if (label == StatusLabels.DateReceived)
+        {
+            statusClass = statusConst.inProgress;
+            statusMessage = "In-progress";
+        }
+        else if (label == StatusLabels.DateToVendor)
+        {
+            statusClass = statusConst.completed;
+        }
+        else
+        {
+            statusClass = statusConst.pending;
+        }
+
+        <button class="@statusClass">
+            @label
+            <br />
+            @(!date.HasValue ? "" : statusClass == statusConst.inProgress ? statusClass : date.Value.ToString("MM/dd/yyyy"))
+        </button>
+    }
+
+}
+
+@if ((Model.ProcessStageName == "Ready to Process" || Model.ProcessStageName == "Ready for Printing" || Model.ProcessStageName == "In Processing" || Model.ProcessStageName == "Ready for Packing/Shipping") && (Model.StatusId != 9 && Model.StatusId != 10 && (Model.StatusId != 2)))
+{
+    @foreach (var item in data)
+    {
+        var label = item.Item2;
+        var date = item.Item3;
+
+        string statusClass;
+
+        if (!date.HasValue && (label == StatusLabels.DateToDmv || label == StatusLabels.Eta))
+        {
+            statusClass = statusConst.inProgress;
+            statusMessage = "In-progress";
+
+        }
+        else if (label == StatusLabels.DateToVendor || label == StatusLabels.DateReceived)
+        {
+            statusClass = statusConst.completed;
+        }
+        else
+        {
+            statusClass = statusConst.pending;
+        }
+
+        <button class="@statusClass">
+            @label
+            <br />
+            @(date.HasValue ? date.Value.ToString("MM/dd/yyyy") : statusClass == statusConst.inProgress ? statusClass : "")
+        </button>
+    }
+
+}
+
+@if ((Model.ProcessStageName == "Title Pending" || Model.ProcessStageName == "TITLE PENDING") && (Model.StatusId != 9 && Model.StatusId != 10 && (Model.StatusId != 2)))
+{
+    @foreach (var item in data)
+    {
+        var label = item.Item2;
+        var date = item.Item3;
+
+        string statusClass;
+
+        if (!date.HasValue && label == StatusLabels.DateTitleIssued)
+        {
+            statusClass = statusConst.inProgress;
+            statusMessage = "In-progress";
+
+        }
+        else if (label == StatusLabels.DateToVendor || label == StatusLabels.DateReceived || label == StatusLabels.Eta || label == StatusLabels.DateToDmv)
+        {
+            statusClass = statusConst.completed;
+        }
+        else
+        {
+            statusClass = statusConst.pending;
+        }
+
+        <button class="@statusClass">
+            @label
+            <br />
+            @(date.HasValue ? date.Value.ToString("MM/dd/yyyy") : statusClass == statusConst.inProgress ? statusClass : "")
+        </button>
+    }
+
+}
+
+@if ((Model.ProcessStageName == "In Transit" || Model.ProcessStageName == "Receiving") && (Model.StatusId != 9 && Model.StatusId != 10 && (Model.StatusId != 2)))
+{
+    @foreach (var item in data)
+    {
+        var label = item.Item2;
+        var date = item.Item3;
+
+        string statusClass;
+
+        if (!date.HasValue && label == StatusLabels.DateFromDmv)
+        {
+            statusClass = statusConst.inProgress;
+            statusMessage = "In-progress";
+
+        }
+        else if (label == StatusLabels.DateTitleIssued || label == StatusLabels.DateToVendor || label == StatusLabels.DateReceived || label == StatusLabels.Eta || label == StatusLabels.DateToDmv)
+        {
+            statusClass = statusConst.completed;
+        }
+        else
+        {
+            statusClass = statusConst.pending;
+        }
+
+        <button class="@statusClass">
+            @label
+            <br />
+            @(date.HasValue ? date.Value.ToString("MM/dd/yyyy") : statusClass == statusConst.inProgress ? statusClass : "")
+        </button>
+    }
+
+}
+
+@if (Model.ProcessStageName == "Ship to LH" && (Model.StatusId != 9 && Model.StatusId != 10 && (Model.StatusId != 2)))
+{
+    @foreach (var item in data)
+    {
+        var label = item.Item2;
+        var date = item.Item3;
+
+        string statusClass;
+
+        if (!date.HasValue && label == StatusLabels.FinishDate)
+        {
+            statusClass = statusConst.inProgress;
+            statusMessage = "In-progress";
+
+        }
+        else if (label == StatusLabels.DateFromDmv || label == StatusLabels.DateTitleIssued || label == StatusLabels.DateToVendor || label == StatusLabels.DateReceived || label == StatusLabels.Eta || label == StatusLabels.DateToDmv)
+        {
+            statusClass = statusConst.completed;
+        }
+        else
+        {
+            statusClass = statusConst.pending;
+        }
+
+        <button class="@statusClass">
+            @label
+            <br />
+            @(date.HasValue ? date.Value.ToString("MM/dd/yyyy") : statusClass == statusConst.inProgress ? statusClass: "")
+        </button>
+    }
+
+}
+
+@if (Model.ProcessStageName == "Complete" || (Model.StatusId == 2))
+{
+    @foreach (var item in data)
+    {
+        var label = item.Item2;
+        var date = item.Item3;
+
+        string statusClass;
+
+        if (label == StatusLabels.FinishDate || label == StatusLabels.DateFromDmv || label == StatusLabels.DateTitleIssued || label == StatusLabels.DateToVendor || label == StatusLabels.DateReceived || label == StatusLabels.Eta || label == StatusLabels.DateToDmv)
+        {
+            statusClass = statusConst.completed;
+        }
+        else
+        {
+            statusClass = statusConst.pending;
+        }
+
+        <button class="@statusClass">
+            @label
+            <br />
+            @(date.HasValue ? date.Value.ToString("MM/dd/yyyy") : statusClass == statusConst.inProgress ? statusClass : "")
+        </button>
+    }
+
+}
+
+@if (Model.StatusId == 9) // 9 is status for Hold
+{
+    <div class="white_box p_15 mb_12 yellow_bg w-100">
+        <h6 class="m-0">
+            This record is currently ON HOLD. Please review the chats and notes below and provide any requested data or documents as needed.
+        Thank you!</h6>
+    </div>
+}
+
+@if (Model.StatusId == 10) // 10 is status for cancelled
+{
+    <div class="white_box p_15 mb_12 yellow_bg w-100">
+        <h6 class="m-0">
+            Hello, this record has been cancelled. Please review the notes and chats below for more detail. Thank you!
+        </h6>
+    </div>
+}

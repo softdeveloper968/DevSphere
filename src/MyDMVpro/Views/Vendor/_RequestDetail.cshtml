@@ -1,0 +1,32 @@
+﻿<div class="col-md-6 col-lg-6">
+    <div id="detailsEditPanel" class="detailsEditPanel" tabindex="-1">
+        <div class="container vertical-alignment-helper">
+            <div class="col-sm-4"></div>
+            <div class="panel-body">
+            </div>
+        </div>
+    </div>
+</div>
+<div class="col-md-6 col-lg-6">
+    <div class="row">
+        <div id="reqNotes" class="" tabindex="-1">
+        </div>
+    </div>
+    <div class="row">
+        <div id="reqChats" class="" tabindex="-1">
+            <div>Chats</div>
+            <hr />
+            @{ await Html.RenderPartialAsync("_chats"); }
+        </div>
+    </div>
+    <div class="row">
+        <div>Details</div>
+        <hr />
+        <div id="reqStatus" class="" tabindex="-1">
+            @{ await Html.RenderPartialAsync("~/Views/Vendor/_EditDetails.cshtml"); }
+        </div>
+    </div>
+</div>
+<div style="display:none">
+    <form id="hiddenform" method="post" action=""></form>
+</div>

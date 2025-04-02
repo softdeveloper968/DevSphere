@@ -1,0 +1,235 @@
+﻿@model List<Dictionary<string,object>>
+@{
+    string GetFieldName(Dictionary<string, object> item)
+    {
+        return item["name"] as string;
+    }
+}
+<style>
+    div.modalDialog {
+        width: 1024px;
+    }
+    #bulkEditForm {
+        display: flex;
+        flex-flow: row wrap;
+        width: 860px;
+    }
+        #bulkEditForm fieldset {
+            flex: 1;
+            border: 1px solid #aaa;
+            margin: 0.5em;
+        }
+            #bulkEditForm fieldset legend {
+                padding: 5px 20px;
+                border: 1px solid #aaa;
+                font-weight: bold;
+            }
+            #bulkEditForm fieldset.profileName {
+                flex: 2 100%;
+            }
+                #bulkEditForm fieldset.profileName legend {
+                    background: #bfffbf;
+                }
+            #bulkEditForm fieldset.profileType {
+                flex: 2 100%;
+            }
+                #bulkEditForm fieldset.profileType legend {
+                    background: #ffffbf;
+                }
+            #bulkEditForm fieldset.profileValues {
+                flex: 2 100%;
+            }
+                #bulkEditForm fieldset.profileValues legend {
+                    background: #ffbfbf;
+                }
+        #bulkEditForm div.DTE_Field {
+            padding: 5px;
+        }
+    html.dark #bulkEditForm fieldset.profileName legend {
+        background: #005c00;
+    }
+    html.dark #bulkEditForm fieldset.profileType legend {
+        background: #6a6a00;
+    }
+    html.dark #bulkEditForm fieldset.profileValues legend {
+        background: #ffff77;
+    }
+    .inputHolder {
+        display: inline-block;
+        width: 100%;
+    }
+    .hiddenHolder {
+        display: none !important;
+    }
+    .BEDIT_dualcolumn > label.control-label {
+        width: 20% !important;
+    }
+    .BEDIT_dualcolumn > input.BEDIT_textRightInput {
+        width: 40% !important;
+    }
+    .BEDIT_dualcolumn > input.BEDIT_textLeftInput {
+        width: 40% !important;
+    }
+    .BEDIT_textRightInput {
+        background-color: aqua;
+    }
+    .BEDIT_textLeftInput {
+        padding-right: 50px;
+    }
+    .BEDIT_textRightHidden {
+        display: none;
+    }
+    .BEDIT_centerSpan {
+        display: inline-block;
+        width: 50px;
+    }
+    div.bulkRadio > label {
+        margin-right: 10px;
+    }
+/*     div[data-lastpass-icon-root="true"] {
+        opacity: 0;
+    }
+    div[data-lastpass-infield="true"] {
+        opacity: 0;
+    }
+ */
+ </style>
+<script>
+    function onPageDisplay(elm) {
+        var name = 'onPage' + Math.random();
+        var Editor = $.fn.dataTable.Editor;
+        var emptyInfo;
+        Editor.display[name] = $.extend(true, {}, Editor.models.display, {
+            // Create the HTML mark-up needed the display controller
+            init: function (editor) {
+                emptyInfo = elm.html();
+                return Editor.display[name];
+            },
+            // Show the form
+            open: function (editor, form, callback) {
+                elm.children().detach();
+                elm.append(form);
+                if (callback) {
+                    callback();
+                }
+            },
+            // Hide the form
+            close: function (editor, callback) {
+                elm.children().detach();
+                elm.html(emptyInfo);
+                if (callback) {
+                    callback();
+                }
+            }
+        });
+        return name;
+    }
+</script>
+<div style="display:none">
+    <div id="bulkEditForm">
+        <div class="col-lg-12 bulkRadio">
+            <input id="bulkEditShowAll" name="showFieldTypes" type="radio" value="All" checked />
+            <label for="bulkEditShowAll">Show All</label>
+            <input id="bulkEditShowRequired" name="showFieldTypes" type="radio" value="Required" />
+            <label for="bulkEditShowRequired">Required Only</label>
+            <input id="bulkEditShowAppOnly" name="showFieldTypes" type="radio" value="AppOnly" />
+            <label for="bulkEditShowAppOnly">App Only</label>
+            <input id="bulkEditDataOnly" name="showFieldTypes" type="radio" value="NonBlank" />
+            <label for="bulkEditDataOnly">Non-Blanks Only</label>
+            <input id="bulkEditProfileOnly" name="showFieldTypes" type="radio" value="Profile" />
+            <label for="bulkEditProfileOnly">Profile Only</label>
+        </div>
+        <fieldset class="profileValues">
+            @foreach (var item in Model)
+            {
+                <editor-field name="@GetFieldName(item)"></editor-field>
+            }
+        </fieldset>
+    </div>
+</div>
+<div style="display:none">
+    <div id="bulkEditFormVendorDocs">
+        <fieldset class="profileValues">
+            @foreach (var item in Model)
+            {
+                <editor-field name="@GetFieldName(item)"></editor-field>
+            }
+        </fieldset>
+    </div>
+</div>
+
+<style>
+    #profileEditForm {
+        display: flex;
+        flex-flow: row wrap;
+    }
+        #profileEditForm fieldset {
+            flex: 1;
+            border: 1px solid #aaa;
+            margin: 0.5em;
+        }
+            #profileEditForm fieldset legend {
+                padding: 5px 20px;
+                border: 1px solid #aaa;
+                font-weight: bold;
+            }
+            #profileEditForm fieldset.profileName {
+                flex: 2 100%;
+            }
+            #profileEditForm fieldset.profileName legend {
+                    background: #bfffbf;
+                }
+            #profileEditForm fieldset.profileType {
+                flex: 2 100%;
+            }
+            #profileEditForm fieldset.profileType legend {
+                background: #ffffbf;
+            }
+            #profileEditForm fieldset.profileValues {
+                flex: 2 100%;
+            }
+            #profileEditForm fieldset.profileValues legend {
+                background: #ffbfbf;
+            }
+        #profileEditForm div.DTE_Field {
+            padding: 5px;
+        }
+    .bulkProfileEditorCheckbox {
+        position: absolute;
+        left: -5px;
+        margin-right: -5px;
+        top: 5px;
+        margin-bottom: -5px;
+    }
+    html.dark #profileEditForm fieldset.profileName legend {
+        background: #005c00;
+    }
+    html.dark #profileEditForm fieldset.profileType legend {
+        background: #6a6a00;
+    }
+    html.dark #profileEditForm fieldset.profileValues legend {
+        background: #ffff77;
+    }
+    .dteFieldCheckbox {
+        float: right;
+        position: relative;
+        top: -45px;
+        left: -5px;
+        width: 4%;
+        vertical-align: middle;
+    }
+    .inputHolder {
+        display: inline-block;
+        width: 95%;
+    }
+</style>
+<div style="display:none">
+<div class="profileEditFormTemplate" style="">
+    <fieldset class="profileValues">
+        @foreach (var item in Model)
+        {
+            <editor-field name="@GetFieldName(item)"></editor-field>
+        }
+    </fieldset>
+</div>
+</div>

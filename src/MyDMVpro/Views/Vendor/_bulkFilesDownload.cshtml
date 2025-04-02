@@ -1,0 +1,379 @@
+﻿@model VendorRequestViewModel
+@using MyDMVpro.Common.ViewHelpers;
+@{
+    var columnCount = 0;
+    string filterList()
+    {
+        List<string> filterFields = new List<string>();
+        foreach (DatatableColumnInfo col in Model.Columns)
+        {
+            if (!string.IsNullOrEmpty(col.FilterField))
+            {
+                filterFields.Add(col.FilterField);
+            }
+        }
+        return string.Join(",", filterFields);
+    }
+}
+<style asp-add-nonce="true">
+    td.numericCol {
+        text-align: right;
+        padding-right: 30px;
+    }
+    .advancedFilter {
+    }
+    .filterToggle .advanced {
+            display: none;
+        }
+    .filterToggle .simple {
+            display: inline-block;
+        }
+    .filterToggle.advancedOn
+        .advanced {
+            display: inline-block;
+        }
+    .filterToggle.advancedOn
+        .simple {
+            display: none;
+        }
+
+    td.sum {
+        border-top: 4px double black;
+    }
+
+    #@Model.ListId tfoot {
+        display: table-footer-group;
+    }
+    #@Model.ListId thead {
+        display: table-header-group;
+    }
+</style>
+
+<table class="display stripe" id="@Model.ListId" cellspacing="0" align="left">
+    <thead>
+        <tr id="headerRow-@Model.ListId">
+            @if (Model.Columns.Count > 0)
+            {
+                foreach (var c in Model.Columns)
+                {
+                    <th class="@c.Class dt-center">@c.Title</th>
+                }
+                columnCount = Model.Columns.Count;
+            }
+        </tr>
+        <tr id="filterRow-@Model.ListId">
+            @for (var i = 0; i < Model.Columns.Count; i++)
+            {
+                DatatableColumnInfo c = Model.Columns[i];
+                string cls = c.Class;//.Split(" ")[0];
+
+                if (i == 0)
+                {
+                    <th class="clearFilter @cls" data-toggle="tooltip" title="Clear filter"></th>
+                }
+                else if (i == 1 && Model.EnableAdvancedSearch)
+                {
+                    <th class="advancedFilter @cls" data-toggle="tooltip" title="Advanced filter"></th>
+                }
+                else
+                {
+                    if (cls == "")
+                    {
+                        <th></th>
+                    }
+                    else
+                    {
+                        <th class="@cls"></th>
+                    }
+                }
+            }
+        </tr>
+    </thead>
+    <tbody></tbody>
+    <tfoot>
+    </tfoot>
+</table>
+
+<script asp-add-nonce="true">
+    $(document).ready(function () {
+        var tblid = '@Model.ListId';
+        var defaultStatusFilterValue = '';
+        var colFilters = [];
+        var initCompleted = false;
+
+        $.fn.dataTable.render.shortDate = datatable_render_shortdate;
+
+        var table = $('#@Model.ListId')
+            .on('preXhr.dt', function (e, settings, data) {
+                data.dropdownFilters = '@filterList()';
+            })
+            .on('xhr.dt', function (e, settings, json, xhr) {
+                if (json == null || typeof json === 'undefined') {
+                    return;
+                }
+                colFilters = json.columnFilters;
+                @if (Model.EnableFilter) {
+<text>
+                if (initCompleted && typeof table !== 'undefined') {
+                    if (colFilters) {
+                        refreshDropdownFilters($(`#${tblid}`).DataTable(), tblid, colFilters, defaultStatusFilterValue, false);
+                    }
+                }
+</text>
+                }
+            }) 
+            .DataTable(
+            {
+                @if  (Model.EnableKeyNavigation)
+                {
+                    @:@Model?.KeyNavigation
+                }
+                "colReorder": true,
+                "scrollX": true,
+                scrollY: false,
+                "select": true,
+                "searching": true,
+                "pageLength": @Model.PageLength,
+                "language": {
+                    select: {
+                        rows: "<span class='info_xrowsselected'>%d rows selected</span>"
+                    }
+                },
+                bSortCellsTop: true,
+                "lengthMenu": @Model.LengthMenu,
+                @if (Model.SortColumns.Count > 0)
+                {
+                    @:order: [
+                    for(var i = 0; i<Model.SortColumns.Count; i++)
+                    {
+                        if (i > 0) { @:,
+                        } @:[$('#@Model.ListId .@Model.SortColumns[i].Name').index(), '@(Model.SortColumns[i].Descending?"desc":"asc")']
+                    }
+                    @:],
+                }
+                searchDelay: 500,
+                "columnDefs": [
+                    {
+                        "targets": "reqChkbx",
+                        "orderable": false,
+                        "className": "select-checkbox",
+                        "min-width": "40px",
+                        "sortable": false
+                    },
+                    { "targets": "fileDateRequested", "data": "dateRequested", "orderSequence": ["desc", "asc"], "className": "dt-nowrap" , "render": getfn_datatable_render_datetime_short() },
+                    { "targets": "fileDateCompleted", "data": "dateCompleted", "orderSequence": ["desc", "asc"] },
+                    { "targets": "fileElapsedTime", "className": "dt-nowrap numericCol" , 
+                            "render": function (data, type, full, meta) 
+                                { 
+                                    var startTime = moment(full.dateCompleted);
+                                    var endTime = moment(full.dateRequested);
+                                    var duration = startTime.diff(endTime, 'seconds', false);
+                                    if (duration !== duration) return ''; // nan check
+                                    if (duration < 60) return `${duration}s`; 
+                                    if (duration < 3600) return `${Math.floor(duration / 60)}m ${duration % 60}s`;
+                                    return `${Math.floor(duration / 3600)}h ${Math.floor((duration % 3600) / 60)}m ${duration % 60}s`;
+                                }
+                    },
+                    { "targets": "filename", "data": "filename", width: "400px"},
+                    { "targets": "fileCreatedBy", "data": "createdBy", width: "200px"},
+                    { "targets": "fileAppType", "data": "appType"},
+                    { "targets": "fileState", "data": "appTypeState"},
+                    { "targets": "fileReqCount", "data": "requestCount", "render": getfn_datatable_render_number(true,false) },
+                    {
+                        "targets": [ "dfilter", "drfilter" ],
+                        "sortable": true,
+                        "width": "100px",
+                        "render": datatable_render_date
+                    },
+                    {
+                        "targets": "bulkPdf", "data": "", width: "40px",
+                        "sortable": false,
+                        "render": function (data, type, full, meta) {
+                            var html = '<a title="Download Bulk PDF file" class="downloadBulkPdf" tabIndex="-1" target="_blank" href="/BulkPrint/GetBulkPrintFile/' + full.bulkPrintFileId + '"></a>';
+                            if (typeof full.dateCompleted === 'undefined' || full.dateCompleted == null) {
+                                html = '<span class="waitingBulkPdf"></span>';
+                            }
+                            return html;
+                        }
+                    },
+                    {
+                        "targets": "_all",
+                        "defaultContent": ""
+                    }
+                ],
+                "processing": true,
+                "serverSide": true,
+                "ajax":
+                    {
+                        "url": "@Model.DataUrl",
+                        "type": "POST",
+                        "dataType": "JSON",
+                        headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() }
+                    },
+                "buttons": [
+                    {
+                        extend: 'selectAll',
+                        className: 'selectall',
+                        action: function (e) {
+                            e.preventDefault();
+                            table.rows({ search: 'applied' }).deselect();
+                            table.rows({ search: 'applied' }).select();
+                        }
+                    },
+                    'selectNone',
+                    {
+                        extend: 'collection',
+                        text: 'Export',
+                        dropup: true,
+                        background: false,
+                        buttons: [
+                            {
+                                extend: 'copy',
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                            {
+                                extend: 'excelHtml5',
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                            {
+                                extend: 'pdfHtml5',
+                                orientation: 'landscape',
+                                pageSize: 'LETTER',
+                                exportOptions: {
+                                    columns: ':visible',
+                                },
+                                footer: true
+                            },
+                            {
+                                extend: "print",
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                        ]
+                    },
+                    @if (Model.ViewType == VendorViewType.BulkChecksForDownload)
+                    {
+                        @:{ text: "Reprocess", titleAttr: "Reprocess", className: "selectOnOff selectOne", action: function (e) { e.preventDefault(); vendor_show_ReprocessCheckMerge(table); }},
+                    }
+                    { text: "", titleAttr: "Refresh", className: "listRefresh", action: function (e) { e.preventDefault(); table.ajax.reload(); }}
+                ],
+                "initComplete": function (settings, json) {
+                    var colFilters = json.columnFilters;
+                    var api = this.api();
+                    api.columns(['.asearch']).every(getfn_datatable_asearch(tblid));
+                    api.columns(['.dsearch']).every(getfn_datatable_dsearch(tblid));
+                    refreshDropdownFilters(api, tblid, colFilters, defaultStatusFilterValue, false);
+                    initCompleted = true;
+                    fixupColumnWidths(this);
+                },
+                "dom": "<'row'<'col-sm-6'l><'col-sm-6'<'#buttonContainer.site-datatable-button-container'>>>" + "<'row'<'col-sm-12'tr>>" + "<'row'<'col-sm-5'i><'col-sm-7'p>><'alert row'><'col-sm-12'B>",
+            });
+
+        @if (Model.EnableKeyNavigation)
+        {
+        <text>
+            table.on('key-focus.dt', function (e, datatable, cell) {
+                table.row(cell.index().row).select();
+            });
+
+            table.on('key-blur.dt', function (e, datatable, cell) {
+                table.row(cell.index().row).deselect();
+            });
+            // Handle click on table cell
+            table.on('click', 'tbody td', function(e){
+                e.stopPropagation();
+
+                // Get index of the clicked row
+                var rowIdx = table.cell(this).index().row;
+
+                // Select row
+                table.row(rowIdx).select();
+            });
+        </text>
+        }
+        @if (Model.EnableKeyShortcuts)
+        {
+        <text>
+        table.on('key.dt', function (e, datatable, key, cell, originalEvent) {
+            if (key === 32) {
+                // Toggle selection
+                var row = table.row(cell.index().row);
+                if ($(row.node()).hasClass('selected'))
+                    row.deselect();
+                else
+                    row.select();
+            }
+            else if (key === 65) { // 'a'
+                var data = table.row(cell.index().row).data();
+                showAttachments(data.requestId, data.vin);
+            }
+            else if (key === 67) { // 'c'
+                var data = table.row(cell.index().row).data();
+                showChat(data.requestId, data.vin);
+            }
+            else if (key === 69) { // 'e'
+                var data = table.row(cell.index().row).data();
+                vendorEditRequest(data.requestId);
+            }
+        });
+        </text>
+        }
+        @Model.TableVarName = table;
+
+        // Add event listener for opening and closing details
+        table.on('click', 'td.details-control', function () {
+            var tr = $(this).closest('tr');
+            var row = table.row(tr);
+
+            if (row.child.isShown()) {
+                // This row is already open - close it
+                row.child.hide();
+                tr.removeClass('shown');
+            }
+            else {
+                // Open this row
+                vendorShowNotes(row.data(), tr, row);
+            }
+        });
+        table.on('draw', function () {
+            if (table.rows({ selected: true }).indexes().length === 0) {
+                table.buttons('.selectOnOff').disable();
+            }
+            else if (table.rows({ selected: true }).indexes().length === 1) {
+                table.buttons('.selectOnOff').enable();
+            }
+            else {
+                table.buttons('.selectOnOff').enable();
+                table.buttons('.selectOnOff.selectOne').disable();
+            }
+        });
+        table.on('select deselect', function (e, dt, type, indexes) {
+            if (type === 'row') {
+                if (table.rows({ selected: true }).indexes().length === 0) {
+                    table.buttons('.selectOnOff').disable();
+                }
+                else if (table.rows({ selected: true }).indexes().length === 1) {
+                    table.buttons('.selectOnOff').enable();
+                }
+                else {
+                    table.buttons('.selectOnOff').enable();
+                    table.buttons('.selectOnOff.selectOne').disable();
+                }
+            }
+        });
+        table.buttons('.selectOnOff').disable();
+        $('#filterRow-@Model.ListId').find('.clearFilter').on('click', function () {
+            $('#@Model.ListId').find('.customFilter').val('');
+            table.search('').columns().search('').draw();
+        });
+        $('#filterRow-@Model.ListId').find('.advancedFilter').on('click', function () {
+            $('#@Model.ListId').find('.filterToggle').toggleClass('advancedOn');
+            table.columns.adjust().draw();
+        });
+    });
+</script>

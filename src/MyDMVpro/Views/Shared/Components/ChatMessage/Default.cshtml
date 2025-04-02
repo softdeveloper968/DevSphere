@@ -1,0 +1,93 @@
+﻿@model IEnumerable<RequestChatThread>
+@{ 
+    string GetLink(Guid id)
+    {
+        if (ViewBag.IsVendor)
+        {
+            return Url.Action("RequestLookup", "Vendor", new { id = id });
+        }
+        else
+        {
+            return Url.Action("Chats", "MyServices");
+            //return Url.Action("RequestLookup", "MyServices", new { id = id });
+        }
+    }
+@*
+    string GetLinkFromVin(string vin, int requestNo)
+    {
+        if (ViewBag.IsVendor)
+        {
+            return Url.Action("RequestLookup", "Vendor", new { vin = vin, rno = requestNo });
+        }
+        else
+        {
+            return Url.Action("RequestLookup", "MyServices", new { vin = vin, rno = requestNo });
+        }
+    }
+*@
+}
+@if (User.Identity.IsAuthenticated)
+    {
+        string allMessageLink = @Url.Action("Chats", "MyServices");
+        if (ViewBag.IsVendor)
+        {
+            allMessageLink = @Url.Action("Chats", "Vendor");
+        }
+@*    <style asp-add-nonce="true">
+        .chats-menu {
+        }
+    </style>*@
+    <li class="dropdown messages-menu" id="messagesMenu">
+        <!-- Menu toggle button -->
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+            <i class="fa fa-comment-o" style="font-size:x-large;line-height:15px"></i>
+            @if (Model.Count() > 0)
+            {
+                <span class="label alert-error">@Model.Count()</span>
+            }
+            else
+            {
+                <span class="label label-success">@Model.Count()</span>
+            }
+        </a>
+        <ul class="dropdown-menu" style="width:350px;">
+            <li class="header">You have @Model.Count() unread chat threads</li>
+            <li>
+                <ul class="menu">
+                    @foreach (var thread in Model)
+                    {
+                        <li class="header"><span>VIN:&nbsp;@thread.VIN</span></li>
+                        @foreach (var message in thread.ChatMessages)
+                        {
+                            <li>
+                                <a href="@GetLink(thread.RequestId)">
+                                    <div class="pull-left">
+                                        <img src="~/images/avatar.png" class="img-circle" alt="ui">
+                                    </div>
+                                    @if (message.WaitingForUser)
+                                    {
+                                        <h4>
+                                            @message.UserName<small><i class="fa fa-clock-o"></i> @message.TimeSpan</small>
+                                            <br />
+                                            <span>@message.VendorName</span>
+                                        </h4>
+                                    }
+                                    else
+                                    {
+                                        <h4>
+                                            @message.UserName<small><i class="fa fa-clock-o"></i> @message.TimeSpan</small>
+                                            <br />
+                                            <span>@message.GroupName</span>
+                                        </h4>
+                                    }
+                                    <p>@message.Message</p>
+                                </a>
+                            </li>
+                        }
+                    }
+                </ul>
+            </li>
+            <li class="footer"><a href="@allMessageLink">See All Messages</a></li>
+        </ul>
+    </li>
+}

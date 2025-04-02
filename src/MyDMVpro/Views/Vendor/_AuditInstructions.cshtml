@@ -1,0 +1,22 @@
+﻿@model MyDMVpro.Models.AuditInstructionsModel
+
+<div class="panel-group mb_5 accordion_tab" id="accordion" role="tablist" aria-multiselectable="true">
+    <div class="panel panel-default">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapse@(Html.Encode(Model.CollapseId))" role="tab" id="heading@(Html.Encode(Model.CollapseId))">
+            <h4 class="panel-title">
+                <span>@Model.Title</span>
+                <i class="fa fa-chevron-down"></i>
+            </h4>
+        </div>
+        <div id="collapse@(Html.Encode(Model.CollapseId))" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading@(Html.Encode(Model.CollapseId))">
+            <div class="panel-body">
+                <ol>
+                    @foreach (var instruction in Model.Instructions)
+                    {
+                        <li>@instruction</li>
+                    }
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>

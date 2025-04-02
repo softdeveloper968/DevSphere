@@ -1,0 +1,86 @@
+﻿@using System.Collections.Generic
+@using Microsoft.AspNetCore.Http
+@{
+    ViewData["Title"] = "My Requests";
+    string GetUrl(string name)
+    {
+        return MyDMVpro.Controllers.RequestStatusController.GetEndpointUrl(this.Context, name);
+    }
+}
+
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+@{ await Html.RenderPartialAsync("_Chat", new Chats()); }
+@{ await Html.RenderPartialAsync("_AttachmentList"); }
+@{ await Html.RenderPartialAsync("_EditDetails"); }
+@{await Html.RenderPartialAsync("~/Views/Vendor/_downloadInstructionPacket.cshtml");}
+@{
+    RequestViewModel activeList = new RequestViewModel(MyServicesViewType.Active)
+    {
+        DataUrl = GetUrl("MyActive"),
+        ListId = "DT_MyActive",
+        TableVarName = "MyActive",
+        FilterOnCurrentUser = true,
+        IncludeCancelledStatus = true,
+        EnableAdvancedSearch = true,
+        EnablePrintInstructionPacket =  true
+    };
+    activeList.Columns.Add_Select();
+    activeList.Columns.Add_Chat();
+    activeList.Columns.Add_Attachments();
+    activeList.Columns.Add("", "reqEditRequest");
+    activeList.Columns.Add_DupeCheck();
+    activeList.Columns.Add("Stage", "reqStage stageFilter");
+    activeList.Columns.Add("Status", "reqStatus statusFilter");
+    if (activeList.EnablePDF)
+    {
+        activeList.Columns.Add("", "reqViewSign dsearch");
+    }
+
+
+    activeList.Columns.Add_AppType();
+    activeList.Columns.Add_AppState();
+    activeList.Columns.Add_VIN();
+
+    activeList.Columns.Add_LH();
+    activeList.Columns.Add_Auction();
+    activeList.Columns.Add_ClientRef();
+
+    if (activeList.LienholderInfo.ManuallySign)
+    {
+        activeList.Columns.Add_DateToVendor();
+        activeList.Columns.Add_DateReceivedFromLH();
+        if (activeList.EnablePDF)
+        {
+            activeList.Columns.Add("Received By Vendor", "reqDateFromLH dsearch");
+        }
+    }
+    else
+    {
+        activeList.Columns.Add_DateSigned();
+        activeList.Columns.Add_DateReceivedFromLH();
+        if (activeList.EnablePDF)
+        {
+            activeList.Columns.Add_PrintDate();
+        }
+    }
+    activeList.Columns.Add_SentToDMV();
+    activeList.Columns.Add_LH_ETA();
+    activeList.Columns.Add_TitleIssued();
+    activeList.Columns.Add_DateReceivedFromDMVAtMaggardOffice();
+    activeList.Columns.Add_Make();
+    activeList.Columns.Add_Year();
+    activeList.Columns.Add_ShippedToAuction();
+    activeList.Columns.Add_Tracking();
+    activeList.Columns.Add_Courier();
+    activeList.Columns.Add_Notes();
+    activeList.Columns.Add_SubmittedBy();
+    activeList.Columns.Add_Vendor();
+    activeList.Columns.Add_FromLHCourier();
+    activeList.Columns.Add_FromLHTracking();
+
+    activeList.SortColumns.Add("reqType");
+    activeList.SortColumns.Add("reqState");
+    activeList.SortColumns.Add("reqVIN");
+
+    await Html.RenderPartialAsync("_MyServicesRequests", activeList);
+}

@@ -1,0 +1,203 @@
+﻿@model MyDMVpro.Models.SharedViews.UploadAttachmentsViewModel
+@{
+    Layout = "~/Views/Shared/_UploadLinkLayout.cshtml";
+}
+
+<div id="upload-link-container">
+ <div class="white_box p_15 clearfix">
+    <div  class="row flex_row gap_15" style="display:block">
+        <div class="col-md-12">
+            <div class="sectionBox bg_white">
+                <div class="box-header mb_10">
+                    <h3 class="box-title">Attachments: @Model.Request.Vin</h3>
+                </div>
+                <p class="attachmentNotes">@Model.AttachmentNotes</p>
+                <div><b>Requested Attachments:</b></div>
+                <div class="table-responsive">
+                    <table class="attachmentList table">
+                        <tbody>
+                            @foreach (var attachment in Model.AttachmentTypes)
+                            {
+                                <tr>
+                                    <td class="p_15">
+                                        <span class="text-red">@attachment.Name:</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        @attachment.Description
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div id="reqAttContent" class="attachment-section col-md-12">
+            <div class="attachment-header">
+                <h4 class="attachment-title">Attachments</h4>
+            </div>
+            <div class="attachment-body">
+                <form id="att-addAttachment" asp-controller="Upload" asp-action="UploadAttachment" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="id" id="att-RequestId" value="@Model.RequestId" />
+                    <input type="hidden" name="vin" id="att-VIN" value="@Model.Request.Vin" />
+                    <div id="attUploadPanel">
+                        <h4 class="hrheader">Upload Attachments</h4>
+                        <div class="form-group">
+                            <input type="file" name="file" class="form-control" required />
+                        </div>
+                        <div class="form-group" id="attachmentTypePanel">
+                            <label for="attachmentTypeId">Type:</label>
+                            <select asp-for="AttachmentTypes.FirstOrDefault().AttachmentTypeId" class="form-control" required>
+                                @foreach (var type in Model.AttachmentTypes)
+                                {
+                                    <option value="@type.AttachmentTypeId">@type.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="att-FileDesc" class="control-label">Description (optional): </label>
+                            <input type="text" class="form-control" name="filedesc" id="att-FileDesc" />
+                        </div>
+                        <div class="form-group mb-0">
+                            <button type="submit" class="btn btn-success custom_btn">Upload File</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+        </div>
+
+    </div>
+</div>
+</div>
+<div id="success-message-container" style="display:none">
+    <div class="row flex_row">
+        <div class="col-md-5">
+            <div class="white_box p_15">
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <span id="successText">File uploaded successfully!</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="failed-message-container" style="display:none">
+    <div class="row flex_row">
+        <div class="col-md-5">
+            <div class="white_box p_15">
+                <div class="alert alert-danger">
+                    <i class="fas fa-check-circle"></i>
+                    <span id="dangerText">This upload link is invalid or has expired.!</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+
+<script asp-add-nonce="true">
+
+    $(document).ready(function () {
+
+        // const urlParams = new URLSearchParams(window.location.search);
+        // const token = urlParams.get("token");
+
+        // var uformData = new FormData();
+        // uformData.append("token", token);
+
+        // // AJAX request to submit the form
+        // $.ajax({
+        //     url: '/ReviewUploadAttachments', // Form action URL
+        //     type: "GET", 
+        //     data: uformData,
+        //     processData: false, // Prevent jQuery from processing the data
+        //     contentType: false, // Prevent jQuery from setting contentType
+        //     success: function (response) {
+        //         if (response.success) {
+        //             // const uploadContainer = document.getElementById("upload-link-container");
+        //             // uploadContainer.style.display = "block";
+        //         } 
+        //         else 
+        //         {
+        //             const uploadContainer = document.getElementById("upload-link-container");
+        //             uploadContainer.style.display = "none";
+
+        //             const uploadSuccessContainer = document.getElementById("failed-message-container");
+        //             uploadSuccessContainer.style.display = "block";
+        //         }
+        //     },
+        //     error: function (xhr, status, error) {
+        //         alert("An error occurred while uploading the file.");
+        //         $(".alert.alert-danger").text(xhr.responseText).show();
+        //     }
+        // });
+
+        var $attForm = $("#att-addAttachment");
+
+        $attForm.on("submit", function (e) {
+            e.preventDefault(); // Prevent the default form submission behavior
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get("token");
+
+            var requestId = $("#att-RequestId").val(); // Value from the hidden input
+            var fileDesc = $("#att-FileDesc").val(); // Value from the description input
+            var attachmentTypeId = $attForm.find("#attachmentTypeId").val();
+
+            var formData = new FormData(this);
+            formData.append("id", requestId);
+            formData.append("filedesc", fileDesc);
+            formData.append("token", token)
+
+            // Optional: Add custom validation
+            var fileInput = $attForm.find('input[name="file"]');
+            if (!fileInput.val()) {
+                alert("Please select a file to upload.");
+                return;
+            }
+
+            // AJAX request to submit the form
+            $.ajax({
+                url: $attForm.attr("action"), // Form action URL
+                type: $attForm.attr("method"), // Form method (POST)
+                data: formData,
+                processData: false, // Prevent jQuery from processing the data
+                contentType: false, // Prevent jQuery from setting contentType
+                success: function (response) {
+                    alert("File uploaded successfully.")
+                    if (response.success) {
+                        const uploadContainer = document.getElementById("upload-link-container");
+                        uploadContainer.style.display = "none"; 
+
+                        const uploadSuccessContainer = document.getElementById("success-message-container");
+                        uploadSuccessContainer.style.display = "block";
+                       
+                    } else {
+                        alert(response.message);
+                    }
+
+                    $attForm[0].reset();
+
+                },
+                error: function (xhr, status, error) {
+                    // Handle error
+                    alert("An error occurred while uploading the file.");
+                    console.error("Error:", error);
+
+                    // Optional: Display error in the alert box in your HTML
+                    $(".alert.alert-danger").text(xhr.responseText).show();
+                }
+            });
+        });
+
+    });
+
+</script>
+

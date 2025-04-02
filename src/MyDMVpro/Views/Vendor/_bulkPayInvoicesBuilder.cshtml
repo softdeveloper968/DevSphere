@@ -1,0 +1,304 @@
+﻿<style asp-add-nonce="true">
+
+    .invoice-body {
+        width: 100%;
+    }
+
+    .invoice-footer {
+    }
+
+    .invoice-details {
+        width: 100%;
+        height: auto;
+    }
+
+    td.numericCol {
+        text-align: right !important;
+        padding-right: 30px;
+    }
+
+    th.numericCol {
+        text-align: right !important;
+        padding-right: 30px;
+    }
+
+    #DT_bulkPayInvoiceDetailsTable_wrapper tfoot {
+        display: table-footer-group;
+        font-weight: bold;
+    }
+
+    #DT_bulkPayInvoiceDetailsTable_wrapper thead {
+        display: table-header-group;
+    }
+
+    div.selectedInvoiceTotal {
+        font-size: large;
+        font-weight: bold;
+        vertical-align: middle;
+    }
+</style>
+<h2 class="sub_heading">Bulk Pay Builder</h2>
+<div id="bulkPayInvoiceBuilder" class="white_box p_15 mb_20 invoice-builder" tabindex="-1">
+	<div id="bulkPayInvoiceBuilderDetails">
+        <table class="display stripe invoice-details" id="DT_bulkPayInvoiceDetailsTable">
+            <thead>
+                <tr id="headerRow-invoiceDetailsTable">
+                    <th class="reqChkbx"></th>
+					<th class="reqGroupName">Group Name</th>
+                    <th class="reqBillTo afilter">Bill To</th>
+                    <th class="reqInvoiceNo asearch">Invoice #</th>
+                    <th class="reqInvoiceDate dfilter">Date Submitted</th>
+                    <th class="reqDmvFee currencyFmt sum">DMV Fee</th>
+                    <th class="reqServiceFee currencyFmt sum">Service Fee</th>
+                    <th class="reqOtherFee currencyFmt sum">Other Fee</th>
+					<th class="reqInvoiceAmount currencyFmt sum">Invoice Amount</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="invoice-footer">
+        <hr />
+        
+		<div style="display:block">
+            <div>
+                <button type="button" class="btn btn-default noEditInvoicingAccess" onclick="vendor_clearBulkInvoicesBuilder();">Clear</button>
+                <button type="button" class="btn btn-success noEditInvoicingAccess" onclick="vendor_show_bulk_MarkAsPaid();">Mark Records as Paid</button>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script asp-add-nonce="true">
+    function getSelectedInvoiceTotal(t) {
+        var total = 0;
+        var rows = t.rows({ selected: true }).data();
+        for (var i = 0; i < rows.length; i++) {
+            total += rows[i].invoiceAmount;
+        }
+        return total;
+    }
+
+    var userWritePermission = false
+    var userReadPermission = false
+
+    $(document).ready(function () {
+        $.fn.dataTable.render.shortDate = datatable_render_shortdate;
+
+        GetBillingAccessData();
+        var table = $('#DT_bulkPayInvoiceDetailsTable').DataTable(
+        {
+                keys: { keys: [ 32 ] },
+                "colReorder": false,
+                bSortCellsTop: true,
+                "scrollX": true,
+                scrollY: false,
+                "select": true,
+                "searching": false,
+                "pageLength": 10,
+                "language": {
+                    select: {
+                        rows: "<span class='info_xrowsselected'>%d rows selected.</span>"
+                        , selector: 'td:not(.norowselect)'
+                    }
+                },
+                "lengthMenu": [10,25,50,100],
+                searchDelay: 500,
+                "createdRow": function (row, data, dataIndex) {
+                },
+                "columnDefs": [
+                    { "targets": "reqChkbx noEditInvoicingAccess", "orderable": false, "className": "select-checkbox", "min-width": "40px", "data": "", "sortable": false, },
+					{ "targets": "reqGroupName", "data": "groupName" },
+                    { "targets": "reqInvoiceNo", "data": "invoiceNo" },
+                    { "targets": "reqBillTo", "data": "billToName", "width": "150px" },
+                    { "targets": "reqInvoiceDate", "data": "invoiceDate" },
+					{ "targets": "reqDmvFee", "data": "dmvFees", "className": "numericCol", width: "100px" },
+					{ "targets": "reqServiceFee", "data": "serviceFees", "className": "numericCol", width: "100px" },
+					{ "targets": "reqOtherFee", "data": "otherFees", "className": "numericCol", width: "100px" },
+					{ "targets": "reqInvoiceAmount", "data": "invoiceAmount", "className": "numericCol", width: "100px" },
+
+                    { "targets": ["dfilter", "drfilter"], "sortable": true, "width": "100px", "defaultContent": "", "render": datatable_render_date },
+                    { "targets": ["currency", "currencyFmt"], className: "numericCol", "render": $.fn.dataTable.render.number(',', '.', 2, '$ ') },
+                    { "targets": "reqId", "visible": false, "sortable": false, "data": "invoiceId", "searchable": false },
+                    {
+                        "targets": "_all", "searchable": true, "className": "dt-center", "autowidth": true, "defaultContent": "", "sortable": true,
+                        render: $.fn.dataTable.render.text()
+                    },
+                ],
+                "processing": true,
+                "serverSide": false,
+                "buttons": [
+                    {
+                        extend: 'selectAll',
+                        className: 'selectall noEditInvoicingAccess',
+                        action: function (e) {
+                            e.preventDefault();
+                            table.rows({ search: 'applied' }).deselect();
+                            table.rows({ search: 'applied' }).select();
+                        }
+                    },
+                    'selectNone',
+                    { text: "Remove", className: "selectOnOff noEditInvoicingAccess", action: function (e) { e.preventDefault(); deleteRowsAndUpdateInvoice(table); } },
+                ],
+                "initComplete": function (settings, json) {
+
+                    setTimeout(() => disableButtons(), 100);
+
+                    var api = this.api();
+                    api.columns(['.reqVIN']).every(function () {
+                        var column = this;
+                        var title = "VIN";
+                        var select = $('<input class="customFilter" type="text" placeholder="Search ' + title + '" />')
+                            .appendTo($("#filterRow-invoiceDetailsTable th").eq(column.index()).empty())
+                            .on('change', function () {
+                                var val = $(this).val();
+                                column
+                                    .search(val ? val : '', false, false)
+                                    .draw();
+                        });
+                    });
+                    api.columns(['.reqClientRef']).every(function () {
+                        var column = this;
+                        var title = "Ref#";
+                        var select = $('<input class="customFilter" type="text" placeholder="Search ' + title + '" class="clientRefSearch" />')
+                            .appendTo($("#filterRow-invoiceDetailsTable th").eq(column.index()).empty())
+                            .on('change', function () {
+                                var val = $(this).val();
+                                column
+                                    .search(val) // ? '/' + val + '\b' : '', true, false)
+                                    .draw();
+                            });
+                    });
+                    api.draw('page'); @* FIX FOR INCORRECT COLUMN WIDTH WHEN USING SCROLLX *@
+                },
+                "footerCallback": function (row, data, start, end, display) {
+                    var api = this.api();
+                    var fmtCurrency = $.fn.dataTable.render.number(',', '.', 2, '$ ');
+
+                    api.columns('.sum', {
+                        page: 'current'
+                    }).every(function () {
+                        var sum = this
+                            .data()
+                            .reduce(function (a, b) {
+                                var x = roundMoney(parseFloat(a)) || 0;
+                                var y = roundMoney(parseFloat(b)) || 0;
+                                return x + y;
+                            }, 0);
+                        let text = fmtCurrency.display(sum);
+                        $(this.footer()).html(text);
+                    });
+                },
+                "dom": "<'row'<'col-sm-6'l><'col-sm-6'<'#buttonContainer.site-datatable-button-container'>>>" + "<'row'<'col-sm-12'tr>>" + "<'row'<'col-sm-5'i><'col-sm-7'p>><'alert row'>B<'selectedInvoiceTotal'>",
+        });
+
+        $('#DT_bulkPayInvoiceDetailsTable').on('key-focus.dt', function (e, datatable, cell) {
+            //table.row(cell.index().row).select();
+        });
+
+        $('#DT_bulkPayInvoiceDetailsTable').on('key-blur.dt', function (e, datatable, cell) {
+            //table.row(cell.index().row).deselect();
+        });
+
+        $('#DT_bulkPayInvoiceDetailsTable').on('key.dt', function (e, datatable, key, cell, originalEvent) {
+            if (key === 32) {
+                // Toggle selection
+                var row = table.row(cell.index().row);
+                if ($(row.node()).hasClass('selected'))
+                    row.deselect();
+                else
+                    row.select();
+            }
+        });
+
+        vendorInvoiceBuilder_Table = table;
+
+        // Add event listener for opening and closing details
+        $('#invoiceDetailsTable tbody').on('click', 'td.details-control', function (e) {
+            e.stopPropagation();
+            var tr = $(this).closest('tr');
+            var row = table.row(tr);
+
+            if (row.child.isShown()) {
+                // This row is already open - close it
+                row.child.hide();
+                tr.removeClass('shown');
+            }
+            else {
+                // Open this row
+                vendorShowNotes(row.data(), tr, row);
+            }
+        });
+        $('#invoiceDetailsTable tbody').on('click', 'td.attDD', function (e) {
+            e.stopPropagation();
+            var tr = $(this).closest('tr');
+            var row = table.row(tr);
+            var rdata = row.data();
+            showAttachments(rdata.requestId, rdata.vin);
+        });
+
+        table.on('select deselect', function (e, dt, type, indexes) {
+            if (type === 'row') {
+                let $outerDiv = $('#bulkPayInvoiceBuilder');
+                var ctl = $outerDiv.find(".selectedInvoiceTotal");
+
+                if (table.rows({ selected: true }).indexes().length === 0) {
+                    table.buttons('.selectOnOff').disable();
+                    ctl.html('');
+                }
+                else {
+                    table.buttons('.selectOnOff').enable();
+
+                    var fmtCurrency = $.fn.dataTable.render.number(',', '.', 2, '$ ');
+                    var spanHtml = '<span style="margin-left: 30px;"><b>Selected Invoice Total: <span class="invoiceTotal"></span></b></span>';
+                    ctl.html(spanHtml);
+                    ctl.find(".invoiceTotal").text(fmtCurrency.display(getSelectedInvoiceTotal(table)));
+                }
+            }
+        });
+        table.buttons('.selectOnOff').disable();
+
+        $("#billToList").on('change', (function (e) {
+            populateSelectedBillTo();
+        }));
+
+        $("#custName").on("click", function () {
+                this.classList.toggle("active");
+                var panel = this.nextElementSibling;
+                if (panel.style.display === "block") {
+                    panel.style.display = "none";
+                } else {
+                    panel.style.display = "block";
+                }
+            });
+    });
+
+    function disableButtons() {
+        if (userReadPermission && !userWritePermission) {
+            $('.noEditInvoicingAccess').each(function () {
+                $(this).prop('disabled', true);
+            });
+
+            document.querySelectorAll('.noEditInvoicingAccess').forEach((button) => {
+                button.disabled = true;
+            });
+
+        }
+    }
+
+</script>
+

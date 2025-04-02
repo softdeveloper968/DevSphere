@@ -1,0 +1,151 @@
+﻿<div id="modal-RequestCode-New" class="modal fade hidden-print" tabindex="-1" role="dialog">
+    <div class="container vertical-alignment-helper">
+        <div class="row vertical-align-center">
+            <div class="col-sm-4"></div>
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <div class="modal-title h4" style="margin-right:20px" id="REQ_VIN_RNO_HEADER">Add Code</div>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="RequestCode_New_Code" class="control-label">Code</label>
+                            <div class="">
+                                <select id="RequestCode_New_Code"></select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="RequestCode_New_Fields" class="control-label">Fields</label>
+                            <div class="">
+                                <select id="RequestCode_New_Fields" multiple></select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="RequestCode_New_Note" class="control-label">Note</label>
+                            <textarea type="text" id="RequestCode_New_Note" rows="3" style="resize:vertical" placeholder="" class="form-control"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="RequestCode_New_Resolution" class="control-label">Suggested Resolution</label>
+                            <textarea type="text" id="RequestCode_New_Resolution" rows="3" style="resize:vertical" placeholder="" class="form-control"></textarea>
+                        </div>
+                    </div>
+                    <div class="alert alert-danger" style="display:none" role="alert"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-success" id="okButton">Save</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="modal-RequestCode-Edit" class="modal fade hidden-print" tabindex="-1" role="dialog">
+    <div class="container vertical-alignment-helper">
+        <div class="row vertical-align-center">
+            <div class="col-sm-4"></div>
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" style="">&times;</button>
+                        <div class="modal-title h4" style="margin-right:20px" id="REQ_VIN_RNO_HEADER">Edit Code</div>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="RequestCode_Edit_RequestCodeId" />
+                        <div class="form-group">
+                            <label for="RequestCode_Edit_Code" class="control-label">Code</label>
+                            <div class="">
+                                <select id="RequestCode_Edit_Code"></select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="RequestCode_Edit_Fields" class="control-label">Fields</label>
+                            <div class="">
+                                <select id="RequestCode_Edit_Fields" multiple></select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="RequestCode_Edit_Note" class="control-label">Note</label>
+                            <textarea type="text" id="RequestCode_Edit_Note" rows="3" style="resize:vertical" placeholder="" class="form-control"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="RequestCode_Edit_Resolution" class="control-label">Suggested Resolution</label>
+                            <textarea type="text" id="RequestCode_Edit_Resolution" rows="3" style="resize:vertical" placeholder="" class="form-control"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <div class="" id="RequestCode_Edit_ClearedInfo" style="margin-left:20px">
+                                @*location for cleared details*@
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-danger" style="display:none" role="alert"></div>
+                    <div class="modal-footer">
+                        @* <label id="RequestCode_Edit_LastModified" class="lastmodinfo">Last modified </label> *@
+                        <button type="button" class="btn btn-success" id="okButton">Save</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="modal-RequestCode-Clear" class="modal fade hidden-print" tabindex="-1" role="dialog">
+    <div class="container vertical-alignment-helper">
+        <div class="row vertical-align-center">
+            <div class="col-sm-4"></div>
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <div class="modal-title h4" style="margin-right:20px" id="REQ_VIN_RNO_HEADER">Complete Follow-Up</div>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="RequestCode_Edit_RequestCodeId" />
+                        <div class="form-group">
+                            <label for="RequestCode_Edit_Code" class="control-label">Code</label>
+                            <div class="">
+                                <select id="RequestCode_Edit_Code" readonly></select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="RequestCode_Edit_Fields" class="control-label">Fields</label>
+                            <div class="">
+                                <select id="RequestCode_Edit_Fields" multiple readonly></select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="RequestCode_Edit_Note" class="control-label">Note</label>
+                            <textarea type="text" id="RequestCode_Edit_Note" rows="3" style="resize:vertical" placeholder="" class="form-control" readonly></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="RequestCode_Edit_Resolution" class="control-label">Suggested Resolution</label>
+                            <textarea type="text" id="RequestCode_Edit_Resolution" rows="3" style="resize:vertical" placeholder="" class="form-control" readonly></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="RequestCode_Edit_ClearedNote" class="control-label">Resolution Note</label>
+                            <textarea type="text" id="RequestCode_Edit_ClearedNote" rows="3" style="resize:vertical" placeholder="" class="form-control" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <div class="" id="RequestCode_Edit_ClearedInfo" style="margin-left:20px">
+                                @*location for cleared details*@
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-danger" style="display:none" role="alert"></div>
+                    <div class="modal-footer">
+                        <label style="display: inline-block;padding-right: 30px" id="RequestCode_Edit_OverrideClear_DIV">
+                            <input style="vertical-align: middle" id="RequestCode_Edit_OverrideClear" type="checkbox" />
+                            <span style="vertical-align: middle">Override field validation</span>
+                        </label>
+                        <button type="button" class="btn btn-success" id="okButton">Mark Cleared</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script asp-add-nonce="true">
+    $(document).ready(function () {
+    });
+</script>

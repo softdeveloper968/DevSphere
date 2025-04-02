@@ -1,0 +1,21 @@
+﻿<div id="modal-receiveFromLH" class="modal fade hidden-print" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Ready For Processing</h4>
+            </div>
+            <div class="modal-body">
+                @{
+                    await Html.RenderPartialAsync("_standardCodeNotesChat", "Received from LH");
+                }
+
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>

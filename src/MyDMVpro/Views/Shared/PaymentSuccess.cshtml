@@ -1,0 +1,24 @@
+﻿@{
+    Layout = "~/Views/Shared/_UploadLinkLayout.cshtml";
+    ViewData["Title"] = "Payment Success";
+}
+
+<div class="container text-center mt-5">
+    <div class="white_box success_sec">
+    <h2 class="text-success">🎉 Payment Successful!</h2>
+    <p class="lead">Thank you for your payment. Your transaction was completed successfully.</p>
+
+    <p class="lead">You can now close this window.</p>
+
+
+    <div class="mt-4">
+            <button onclick="closeTab()" class="btn btn-primary">Close Tab</button>
+     </div>
+</div>
+</div>
+
+<script>
+    function closeTab() {
+        window.close();
+    }
+</script>

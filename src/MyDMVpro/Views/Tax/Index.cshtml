@@ -1,0 +1,59 @@
+﻿@model MyDMVpro.Models.Tax.StateJurisdictionViewModel
+
+<script src="~/js/taxcalculator.js" asp-append-version="true"></script>
+<div class="white_box p_15 mb_20">
+    <div class="row flex_row gap_15 items-end">
+        <div class="col-md-4">
+            <div class="form-group">
+                <label for="stateSelect" class="control-label">Select State:</label>
+                <select id="stateSelect" class="form-control">
+                    <option value="">--Select State--</option>
+                    @foreach (var state in Model.States)
+                    {
+                        <option value="@state.StateAbbreviation">@state.StateName</option>
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label for="jurisdictionSelect" class="control-label">Select Jurisdiction:</label>
+                <select id="jurisdictionSelect" class="form-control">
+                    <option value="">--Select Jurisdiction--</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="taxRulesSection"></div>
+
+
+    <script>
+    $(document).ready(function() {
+        const jurisdictions = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Jurisdictions));
+        // Filter jurisdictions based on selected state
+        $('#stateSelect').change(function() {
+            $('#taxRulesSection').html('');
+            const selectedStateId = $(this).val();
+
+            // Clear and reset the jurisdiction dropdown
+            $('#jurisdictionSelect').html('<option value="">--Select Jurisdiction--</option><option value="0">Applicable for all jurisdictions</option>');
+
+            if (selectedStateId) {
+                // Filter jurisdictions locally
+                const filteredJurisdictions = jurisdictions.filter(j => j.StateAbbreviation == selectedStateId);
+
+                // Populate the jurisdiction dropdown
+                filteredJurisdictions.forEach(jurisdiction => {
+                    $('#jurisdictionSelect').append(`<option value="${jurisdiction.JurisdictionID}">${jurisdiction.JurisdictionName}</option>`);
+                });
+            }
+        });
+
+        // Trigger on jurisdiction dropdown selection change
+        $('#jurisdictionSelect').change(function() {
+            reloadTaxRulesSection();
+            fetchStateConfig();
+        });
+    });
+    </script>

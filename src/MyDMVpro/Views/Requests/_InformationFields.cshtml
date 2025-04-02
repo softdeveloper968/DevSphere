@@ -1,0 +1,88 @@
+﻿@model List<MyDMVpro.Models.RequestCode>
+<div class="fields-notes">
+    @if (Model.Count > 0)
+    {
+        @foreach (var requestCode in Model)
+        {
+            <div class="row gap_15 flex_row">
+                <div class="col-md-6">
+                    <div class="field-note-row">
+                        @foreach (var field in requestCode.Fields)
+                        {
+                            <div class="field form-group position-relative">
+                                <label class="mb-0">@field.ExcelName</label>
+                                <div class="input-group">
+                                    <input class="form-control open-widget"
+                                           data-request-id="@requestCode.RequestCodeId"
+                                           data-field-id="@field.FieldId"
+                                           placeholder="@field.Field.FormDefaultLabel" />
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="note form-group">
+                        <label class="mb-0">Notes</label>
+                        <textarea class="form-control" readonly>@requestCode.Note</textarea>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="row gap_15 flex_row">
+            <div class="col-md-12">
+                <div class="field-note-row">
+                    <div class="field form-group">
+                        <h6 class="mb-0">
+                            All required information has been successfully provided.
+                        </h6>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<script>
+
+    $(document).ready(function () {
+        // Attach click event to inputs
+        $(document).on('click', '.open-widget', function () {
+            const requestCodeId = $(this).data('request-id'); // Get request ID
+            const fieldId = $(this).data('field-id'); // Get field ID
+            openWidget(requestCodeId, fieldId); // Call the function to open the widget
+
+        });
+    });
+
+    // Function to open the widget or load a partial view
+    function openWidget(requestCodeId, fieldId) {
+
+        $.ajax({
+            url: '@Url.Action("EditMissingRequestFields", "MyServices")' + '?requestCodeId=' + requestCodeId + '&fieldId=' + fieldId,
+            type: 'GET',
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            cache: false,
+            contentType: false,
+            processData: false,
+            data: {
+                requestCodeId: requestCodeId,
+            },
+            success: function (response) {
+                const uploadDocumentSection = document.getElementById('dataFieldWidgetContainer');
+                uploadDocumentSection.style.display = 'block';
+
+                $('#dataFieldWidget').find('.panel-body').html(response);
+
+            },
+            error: function () {
+                alert("An error occurred while fetching the data.");
+            }
+        });
+
+    }
+</script>
+

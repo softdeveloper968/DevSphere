@@ -1,0 +1,17 @@
+﻿@using MyDMVpro.Models.FormsViewModels
+@{ Layout = ""; }
+@{
+    Guid? attachmentId = ViewData["AttachmentId"] as Guid?;
+    string filename = ViewData["Filename"] as string;
+    string url = $"/FileLibrary/DownloadAttachment/{attachmentId}/{filename}";
+    var mimetype = ViewData["MimeType"] as string;
+}
+<html lang="en">
+<body>
+    <object data="@(url)" type="@(mimetype)" style="width:100%;height:100%;">
+        <embed src="@(url)" type="@(mimetype)">
+            <p><a href="@(url)">Download File</a>.</p>
+        </embed>
+    </object>
+</body>
+</html>

@@ -1,0 +1,28 @@
+﻿@{
+    const string PageName = VendorPageNames.FollowUps;
+    ViewData["Title"] = "Follow-Ups";
+    UserInfo ui = UserInfo.GetCurrentUser(User, false);
+}
+
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+
+<h2>Follow-Ups</h2>
+@{
+    VendorFollowUpViewModel list = new VendorFollowUpViewModel(VendorViewType.FollowUps, PageName)
+    {
+        DataUrl = "/FollowUp/VendorFollowUps",
+        ListId = "DT_FollowUps",
+        AllowMove = false,
+        TableVarName = "FollowUpsTable",
+        AllowDelete = false
+    };
+    list.Columns.Add_Select();
+    list.Columns.Add_VIN();
+    list.Columns.Add_RNo();
+    list.Columns.Add_Group();
+    list.Columns.Add("Follow-Up Note", "reqFUPNotes");
+    list.Columns.Add("Code", "reqFollowUpCode afilter");
+
+    await Html.RenderPartialAsync("_vendorFollowUpsList", list);
+}

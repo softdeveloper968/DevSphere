@@ -1,0 +1,431 @@
+﻿@model RequestHistoryModel
+@using MyDMVpro.Common;
+@using MyDMVpro.Controllers;
+
+@{
+    const string c_EST_dateonly = "MMM d, yyyy";
+
+    DateTime GetEasternDateTime(DateTime? dt)
+    {
+        return DateTimeHelpers.ConvertToEasternDateTime(dt).Value;
+    }
+    string FormatDate(DateTime? dt, string format = "MMM d, yyyy")
+    {
+        if (dt == null) return "";
+        return DateTimeHelpers.EasternDateTime(dt.Value, format);
+    }
+    string FormatDateTime(DateTime? dt, string format = "M/d/yyyy h:mm tt")
+    {
+        if (dt == null) return "";
+        return DateTimeHelpers.EasternDateTime(dt.Value, format);
+    }
+    string FormatTime(DateTime? dt, string format = "t")
+    {
+        if (dt == null) return "";
+        if (dt.Value.TimeOfDay == TimeSpan.Zero) return "";
+
+        return DateTimeHelpers.EasternDateTime(dt, format);
+    }
+    bool ReverseList = true;
+    bool DisplayDate = false;
+
+    if (ReverseList)
+    {
+        Model.History.Reverse();
+    }
+    string BIN(object val)
+    {
+        if (val == null) return "blank";
+        if (val is DateTime)
+        {
+            return ((DateTime)val).ToString("M/d/yyyy");
+        }
+        if (val is string)
+        {
+            string v = (string)val;
+            if (string.IsNullOrWhiteSpace(v)) return "blank";
+            return v.Trim();
+        }
+        return val.ToString();
+    }
+    DateTime currentDate = DateTime.MinValue;
+}
+<div class="white_box p_15">
+    <table class="reqsummary table">
+        <thead>
+            <tr>
+                <th colspan="2">VIN</th>
+                <th>&nbsp;</th>
+                <th class="dt-center">AppType</th>
+                <th>&nbsp;</th>
+                <th class="dt-center">State</th>
+                <th>&nbsp;</th>
+                <th>Group</th>
+                <th>&nbsp;</th>
+                <th>Date To Vendor</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td colspan="2">@Model.Request.Vin</td>
+                <td>&nbsp;</td>
+                <td class="dt-center">@Model.Request.AppType</td>
+                <td>&nbsp;</td>
+                <td class="dt-center">@Model.Request.State</td>
+                <td>&nbsp;</td>
+                <td>@Model.Request.GroupName</td>
+                <td>&nbsp;</td>
+                <td>@Model.Request.DateToVendor.Value.Date.ToString("d")</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <br />
+    <table class="reqhist table">
+
+        <thead>
+            <tr>
+                <th colspan="2"><h4 class="m-0">Request Timeline</h4></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var m1 in Model.History)
+            {
+                var thisDate = GetEasternDateTime(m1.SortDate);
+                @if (thisDate.Date != currentDate.Date)
+                {
+                    DisplayDate = true;
+                }
+                else
+                {
+                    DisplayDate = false;
+                }
+                currentDate = GetEasternDateTime(m1.SortDate);
+                @if (DisplayDate)
+                {
+                    <tr class="reqhist_daterow">
+                        <td colspan="2" class="reqhist_date" colspan="6">@FormatDate(m1.SortDate, "ddd MMM d, yyyy")</td>
+                    </tr>
+                }
+                else
+                {
+                    <tr class="reqhist_nodaterow">
+                        <td colspan="2">&nbsp;</td>
+                    </tr>
+                }
+
+                @if (m1 is ProcessHistory ph)
+                {
+                    <tr>
+                        <td class="reqhist_time" style="vertical-align:top">@FormatTime(m1.SortDate, "t")
+                            <span class="reqhist_process"><!-- icon --></span>
+                        </td>
+                        
+                        <td>
+                            <table>
+                                @if (!string.IsNullOrWhiteSpace(ph.Action))
+                                {
+                                    <tr>
+                                        <td>@ph.Action</td>
+                                    </tr>
+                                }
+                            </table>
+                        </td>
+                    </tr>
+                }
+                @if (m1 is FollowUpHistory fh)
+                {
+                    <tr>
+                        <td class="reqhist_time" style="vertical-align:top">@FormatTime(m1.SortDate, "t")
+                            @if (fh.CreatedDate == fh.ModifiedDate || fh.ModifiedDate == null)
+                            {
+                                <span class="reqhist_followupcreated"><!-- icon --></span>
+                            }
+                            else
+                            {
+                                <span class="reqhist_followupedited"><!-- icon --></span>
+                            }
+                        </td>
+                        
+                        <td>
+                            <table>
+                                <tr>
+                                    @if (fh.CreatedDate == fh.ModifiedDate || fh.ModifiedDate == null)
+                                    {
+                                        <td>Created Follow-up: @Html.Encode(fh.Title)</td>
+                                    }
+                                    else
+                                    {
+                                        <td>Edited Follow-up: @Html.Encode(fh.Title)</td>
+                                    }
+                                </tr>
+                                @foreach (var fld in fh.Diff)
+                                {
+                                    <tr>
+                                        <td class="reqhist_fldname" colspan="2">@Html.Encode(fld.Key) changed from <span class="reqhist_lfld">@Html.Encode(BIN(fld.Value.Left))</span> to <span class="reqhist_rfld">@Html.Encode(BIN(fld.Value.Right))</span>.</td>
+                                    </tr>
+                                }
+                                <tr>
+                                    <td class="reqhist_changedby" colspan="2">
+                                        <span>by @Html.Encode(fh.DisplayModifiedBy ?? "System") @FormatDateTime(m1.SortDate, c_EST_dateonly)</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                }
+                @if (m1 is NoteHistory note)
+                {
+                    <tr>
+                        <td class="reqhist_time" style="vertical-align:top">@FormatTime(m1.SortDate, "t")
+                            <span class="reqhist_note"></span>
+                        </td>
+                        <td>
+                            <table>
+                                @if (!string.IsNullOrWhiteSpace(note.Note))
+                                {
+                                    <tr>
+                                        <td>Note: @Html.Raw(note.Note)</td>
+                                    </tr>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(note.Remark))
+                                {
+                                    <tr>
+                                        <td>Remark: @Html.Raw(note.Remark)</td>
+                                    </tr>
+                                }
+                                <tr>
+                                    <td class="reqhist_changedby">
+                                        <span>by @Html.Encode(note.DisplayModifiedBy ?? "System") @FormatDateTime(m1.SortDate, c_EST_dateonly)</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                }
+                @if (m1 is RequestHistory m)
+                {
+                    <tr>
+                        <td class="reqhist_time" style="vertical-align:top">@FormatTime(m1.SortDate, "t")
+                            <span class="reqhist_editForm"><!-- icon --></span>
+                        </td>
+                        
+                        <td>
+                            <table>
+                                @if (!string.IsNullOrWhiteSpace(m.AssignedToChangeMsg))
+                                {
+                                    <tr>
+                                        <td>@Html.Raw(m.AssignedToChangeMsg)</td>
+                                    </tr>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(m.StageChangeMsg))
+                                {
+                                    <tr>
+                                        <td>@Html.Raw(m.StageChangeMsg)</td>
+                                    </tr>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(m.StatusChangeMsg))
+                                {
+                                    <tr>
+                                        <td>@Html.Raw(m.StatusChangeMsg)</td>
+                                    </tr>
+                                }
+                                @if (m.RequestDiff != null && m.RequestDiff.Count() > 0)
+                                {
+                                    @foreach (var fld in m.RequestDiff)
+                                    {
+                                        <tr>
+                                            <td class="reqhist_fldname">@Html.Encode(fld.Key) changed from <span class="reqhist_lfld">@Html.Encode(BIN(fld.Value.Left))</span> to <span class="reqhist_rfld">@Html.Encode(BIN(fld.Value.Right))</span>.</td>
+                                        </tr>
+                                    }
+                                }
+                                @if (m.ProcessDiff != null && m.ProcessDiff.Count() > 0)
+                                {
+                                    @foreach (var fld in m.ProcessDiff)
+                                    {
+                                        <tr>
+                                            @if (fld.Key == "ProcessStageID")
+                                            {
+                                                @* // should already be shown in change list
+                            <td class="reqhist_fldname" colspan="9">Stage changed from <span class="reqhist_lfld">@Html.Encode(StageNameFromObject(fld.Value.Left))</span> to <span class="reqhist_rfld">@Html.Encode(StageNameFromObject(fld.Value.Right))</span>.</td>
+                            *@
+                                            }
+                                            else
+                                            {
+                                                <td class="reqhist_fldname">@Html.Encode(fld.Key) changed from <span class="reqhist_lfld">@Html.Encode(BIN(fld.Value.Left))</span> to <span class="reqhist_rfld">@Html.Encode(BIN(fld.Value.Right))</span>.</td>
+                                            }
+                                        </tr>
+                                    }
+                                }
+                                <tr>
+                                    <td class="reqhist_changedby">
+                                        <span>by @Html.Encode(m.DisplayModifiedBy ?? "System") @FormatDateTime(m1.SortDate, c_EST_dateonly)</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                }
+                @if (m1 is AttachmentHistory ah)
+                {
+                    <tr>
+                        <td class="reqhist_time" style="vertical-align:top">@FormatTime(m1.SortDate, "t")
+                            <span class="reqhist_attachment"><!-- icon --></span>
+                        </td>
+                        
+                        <td>
+                            <table>
+                                @if (!string.IsNullOrWhiteSpace(ah.FileName))
+                                {
+                                    <tr>
+                                        <td>Added attachment '@Html.Raw(ah.FileName)': @(ah.Description)</td>
+                                    </tr>
+                                }
+                                <tr>
+                                    <td class="reqhist_changedby">
+                                        <span>by @Html.Encode(ah.DisplayModifiedBy ?? "System") @FormatDateTime(m1.SortDate, c_EST_dateonly)</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                }
+                @if (m1 is ChatHistory ch)
+                {
+                    <tr>
+                        <td class="reqhist_time" style="vertical-align:top">@FormatTime(m1.SortDate, "t")
+                            <span class="reqhist_chatMsg"><!-- icon --></span>
+                        </td>
+                        
+                        <td>
+                            <table>
+                                @if (!string.IsNullOrWhiteSpace(ch.Message))
+                                {
+                                    <tr>
+                                        <td>@Html.Raw(ch.Message)</td>
+                                    </tr>
+                                }
+                                <tr>
+                                    <td class="reqhist_changedby">
+                                        <span>
+                                            by @Html.Encode(ch.DisplayModifiedBy ?? "System") @FormatDateTime(m1.SortDate, c_EST_dateonly)
+                                            @if (ch.ReadBy != null && ch.ReadOn != null)
+                                            {
+                                                <span> | Marked as read by @Html.Encode(ch.DisplayReadBy) on @FormatTime(ch.ReadOn) @FormatDateTime(ch.ReadOn, c_EST_dateonly)</span>
+                                            }
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                }
+                @if (m1 is InvoiceHistory ih)
+                {
+                    <tr>
+                        <td class="reqhist_time" style="vertical-align:top">@FormatTime(m1.SortDate, "t")
+                            <span class="reqhist_invoice"><!-- icon --></span>
+                        </td>
+                       
+                        <td>
+                            <table>
+                                <tr>
+                                    <td>
+                                        Invoice # @ih.InvoiceNo created<br />
+                                        <table width="200px">
+                                            <tr>
+                                                <td>DMV Fee</td>
+                                                <td style="margin-left:20px;text-align:right">@ih.DmvFee</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Service Fee</td>
+                                                <td style="margin-left:20px;text-align:right">@ih.ServiceFee</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Other Fee</td>
+                                                <td style="margin-left:20px;text-align:right">@ih.OtherFee</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Total</td>
+                                                <td style="margin-left:20px;text-align:right">@ih.TotalDue</td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="reqhist_changedby">
+                                        <span>by @Html.Encode(ih.DisplayCreatedBy ?? "System") @FormatDateTime(m1.SortDate, c_EST_dateonly)</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                }
+                @if (m1 is PaymentAndDisbursementHistory pdh)
+                {
+                    <tr>
+                        <td class="reqhist_time" style="vertical-align:top">
+                            @FormatTime(m1.SortDate, "t")
+                            <span class="reqhist_invoice"><!-- icon --></span>
+                        </td>
+
+                        <td>
+                            @if(pdh.ChangeType == "INSERT" || pdh.ChangeType == "UPDATE"){
+                            <table>
+                                <tr>
+                                    <td>
+                                        PaymentId # @pdh.PaymentID @Html.Encode(pdh.DisplayCreatedBy != null ? "created": "updated")<br />
+                                        <table width="200px">
+                                            <tr>
+                                                <td>Amount</td>
+                                                <td style="margin-left:20px;text-align:right">@pdh.Amount</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Processing Fee</td>
+                                                <td style="margin-left:20px;text-align:right">@pdh.ProcessingFee</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Total Amount</td>
+                                                <td style="margin-left:20px;text-align:right">@pdh.Amount</td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    @if(pdh.DisplayModifiedBy != null){
+                                    <td class="reqhist_changedby">
+                                        <span>by @Html.Encode(pdh.DisplayModifiedBy ?? "System") @FormatDateTime(m1.SortDate, c_EST_dateonly)</span>
+                                    </td>
+                                    }
+                                    else{
+                                    <td class="reqhist_changedby">
+                                        <span>by @Html.Encode(pdh.DisplayCreatedBy ?? "System") @FormatDateTime(m1.SortDate, c_EST_dateonly)</span>
+                                    </td>
+                                    }
+                                </tr>
+                                </table>
+                            }
+                            else
+                            {
+                                <table>
+                                    <tr>
+                                        <td>
+                                            PaymentId # @pdh.PaymentID deleted<br />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="reqhist_changedby">
+                                            <span>by @Html.Encode(pdh.DisplayModifiedBy ?? "System") @FormatDateTime(m1.SortDate, c_EST_dateonly)</span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+        <tfoot></tfoot>
+    </table>
+
+</div>

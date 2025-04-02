@@ -1,0 +1,159 @@
+﻿@{
+    ViewData["Title"] = "Request Codes";
+}
+
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+<script src="~/js/requesttags.js" asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+
+<h2>Request Codes</h2>
+@{
+    {
+        RequestTagViewModel list = new RequestTagViewModel(VendorViewType.RequestTags)
+                {
+                    DataUrl = "/Tags/RequestCodeTags",
+                    ListId = "DT_RequestTags",
+                    TableVarName = "RequestTagTable",
+                    AllowDelete = false,
+                    PageLength = 20,
+                    EnableKeyNavigation = false,
+                    AllowMultiSelect = true,
+                    AddLastModified = false,
+                    AddLastModifiedBy = false,
+                    AllowExport = false
+                };
+        list.Columns.Add_Select();
+        list.Columns.Add("Code", "reqTag");
+        list.Columns.Add("Category", "reqTagCategory");
+        list.Columns.Add("Description", "reqDesc");
+        list.Columns.Add("Disabled", "reqTagDisabled");
+
+        list.SortColumns.Add("reqTag");
+
+        await Html.RenderPartialAsync("_vendorRequestTagList", list);
+    }
+}
+<div id="modal-RequestTag-New" class="modal fade hidden-print" tabindex="-1" role="dialog">
+    <div class="container vertical-alignment-helper">
+        <div class="row vertical-align-center">
+            <div class="col-sm-4"></div>
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="myModal-label">New Request Code</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="RequestTag_Name" class="control-label">Request Code</label>
+                            <input type="text" maxlength="50" style="text-transform: uppercase;" id="RequestTag_Name" class="form-control" />
+                        </div>
+                        <label for="RequestTag_Category" class="control-label">Category</label>
+                        <select id="RequestTag_Category" class="form-control">
+                            <option value="">(none)</option>
+                        </select>
+                        <div class="form-group">
+                            <label for="RequestTag_Description" class="control-label">Request Description</label>
+                            <textarea class="form-control" id="RequestTag_Description" rows="10" width="100%" placeholder="Type note" style="resize:none;"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="RequestTag_Disabled" class="control-label">
+                                <input type="checkbox" id="RequestTag_Disabled" />
+                                Disabled
+                            </label>
+                        </div>
+                    </div>
+                    <div class="alert alert-danger" style="display:none" role="alert"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-success" id="okButton">Save</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="modal-RequestTag-Delete" class="modal fade hidden-print" tabindex="-1" role="dialog">
+    <div class="container vertical-alignment-helper">
+        <div class="row vertical-align-center">
+            <div class="col-sm-4"></div>
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="myModal-label">Delete Request Code</h4>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="RequestTag_Id" />
+                        <div class="form-group">
+                            <label for="RequestTag_Name" class="control-label">Request Code</label>
+                            <input type="text" maxlength="50" style="text-transform: uppercase;" id="RequestTag_Name" class="form-control" readonly>
+                        </div>
+                        <label for="RequestTag_Category" class="control-label">Category</label>
+                        <select id="RequestTag_Category" class="form-control" readonly>
+                            <option value="">(none)</option>
+                        </select>
+                        <div class="form-group">
+                            <label for="RequestTag_Description" class="control-label">Request Description</label>
+                            <textarea class="form-control" id="RequestTag_Description" rows="10" width="100%" style="resize:none;" readonly></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="RequestTag_Disabled" class="control-label">
+                                <input type="checkbox" id="RequestTag_Disabled" readonly />
+                                Disabled
+                            </label>
+                        </div>
+                    </div>
+                    <div class="alert alert-danger" style="display:none" role="alert"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-success" id="okButton">Delete</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="modal-RequestTag-Edit" class="modal fade hidden-print" tabindex="-1" role="dialog">
+    <div class="container vertical-alignment-helper">
+        <div class="row vertical-align-center">
+            <div class="col-sm-4"></div>
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="myModal-label">Edit Request Tag</h4>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="RequestTag_Id" />
+                        <div class="form-group">
+                            <label for="RequestTag_Name" class="control-label">Request Code</label>
+                            <input type="text" maxlength="50" style="text-transform: uppercase;" id="RequestTag_Name" class="form-control" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="RequestTag_Category" class="control-label">Category</label>
+                            <select id="RequestTag_Category" class="form-control">
+                                <option value="">(none)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="RequestTag_Description" class="control-label">Request Description</label>
+                            <textarea class="form-control" id="RequestTag_Description" rows="10" width="100%" placeholder="Type note" style="resize:none;"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="RequestTag_Disabled" class="control-label">
+                                <input type="checkbox" id="RequestTag_Disabled"/>
+                                Disabled
+                            </label>
+                        </div>
+                    </div>
+                    <div class="alert alert-danger" style="display:none" role="alert"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-success" id="okButton">Save</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

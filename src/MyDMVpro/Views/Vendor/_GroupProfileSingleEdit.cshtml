@@ -1,0 +1,97 @@
+﻿@model List<Dictionary<string,object>>
+@{
+    string GetFieldName(Dictionary<string, object> item)
+    {
+        return item["name"] as string;
+    }
+}
+<style>
+    #profileEditForm {
+        display: flex;
+        flex-flow: row wrap;
+    }
+
+        #profileEditForm fieldset {
+            flex: 1;
+            border: 1px solid #aaa;
+            margin: 0.5em;
+        }
+
+            #profileEditForm fieldset legend {
+                padding: 5px 20px;
+                border: 1px solid #aaa;
+                font-weight: bold;
+            }
+
+            #profileEditForm fieldset.profileName {
+                flex: 2 100%;
+            }
+
+                #profileEditForm fieldset.profileName legend {
+                    background: #bfffbf;
+                }
+
+            #profileEditForm fieldset.profileType {
+                flex: 2 100%;
+            }
+
+                #profileEditForm fieldset.profileType legend {
+                    background: #ffffbf;
+                }
+
+            #profileEditForm fieldset.profileValues {
+                flex: 2 100%;
+            }
+
+                #profileEditForm fieldset.profileValues legend {
+                    background: #ffbfbf;
+                }
+
+        #profileEditForm div.DTE_Field {
+            padding: 5px;
+        }
+
+    .bulkProfileEditorCheckbox {
+        position: absolute;
+        left: -5px;
+        margin-right: -5px;
+        top: 5px;
+        margin-bottom: -5px;
+    }
+
+    html.dark #profileEditForm fieldset.profileName legend {
+        background: #005c00;
+    }
+
+    html.dark #profileEditForm fieldset.profileType legend {
+        background: #6a6a00;
+    }
+
+    html.dark #profileEditForm fieldset.profileValues legend {
+        background: #ffff77;
+    }
+
+    .dteFieldCheckbox {
+        float: right;
+        position: relative;
+        top: -45px;
+        left: -5px;
+        width: 4%;
+        vertical-align: middle;
+    }
+
+    .inputHolder {
+        display: inline-block;
+        width: 95%;
+    }
+</style>
+<div style="display:none">
+    <div class="profileEditForm" style="">
+        <fieldset class="profileValues">
+            @foreach (var item in Model)
+            {
+                <editor-field name="@GetFieldName(item)"></editor-field>
+            }
+        </fieldset>
+    </div>
+</div>

@@ -1,0 +1,13 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/src/MyDMVpro/obj
+.vs
+*.jfm
+*.dbmdl
+/src/MyDMVpro/.config/dotnet-tools.json
+/.cr/personal/FavoritesList/List.xml
+.cr
+
+/src/MyDMVpro/NewModels

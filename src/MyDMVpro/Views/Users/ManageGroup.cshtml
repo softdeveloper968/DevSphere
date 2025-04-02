@@ -1,0 +1,42 @@
+﻿@model IEnumerable<MyDMVpro.Models.UserGroups>
+
+@{
+    ViewData["Title"] = "ManageGroup";
+}
+
+<h2>ManageGroup</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Group)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.IsGroupAdmin)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.User)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Group.GroupName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.User.UserPrincipalName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.IsGroupAdmin)
+            </td>
+            <td>
+                @Html.ActionLink("Remove", "Remove", new { id=item.UserId, group=item.GroupId })
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

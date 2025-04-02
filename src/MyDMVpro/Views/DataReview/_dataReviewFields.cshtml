@@ -1,0 +1,107 @@
+﻿@model MyDMVpro.Models.DataReviewModels.DataReviewFieldsModel
+@{
+    Dictionary<string, string> fieldValues = null;
+    Dictionary<string, string> fieldValuesBefore = null;
+
+    void initFieldValues()
+    {
+        if (fieldValues == null && !string.IsNullOrWhiteSpace(Model.JRequest) && !string.IsNullOrWhiteSpace(Model.BeforeJRequest))
+        {
+            try
+            {
+                fieldValues = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(Model.JRequest);
+                fieldValuesBefore = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(Model.BeforeJRequest);
+            }
+            catch (Exception ex)
+            {
+                // log error
+                System.Diagnostics.Trace.TraceError("Error deserializing JRequest: " + ex.Message);
+            }
+        }
+    }
+   
+    string GetFieldValue(string xlName)
+    {
+        if (fieldValues.ContainsKey(xlName))
+        {
+            return fieldValues[xlName].ToString();
+        }
+        return "";
+    }
+
+    string GetBeforeFieldValue(string xlName)
+    {
+        if (fieldValuesBefore.ContainsKey(xlName))
+        {
+            return fieldValuesBefore[xlName].ToString();
+        }
+        return "";
+    }
+
+    string GetColumnValue_ProposedField(RequestCodeFields column)
+    {
+        string xlName = column.Field?.ExcelName;
+        return GetFieldValue(xlName);
+    }
+
+    string GetColumnLabel_ProposedField(RequestCodeFields column)
+    {
+        return column.Field?.FormDefaultLabel ?? "unknown";
+    }
+
+    string GetColumnValue_BeforeField(RequestCodeFields column)
+    {
+        string xlName = column.Field?.ExcelName;
+        return GetBeforeFieldValue(xlName);
+    }
+
+    string GetColumnLabel_BeforeField(RequestCodeFields column)
+    {
+        return column.Field?.FormDefaultLabel ?? "unknown";
+    }
+
+    initFieldValues();
+}
+<div id="reviewFields" class="" tabindex="-1">
+    <div>
+        @Html.Partial("_DataReviewWidget", Model.RequestCode)
+    </div>
+    <div class="">
+        <div class="form-group">
+            <label class="control-label">New Added Note</label>
+            <input asp-for="@Model.ProposedUpdates.ApprovalNotes" class="form-control" value="@Model.ProposedUpdates.ApprovalNotes" readonly />
+        </div>
+        @if ((Model.RequestCodeFields?.Count ?? 0) > 0)
+        {
+            <h4>Before values of Field</h4>
+            foreach (var column in Model.RequestCodeFields)
+            {
+                var xlName = column.Field.ExcelName;
+                <div class="form-group">
+                    <label asp-for="@xlName" class="control-label">@GetColumnLabel_BeforeField(column)</label>
+                    <input asp-for="@xlName" class="form-control" value="@GetColumnValue_BeforeField(column)" readonly />
+               </div>
+            }
+        }
+        @if ((Model.RequestCodeFields?.Count ?? 0) > 0)
+        {
+            <h4>Proposed values of Field</h4>
+
+            // use the columns specified on the MdpAttachmentType
+            foreach (var column in Model.RequestCodeFields)
+            {
+                var xlName = column.Field.ExcelName;
+                <div class="form-group">
+                    <label asp-for="@xlName" class="control-label">@GetColumnLabel_ProposedField(column)</label>
+                    <input asp-for="@xlName" class="form-control" value="@GetColumnValue_ProposedField(column)" readonly />
+                </div>
+            }
+        }
+        else
+        {
+            <div>
+                <p>No review fields are available for this attachment type.</p>
+            </div>
+        }
+    </div>
+</div>

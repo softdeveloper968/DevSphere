@@ -1,0 +1,326 @@
+﻿@{
+    const string PageName = "Payment Reports";
+    string GetUrl(string name)
+    {
+        return MyDMVpro.Controllers.PaymentReportController.GetEndpointUrl(this.Context, name);
+    }
+}
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+<script asp-append-version="true" src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+<script asp-append-version="true" src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.full.js"></script>
+
+<style>
+    .select2.select2-container {
+        width: 100% !important;
+    }
+
+        .select2.select2-container .select2-selection {
+            border: 1px solid #d2d6de;
+            -webkit-border-radius: 4px;
+            -moz-border-radius: 4px;
+            border-radius: 4px;
+            outline: none;
+            transition: all 0.15sease-in-out;
+        }
+
+        .select2.select2-container .select2-selection .select2-selection__rendered {
+            color: #333;
+            line-height: 32px;
+            padding-right: 33px;
+        }
+
+        .select2.select2-container .select2-selection .select2-selection__arrow {
+            background: #f8f8f8;
+            border-left: 1px solid #ccc;
+            -webkit-border-radius: 0 3px 3px 0;
+            -moz-border-radius: 0 3px 3px 0;
+            border-radius: 0 3px 3px 0;
+            height: 32px;
+            width: 33px;
+        }
+
+        .select2.select2-container.select2-container--open .select2-selection.select2-selection--multiple {
+            border: 1px solid #137ce0;
+        }
+
+        .select2.select2-container.select2-container--focus .select2-selection {
+            border: 1px solid #137ce0;
+        }
+
+        .select2.select2-container .select2-selection--multiple {
+            height: auto;
+            min-height: 42px;
+            padding-right: 18px !important;
+            display: flex;
+            align-items: center;
+        }
+
+        .select2.select2-container .select2-selection--multiple .select2-search--inline .select2-search__field {
+            margin-top: 0;
+                height: 18px;
+        }
+
+            .select2.select2-container .select2-selection--multiple .select2-selection__rendered {
+                display: flex;
+                padding: 7px 4px;
+                line-height: normal;
+                gap: 3px;
+                flex-wrap: wrap;
+            }
+
+            .select2.select2-container .select2-selection--multiple .select2-selection__choice {
+                background-color: #f8f8f8;
+                border: 1px solid #ccc;
+                -webkit-border-radius: 3px;
+                -moz-border-radius: 3px;
+                border-radius: 3px;
+                margin: 0px;
+                padding: 0 4px 0 15px;
+                height: 18px;
+                line-height: 18px;
+                font-size: 11px;
+                position: relative;
+                color: #222;
+                display: flex;
+                align-items: center;
+            }
+
+                .select2.select2-container .select2-selection--multiple .select2-selection__choice .select2-selection__choice__remove {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    height: 14px;
+                    width: 14px;
+                    margin: 0;
+                    text-align: center;
+                    color: #137ce0;
+                    font-weight: bold;
+                    font-size: 14px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+        .select2-container .select2-dropdown {
+            background: transparent;
+            border: none;
+            margin-top: -5px;
+        }
+
+        .select2-container .select2-dropdown .select2-search {
+            padding: 0;
+        }
+
+        .select2-container .select2-dropdown .select2-search input {
+            outline: none;
+            border: 1px solid #34495e;
+            border-bottom: none;
+            padding: 4px 6px;
+        }
+
+        .select2-container .select2-dropdown .select2-results {
+            padding: 0;
+        }
+
+            .select2-container .select2-dropdown .select2-results ul {
+                background: #fff;
+                border: 1px solid #34495e;
+            }
+
+                .select2-container .select2-dropdown .select2-results ul .select2-results__option--highlighted[aria-selected] {
+                    background-color: #3498db;
+                }
+
+    .select2.select2-container .select2-selection--multiple:after {
+        content: "\f104";
+        font-family: 'FontAwesome';
+        font-size: 18px;
+        position: absolute;
+        right: 9px;
+        top: 50%;
+        transform: translateY(-50%) rotate(-90deg);
+    }
+</style>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+@{
+    await Html.RenderPartialAsync("_ExportItems");
+}
+<div class="white_box p_15 mb_20" id="payment_disbursement_filter_section">
+            <div class="row gap_15 flex_row items-end">
+                <div class="col-md-2">
+                <div class="form-group" id="PaymentTypeDiv">
+                    <label for="">Transaction Type</label>
+                    <select class="form-control" name="filterPaymentTypeID" id="filterPaymentTypeID">
+                        <option selected value="">Select Type</option>
+                        <option  value="credit">Credit</option>
+                        <option value="debit">Debit</option>
+                    </select>
+                </div>
+                </div>
+                 <div class="col-md-2" id="debitTypePaymentDiv">
+                    <div class="form-group" >
+                    <label class="control-label font-600">Select Payment Type </label>
+                    <select id="reportDebitPaymentType" class="form-control">
+                            <option value="">All</option>
+                            <option value="4">Electronic Disbursement</option>
+                            <option value="5">Disbursement check</option>
+                            <option value="6">Maggard service fee</option>
+                        </select>
+                    </div>
+                </div>
+
+            <div class="col-md-2" id="creditTypePaymentDiv">
+                <div class="form-group" id="creditTypePaymentDiv">
+                    <label class="control-label font-600">Select Payment Type </label>
+                    <select id="reportCreditPaymentType" class="form-control">
+                        <option value="">All</option>
+                        <option value="3">ACH</option>
+                        <option value="1">Check</option>
+                        <option value="2">Credit Card</option>
+                    </select>
+                </div>
+            </div>
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label for="reportPaymentDate" class="control-label">Payment Date</label>
+                        <input type="date" id="reportPaymentDate" name="reportPaymentDate" class="form-control" />
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="control-label font-600">Select State</label>
+                    <select id="reportStateType" class="form-control js-select2-multi" multiple="multiple">
+                            @foreach (var state in ViewBag.states)
+                            {
+                                <option value="@state.StateAbbreviation">@state.StateAbbreviation</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="control-label font-600">Select App Type</label>
+                    <select id="reportAppType" class="form-control js-select2-multi" multiple="multiple">
+                        @foreach (var state in ViewBag.AppTypes)
+                        {
+                            <option value="@state.AppType">@state.AppType</option>
+                        }
+                    </select>
+                    </div>
+                </div>
+        <div class="col-md-12 text-right">
+            <button title="Reset Filter" type="button" class="btn btn-primary" id="paymentFilterResetButton">
+                Reset
+            </button>
+                </div>
+            </div>
+</div>
+
+<div class="white_box p_15 mb_20">
+    <div class="row gap_15">
+        <h4>Summary section</h4>
+        <div id="summary-section" class="summary-container">
+            <h6>Total Number of Payments: <span id="total-payments">0</span></h6>
+            <h6>Total Dollar Value of Payments: $<span id="total-amount">0.00</span></h6>
+        </div>
+
+    </div>
+</div>
+
+<div>
+    <h2 class="sub_heading">Payments And Disbursements</h2>
+    <div class="white_box p_15 mb_20">
+        @{
+            {
+                VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.Payment_Reporting, PageName)
+                {
+                    QueueTitle = "",
+                    DataUrl = GetUrl("Report"),
+                    ListId = "Reports_PaymentsAndDisbursement",
+                    TableVarName = "Reports_PaymentsAndDisbursement_Table",
+                    TableClass = "reportTable",
+                    AllowAutoIMSRefresh = false,
+                    AddLastModified = false,
+                    AddLastModifiedBy = false,
+                    EnableReportBuilder = false,
+                    EnableAdvancedSearch = false,
+                    // EnableFilter = true,
+                    EnableBulkEdit = false,
+                    EnableUniversalExport = false,
+                    AllowDirectToBilling = false,
+                    AllowAddToInvoice = false,
+                    AllowCancel = false,
+                    AllowDelete = false,
+                    AllowMultilineVin = false,
+                    AllowReassign = false,
+                    AllowSort = true,
+                    AllowStatusEdit = false,
+                    EnablePresets = false,
+                    AddIncludeArchivedOption = false,
+                    AddExpandNotesOption = false,
+                };
+                // list.Columns.Add_Blank();
+                // list.Columns.Add_Blank();
+                list.Columns.Add_AppType();
+                list.Columns.Add_AppState();
+                list.Columns.Add_VIN();
+                list.Columns.Add_PaymentRecordNumber();
+                list.Columns.Add_PaymentAmount();
+                list.Columns.Add_PaymentType();
+                list.Columns.Add_PaymentDate();
+                list.Columns.Add_PaymentRefNumber();
+                
+                list.Columns.Add_Group().SetExportable(false);
+
+                await Html.RenderPartialAsync("_VendorRequestList", list);
+                await Html.RenderPartialAsync("_downloadFile", list);
+            }
+        }
+    </div>
+</div>
+
+<form method="post"></form>
+
+<script>
+
+    $(document).ready(function () {
+
+        var $form = $("#payment_disbursement_filter_section");
+
+        $form.find("#debitTypePaymentDiv").hide();
+        $form.find("#creditTypePaymentDiv").hide();
+
+        $(".js-select2-multi").select2();
+        $(".js-select2-multi").val('A').trigger('change');
+
+
+        document.getElementById("reportStateType").addEventListener("change", function () {
+            let selectedStates = Array.from(this.selectedOptions).map(option => option.value);
+            console.log("Selected States:", selectedStates);
+        });
+
+        document.getElementById("reportAppType").addEventListener("change", function () {
+            let selectedAppTypes = Array.from(this.selectedOptions).map(option => option.value);
+            console.log("Selected App Types:", selectedAppTypes);
+        });
+
+
+        document.getElementById("reportPaymentDate").addEventListener("change", function () {
+            let date = new Date(this.value);
+            if (!isNaN(date)) {
+                let formattedDate = (date.getMonth() + 1).toString().padStart(2, '0') + '/' +
+                    date.getDate().toString().padStart(2, '0') + '/' +
+                    date.getFullYear();
+                console.log("Formatted Date:", formattedDate); // For debugging
+            }
+        });
+
+
+        $("#downloadReports").on('click', function (e) {
+            Payments_Reports_Download($("#reportPaymentType").val(), $("#reportWorkbook").is(':checked'));
+        });
+       
+    });
+</script>

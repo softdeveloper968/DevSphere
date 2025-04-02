@@ -1,0 +1,42 @@
+﻿<div id="modal-shipDmv" class="modal fade hidden-print" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Send to DMV</h4>
+            </div>
+            <div class="modal-body">
+                @* no longer using courier name, but need to leave for code references *@
+                <div class="form-group" style="display:none">
+                    <label for="dmvCourierName" class="control-label">Courier</label>
+                    <input type="text" width="150" id="dmvCourierName" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label for="toDmvTrackingNumber" class="control-label">To DMV Tracking #</label>
+                    <input type="text" width="150" class="form-control" id="toDmvTrackingNumber" />
+                </div>
+                <div class="form-group">
+                    <label for="dmvTrackingNumber" class="control-label">Return from DMV Tracking #</label>
+                    <input type="text" width="150" class="form-control" id="dmvTrackingNumber" />
+                </div>
+                <div class="form-group">
+                    <label for="dateToDmv" class="control-label">Shipped to DMV</label>
+                    <input type="date" width="150" id="dateToDmv" class="form-control" readonly />
+                </div>
+                <div class="form-group">
+                    <label for="dmvETA" class="control-label">ETA</label>
+                    <span id="dmvEtaMessage" style="color:blue; margin-left:14px"></span>
+                    <input type="date" width="150" id="dmvETA" class="form-control" readonly/>
+                </div>
+                <div class="form-group">
+                    <label id="selectedCount" class="control-label"></label>
+                </div>
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>

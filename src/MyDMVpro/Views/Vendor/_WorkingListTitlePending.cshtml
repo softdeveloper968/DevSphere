@@ -1,0 +1,60 @@
+﻿<div id="modal-titleIssuedWorkingList" class="modal fade hidden-print" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Title Issued</h4>
+            </div>
+            <div class="modal-body">
+                <div class="row row gap_15">
+                    <div class="col-lg-6">
+                        <div class="form-group">
+                            <label for="dateTitleIssued">Date Issued</label>
+                            <input type="date" id="dateTitleIssued" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label for="inTransit">Routing:&nbsp;</label>
+                            <select name="inTransit" id="inTransit" class="form-control">
+                                <option value="false" selected>Returning to Maggard</option>
+                                <option value="true">In Transit to the Lienholder</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="noteDiv">
+                            <label for="Note" class="required">Note</label>
+                            <textarea id="note" name="note" cols="80" placeholder="" required="required" class="form-control"></textarea>
+                        </div>
+                        <div class="form-group" id="internalRemarkDiv">
+                            <label for="Remark">Internal remarks</label>
+                            <textarea id="remark" name="remark" cols="80" placeholder="" class="form-control"></textarea>
+                        </div>
+                        <div class="form-group m-0">
+                            <label id="titleIssuedCount"></label>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 pull-right" id="chatDiv">
+                        <div class="chatsEditPanel" tabindex="-1">
+                            <h2 id="myModal-label">Chat</h2>
+                            <div class="panel-body chat-body" style="max-height: 300px;"></div>
+                            <div class="panel-footer mt_10">
+                                <form asp-controller="Chats" asp-action="Create" method="post" class="chatform">
+                                    <input type="hidden" name="RequestId" id="chat-RequestId" />
+                                    <textarea class="form-control" name="Message" id="chat-newMsg" rows="4" width="100%" placeholder="Type message" style="resize:none;"></textarea>
+                                    <div class="mt_10">
+                                        <input type="submit" value="Send" class="btn btn-primary custom_btn" />
+                                        <button type="button" id="chatMarkAsRead" class="btn btn-default custom_btn">Mark As Read</button>
+                                        <button type="button" id="chatRefreshBtn" class="btn custom_btn">Refresh</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>

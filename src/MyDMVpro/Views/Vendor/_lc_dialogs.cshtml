@@ -1,0 +1,264 @@
+﻿<div id="modal-LCReceivedFromLH" class="modal fade hidden-print" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Mark As Received</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="date" class="control-label">Date Received</label>
+                    <input type="date" width="150" id="date" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label id="selectedCount"></label>
+                </div>
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-LCRequested" class="modal fade hidden-print" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Mark As LC Applied For</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="date" class="control-label">Date Applied For</label>
+                    <input type="date" width="150" id="date" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label for="trackingNumber" class="control-label">Tracking #</label>
+                    <input type="text" width="150" id="trackingNumber" class="form-control" />
+                </div>
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="autoIncrement">
+                    <label class="form-check-label" for="autoIncrement">Auto-increment</label>
+                </div>
+                <div class="form-group">
+                    <label for="checkNumber" class="control-label">Check #</label>
+                    <input type="number" width="150" id="checkNumber" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label id="selectedCount"></label>
+                </div>
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-LCReceivedFromDmv" class="modal fade hidden-print" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Received From DMV</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="date" class="control-label">Date Received</label>
+                    <input type="date" width="150" id="date" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label id="selectedCount"></label>
+                </div>
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-LCRejected" class="modal fade hidden-print" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Mark As Rejected</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="date" class="control-label">Date Rejected</label>
+                    <input type="date" width="150" id="date" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label id="selectedCount"></label>
+                </div>
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-LIRequested" class="modal fade hidden-print" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">LI Applied For</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="date" class="control-label">Date Applied For</label>
+                    <input type="date" width="150" id="date" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label for="trackingNumber" class="control-label">Tracking #</label>
+                    <input type="text" width="150" id="trackingNumber" class="form-control" />
+                </div>
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="autoIncrement">
+                    <label class="form-check-label" for="autoIncrement">Auto-increment</label>
+                </div>
+                <div class="form-group">
+                    <label for="checkNumber" class="control-label">Check #</label>
+                    <input type="number" width="150" id="checkNumber" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label id="selectedCount"></label>
+                </div>
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-LIReceivedFromDmv" class="modal fade hidden-print" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Received LI From DMV</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="date" class="control-label">Date Received</label>
+                    <input type="date" width="150" id="date" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label id="selectedCount"></label>
+                </div>
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-ReceiveFromDmv" class="modal fade hidden-print" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Received From DMV</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="date" class="control-label">Date Received</label>
+                    <input type="date" width="150" id="date" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label id="selectedCount"></label>
+                </div>
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-Rejected" class="modal fade hidden-print" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Mark As Rejected</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="date" class="control-label">Date Rejected</label>
+                    <input type="date" width="150" id="date" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label id="selectedCount"></label>
+                </div>
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-ShipToDmv" class="modal fade hidden-print" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Send to DMV</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="dmvCourierName" class="control-label">Courier</label>
+                    <input type="text" width="150" id="dmvCourierName" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label for="dmvTrackingNumber" class="control-label">Tracking #</label>
+                    <input type="text" width="150" class="form-control" id="dmvTrackingNumber" />
+                </div>
+                <div class="form-group">
+                    <label for="toDmvTrackingNumber" class="control-label">To DMV Tracking #</label>
+                    <input type="text" width="150" class="form-control" id="toDmvTrackingNumber" />
+                </div>
+                <div class="form-group">
+                    <label for="dateToDmv" class="control-label">Shipped to DMV</label>
+                    <input type="date" width="150" id="dateToDmv" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label for="dmvETA" class="control-label">ETA</label>
+                    <input type="date" width="150" id="dmvETA" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label id="selectedCount" class="control-label"></label>
+                </div>
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>

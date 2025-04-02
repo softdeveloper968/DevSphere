@@ -1,0 +1,114 @@
+﻿.attachmentReview {
+    font-family: sans-serif;
+}
+
+a {
+    color: #369;
+}
+
+p {
+    margin-top: 0;
+}
+
+.my-form {
+    margin-bottom: 10px;
+}
+
+#gallery {
+    margin-top: 10px;
+}
+
+    #gallery img {
+        width: 150px;
+        margin-bottom: 10px;
+        margin-right: 10px;
+        vertical-align: middle;
+    }
+
+.button {
+    display: inline-block;
+    padding: 10px;
+    background: #ccc;
+    cursor: pointer;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+    .button:hover {
+        background: #ddd;
+    }
+
+#fileElem {
+    display: none;
+}
+
+progress[value] {
+    width: 100%;
+    height: 20px;
+}
+
+.reviewPanel {
+    padding: 0px;
+}
+
+.analyzerDropZonePanel {
+    padding: 5px;
+}
+
+.docViewPanel {
+    display: block;
+    height: calc(100vh - 269px);
+}
+
+.fullwidth {
+    width: 100%;
+}
+
+#pdfFrame {
+    position: relative;
+    height: 100%;
+    width: 100%;
+}
+
+.reviewInstructions{
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-size: large;
+    color: blue;
+}
+.reviewInstructions:empty {
+    display: none;
+}
+#reviewPanel_rejectButton, #reviewPanel_acceptButton, #reviewPanel_changeType {
+    margin-left: 10px;
+}
+
+.appTypeState {
+    color: blue;
+}
+#docViewVin {
+    font-weight: bold;
+    font-family: "Courier New", monospace;
+    font-size: x-large;
+    color: black;
+}
+#docViewAttachmentType {
+    color: blueviolet;
+    font-size: x-large;
+}
+.attachmentListPanel {
+    margin: 0px;
+    padding:0px;
+}
+#reviewPanel_type {
+    font-size: large;
+    color: blueviolet;
+    margin-right: 10px;
+}
+.btn .caret {
+    margin-left: 5px;
+}
+.dataTables_wrapper .row .col-sm-1 {
+    padding-top: 2px;
+    padding-left: 7px;
+}

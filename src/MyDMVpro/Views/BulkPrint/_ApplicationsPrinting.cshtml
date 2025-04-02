@@ -1,0 +1,49 @@
+﻿@model MyDMVpro.Models.RequestsViewModels.ApplicationsForMergeViewModel
+
+
+<style>
+    .outer-div {
+        display: flex;
+        justify-content: center; /* Center horizontally */
+        align-items: center; /* Center vertically */
+    }
+</style>
+
+<div class="row">
+    <div class="col-md-12" id="bulkMergeStep1">
+        @if (Model.PdfTemplates.Count == 0)
+        {
+            <span>No application templates.</span>
+        }
+        else
+        {
+            <h4 style="text-align: center;">Merge Applications for <b>@Model.State</b> <b>@Model.AppType</b></h4>
+
+            <div class="outer-div">
+                <div style="width:auto">
+                    @foreach (var item in Model.PdfTemplates)
+                    {
+                        <input type="radio" name="templateId" id="@item.TemplateId" value="@item.TemplateId" />
+                        <label for="@item.TemplateId">
+                            @item.DisplayName
+                        </label>
+                        <br />
+                    }
+                </div>
+            </div>
+        }
+        @if (Model.IncludeCheckMerge)
+        {
+            <div class="outer-div" style="padding:20px">
+                <label style="display: inline-block">
+                    <input style="vertical-align: middle" id="includeCheckMerge" name="includeCheckMerge" type="checkbox" />
+                    <span style="vertical-align: middle">Prepare Checks for Application</span>
+                </label>
+            </div>
+        }
+    </div>
+    <div class="col-md-12" id="bulkMergeStep2" style="display: none;">
+        Your file for <span style="font-weight:bold" id="bulkFileName"></span>
+        is being generated and will be available for printing shortly. Please check the Bulk Applications for Download List for the file.
+    </div>
+</div>

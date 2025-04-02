@@ -1,0 +1,81 @@
+﻿@model MyDMVpro.Models.Chats
+
+<div id="modal-reqChat" class="modal fade hidden-print" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Chat</h4>
+            </div>
+            <div class="modal-body chat-body">
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <form asp-controller="Chats" asp-action="Create" method="post" id="chat-SendMessageForm" class="w-100">
+                    <input type="hidden" asp-for="RequestId" id="chat-RequestId" />
+                    <textarea class="fullwidthtextarea form-control" asp-for="Message" id="chat-newMsg" rows="4" cols="80" placeholder="Type message"></textarea>
+                    <div class="mt_10">
+                        <input type="submit" value="Send" class="btn btn-primary custom_btn" />
+                        <button type="button" id="chatMarkAsRead" class="btn btn-default custom_btn">Mark As Read</button>
+                        <button type="button" id="chatCloseBtn" class="btn btn-default custom_btn" data-dismiss="modal">Close</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script asp-add-nonce="true">
+    $(function () {
+        $("#chat-SendMessageForm").submit(function (e) {
+            e.preventDefault();
+            let $chatForm = $("#chat-SendMessageForm");
+            if ($chatForm.find("#chat-newMsg").val() != '') {
+                $.ajax({
+                    url: $chatForm.attr('action'),
+                    type: 'POST',
+                    data: $chatForm.serialize()
+                }).done(function (data) {
+                    $("#chat-newMsg").val('');
+                    jqToast.success({ text: 'Message send successfully' });
+                    $mymodal = $("#modal-reqChat");
+                    $mymodalbody = $mymodal.find(".modal-body");
+                    $mymodalbody.html(data);
+                    $mymodalbody.animate({ scrollTop: $mymodalbody.prop("scrollHeight") }, 1000);
+                    var reqid = $("#chat-RequestId").val();
+                    refreshChat(reqid);
+                });
+            }
+            return false;
+        });
+        $("#chatCloseBtn").off('click').on('click',function (e) {
+            e.preventDefault();
+            var reqid = $("#chat-RequestId").val();
+            refreshChat(reqid);
+        });
+        $("#chatMarkAsRead").off('click').on('click',function (e) {
+            e.preventDefault();
+            var reqid = $("#chat-RequestId").val();
+            var lastcreated = $("#modal-reqChat").find("[data-lastcreated]").data("lastcreated");
+
+            var formdata = new FormData();
+            formdata.append('id', reqid);
+            formdata.append('lastcreated', lastcreated);
+            $.ajax({
+                url: '/Chats/MarkAsRead',
+                type: 'POST',
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                data: formdata,
+                cache: false,
+                contentType: false,
+                processData: false
+            }).done(function (data) {
+                var reqid = $("#chat-RequestId").val();
+                refreshChat(reqid);
+                jqToast.success({ text: 'Chat is mark as read.' });
+
+            });
+
+            return false;
+        });
+    });
+</script>

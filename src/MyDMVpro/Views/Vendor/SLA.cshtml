@@ -1,0 +1,49 @@
+﻿<script src="~/js/vendor.js" asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+@{ 
+    const string PageName = "SLA";
+    string GetUrl(string name)
+    {
+        return MyDMVpro.Controllers.RequestStatusController.GetEndpointUrl(this.Context, name);
+    }
+    await Html.RenderPartialAsync("_ExportItems");
+}
+<div>
+    @{
+        VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.SLAReport, PageName)
+        {
+            QueueTitle = "SLA",
+            DataUrl = GetUrl("VendorSLA"),
+            ListId = "DT_VendorSLA",
+            TableVarName = "vendorSLA_Table",
+            DisplayFullNotesAsChildRow = true,
+            DisableCsvExport = true,
+            ExcelExportSelector = ".xlexport",
+            PdfExportSelector = ".xlexport",
+            CopyExportSelector = ".xlexport"
+            //DefaultDateFormat = "MM-DD-YYYY"
+        };
+        list.Columns.Add_Select();
+        list.Columns.Add_Blank();
+        list.Columns.Add_AppState().AddClass("xlexport");
+        list.Columns.Add_AppType(true).AddClass("xlexport");
+        list.Columns.Add("Acct#", "reqClientRef xlexport");
+        list.Columns.Add_VIN().AddClass("xlexport");
+        list.Columns.Add_RNo().AddClass("xlexport");
+        list.Columns.Add("Received By Vendor", "reqDateFromLH dsearch xlexport");
+        list.Columns.Add("Sent To DMV", "reqDateToDMV dsearch xlexport");
+        list.Columns.Add("Received From DMV", "reqDateFromDMV dsearch xlexport");
+        list.Columns.Add_ETA().AddClass("xlexport");
+        list.Columns.Add_FinishDate().AddClass("xlexport");
+        list.Columns.Add("Notes", "reqFullNotes xlexport"); // hidden in list, but required for export
+        list.Columns.Add_Code().AddClass("xlexport");
+        list.Columns.Add_Group().AddClass("xlexport");
+
+        list.SortColumns.Add("reqDateFromLH");
+        list.SortColumns.Add("reqFinished");
+
+        await Html.RenderPartialAsync("_VendorRequestList", list);
+        await Html.RenderPartialAsync("_downloadFile", list);
+    }
+</div>
+

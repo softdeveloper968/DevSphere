@@ -1,0 +1,387 @@
+﻿@{
+    const string PageName = VendorPageNames.Audits;
+    ViewData["Title"] = "Audit";
+    // UserInfo ui = UserInfo.GetCurrentUser(User, false);
+    // string GetUrl(string name)
+    // {
+    //     return MyDMVpro.Controllers.RequestStatusController.GetEndpointUrl(this.Context, name);
+    // }
+}
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+
+@{
+    // This are shared and should only be include once
+    await Html.RenderPartialAsync("_Chat", new Chats());
+    await Html.RenderPartialAsync("_BulkDialog");
+    await Html.RenderPartialAsync("_EditDetails");
+}
+<h2 class="sub_heading">Audits-ETA</h2>
+@{
+    var etaAuditInstructions = new MyDMVpro.Models.AuditInstructionsModel
+            {
+                CollapseId = "One",
+                Title = "Please click and read the ETA audit instructions below",
+                Instructions = new List<string>
+                {
+                    "Review the past due ETAs and contact the state to determine if the application just needs more time or if there is a problem. DIG IN and do not let the DMV get you off the phone without an answer.",
+                    "Add notes from your investigation to the record and update the ETA accordingly.",
+                    "Chat the client to advise them of any updates."
+                }
+            };
+    await Html.RenderPartialAsync("_AuditInstructions", etaAuditInstructions);
+}
+
+<div class="white_box p_15 mb_20 Audits_view">
+    @{
+        VendorRequestViewModel auditList = new VendorRequestViewModel(VendorViewType.Audits, PageName)
+            {
+                QueueName = "Audits",
+                //DataUrl = GetUrl("Audits"),
+                //ListId = "DT_Audits",
+                //TableVarName = "AuditsTable",
+                AllowMove = false,
+                AllowDelete = false,
+                AllowCancel = false,
+                AllowAddToInvoice = false,
+                AllowRefresh = true,
+                AllowStatusEdit = false,
+                AllowMultiSelect = true,
+                AllowDirectToBilling = false,
+                AllowSort = true,
+                EnableFilter = true,
+                ColorizeStatus = false,
+                EnableSortButton = false,
+                AddLastModified = false,
+                AddLastModifiedBy = false,
+                EnableExport = false,
+                EnablePresets = false,
+                EnableReportBuilder = false,
+                AddExpandNotesOption = false,
+                AddIncludeArchivedOption = false,
+                UpdateAuditsButton = true,
+                EnableBulkEdit = false,
+            };
+
+        auditList.Columns.Add_Select();
+        auditList.Columns.Add_Chat();
+        auditList.Columns.Add_Links();
+        auditList.Columns.Add_StageName();
+        auditList.Columns.Add_Status();
+        auditList.Columns.Add_AppType();
+        auditList.Columns.Add_AppState();
+        auditList.Columns.Add_VIN();
+        auditList.Columns.Add_RNo();
+        auditList.Columns.Add_Make();
+        auditList.Columns.Add_Year();
+        auditList.Columns.Add_Group();
+        auditList.Columns.Add_RT_LH();
+        auditList.Columns.Add_DT_LH();
+        auditList.Columns.Add_ETA();
+        auditList.Columns.Add_SendToDMV();
+        auditList.Columns.Add_Outcome();
+        auditList.Columns.Add_NotesAudit();
+        auditList.Columns.Add_Internal();
+        auditList.Columns.Add_AssignedUser();
+    }
+
+    <div class="audit_ETAheader">
+    </div>
+    <div class="eta_audit_button">
+        <div class="audit_ETArealtimer custom_btn btn btn-default"></div>
+    </div>
+    @{
+        await Html.RenderPartialAsync("_VendorRequestList", auditList);
+    }
+</div>
+
+<h2 class="sub_heading">Audit-PCode</h2>
+@{
+    var pCodeAuditInstructions = new MyDMVpro.Models.AuditInstructionsModel
+            {
+                CollapseId = "One1",
+                Title = "Please click and read the PCode audit instructions below",
+                Instructions = new List<string>
+                {
+                    "Lookup the record to see if the title has issued yet. If it has, update the record accordingly and chat the client to confirm receipt of the title.",
+                    "If the title has not issued and we have not received concrete guidance from the DMV about when the title will issue, call the DMV and get them to confirm that they have the request and when it will be processed.",
+                    "Update the record with your notes and an updated ETA."
+                }
+            };
+    await Html.RenderPartialAsync("_AuditInstructions", pCodeAuditInstructions);
+}
+<div class="white_box p_15 mb_20 Audits_view">
+    @{
+        VendorRequestViewModel auditPCodeList = new VendorRequestViewModel(VendorViewType.PCodeAudit, PageName)
+            {
+                QueueName = "PCodeAudit",
+                //DataUrl = GetUrl("PCodeAudit"),
+                //ListId = "DT_PCodeAudit",
+                //TableVarName = "PCodeAuditTable",
+                AllowMove = false,
+                AllowDelete = false,
+                AllowCancel = false,
+                AllowAddToInvoice = false,
+                AllowRefresh = true,
+                AllowStatusEdit = false,
+                AllowMultiSelect = true,
+                AllowDirectToBilling = false,
+                AllowSort = true,
+                EnableFilter = true,
+                ColorizeStatus = false,
+                EnableSortButton = false,
+                AddLastModified = false,
+                AddLastModifiedBy = false,
+                EnableExport = false,
+                EnablePresets = false,
+                EnableReportBuilder = false,
+                AddExpandNotesOption = false,
+                AddIncludeArchivedOption = false,
+                UpdateAuditsButton = true,
+                EnableBulkEdit = false,
+            };
+        auditPCodeList.Columns.Add_Select();
+        auditPCodeList.Columns.Add_Chat();
+        auditPCodeList.Columns.Add_Links();
+        auditPCodeList.Columns.Add_StageName();
+        auditPCodeList.Columns.Add_Status();
+        auditPCodeList.Columns.Add_AppType();
+        auditPCodeList.Columns.Add_AppState();
+        auditPCodeList.Columns.Add_VIN();
+        auditPCodeList.Columns.Add_RNo();
+        auditPCodeList.Columns.Add_Make();
+        auditPCodeList.Columns.Add_Year();
+        auditPCodeList.Columns.Add_Group();
+        auditPCodeList.Columns.Add_RT_LH();
+        auditPCodeList.Columns.Add_DT_LH();
+        auditPCodeList.Columns.Add_ETA();
+        auditPCodeList.Columns.Add_SendToDMV();
+        auditPCodeList.Columns.Add_Outcome();
+        auditPCodeList.Columns.Add_NotesAudit();
+        auditPCodeList.Columns.Add_Internal();
+        auditPCodeList.Columns.Add_AssignedUser();
+    }
+
+    <div class="audit_PCodeheader">
+    </div>
+    <div class="eta_audit_button">
+        <div class="audit_PCoderealtimer custom_btn btn btn-default"></div>
+    </div>
+    @{
+        await Html.RenderPartialAsync("_VendorRequestList", auditPCodeList);
+    }
+</div>
+
+<h2 class="sub_heading">Audit-Tickle-Hold</h2>
+@{
+    var holdAuditInstructions = new MyDMVpro.Models.AuditInstructionsModel
+            {
+                CollapseId = "One2",
+                Title = "Please click and read the Hold audit instructions below",
+                Instructions = new List<string>
+        {
+            "Review the record to determine if the data tags and latest notes / chats are up to date.",
+            "Chat the client to remind them what we need (Use judgement - if we just communicated, you can skip the chat).",
+            "Update the record and add notes to document that you reviewed the record and determined we have done all we can do right now while we wait on other parties. Important – if there is anything Maggard can do to move the record forward, take the initiative to do so!"
+        }
+            };
+    await Html.RenderPartialAsync("_AuditInstructions", holdAuditInstructions);
+}
+
+
+<div class="white_box p_15 mb_20 Audits_view">
+    @{
+        VendorRequestViewModel auditHoldList = new VendorRequestViewModel(VendorViewType.HoldAudit, PageName)
+            {
+                QueueName = "HoldAudit",
+                //DataUrl = GetUrl("HoldAudit"),
+                //ListId = "DT_HoldAudit",
+                //TableVarName = "HoldAuditTable",
+                AllowMove = false,
+                AllowDelete = false,
+                AllowCancel = false,
+                AllowAddToInvoice = false,
+                AllowRefresh = true,
+                AllowStatusEdit = false,
+                AllowMultiSelect = true,
+                AllowDirectToBilling = false,
+                AllowSort = true,
+                EnableFilter = true,
+                ColorizeStatus = false,
+                EnableSortButton = false,
+                AddLastModified = false,
+                AddLastModifiedBy = false,
+                EnableExport = false,
+                EnablePresets = false,
+                EnableReportBuilder = false,
+                AddExpandNotesOption = false,
+                AddIncludeArchivedOption = false,
+                UpdateAuditsButton = true,
+                EnableBulkEdit = false,
+            };
+        auditHoldList.Columns.Add_Select();
+        auditHoldList.Columns.Add_Chat();
+        auditHoldList.Columns.Add_Links();
+        auditHoldList.Columns.Add_AppType();
+        auditHoldList.Columns.Add_AppState();
+        auditHoldList.Columns.Add_VIN();
+        auditHoldList.Columns.Add_RNo();
+        auditHoldList.Columns.Add_Group();
+        auditHoldList.Columns.Add_LH_Shipped_to_Vendor();
+        auditHoldList.Columns.Add_Outcome();
+        auditHoldList.Columns.Add_NotesAudit();
+        auditHoldList.Columns.Add_Internal();
+        auditHoldList.Columns.Add_AssignedUser();
+    }
+
+    <div class="audit_Holdheader">
+    </div>
+    <div class="eta_audit_button">
+        <div class="audit_Holdrealtimer custom_btn btn btn-default"></div>
+    </div>
+    @{
+        await Html.RenderPartialAsync("_VendorRequestList", auditHoldList);
+    }
+</div>
+
+<h2 class="sub_heading">Audit-Tickle-Incoming</h2>
+@{
+    var incomingAuditInstructions = new MyDMVpro.Models.AuditInstructionsModel
+            {
+                CollapseId = "One3",
+                Title = "Please click and read the Incoming audit instructions below",
+                Instructions = new List<string>
+                {
+                    "Review the incoming hold records to determine if the data tags and attachment requests are up to date.",
+                    "Add notes from your investigation to the record.",
+                    "Chat the client to remind them what we need (if the last communication was more than 1 week ago)."
+                }
+            };
+    await Html.RenderPartialAsync("_AuditInstructions", incomingAuditInstructions);
+}
+
+<div class="white_box p_15 mb_20 Audits_view">
+    @{
+        VendorRequestViewModel auditIncomingList = new VendorRequestViewModel(VendorViewType.IncomingAudit, PageName)
+            {
+                QueueName = "IncomingAudit",
+                //DataUrl = GetUrl("IncomingAudit"),
+                //ListId = "DT_IncomingAudit",
+                //TableVarName = "IncomingAuditTable",
+                AllowMove = false,
+                AllowDelete = false,
+                AllowCancel = false,
+                AllowAddToInvoice = false,
+                AllowRefresh = true,
+                AllowStatusEdit = false,
+                AllowMultiSelect = true,
+                AllowDirectToBilling = false,
+                AllowSort = true,
+                EnableFilter = true,
+                ColorizeStatus = false,
+                EnableSortButton = false,
+                AddLastModified = false,
+                AddLastModifiedBy = false,
+                EnableExport = false,
+                EnablePresets = false,
+                EnableReportBuilder = false,
+                AddExpandNotesOption = false,
+                AddIncludeArchivedOption = false,
+                UpdateAuditsButton = true,
+                EnableBulkEdit = false,
+            };
+        auditIncomingList.Columns.Add_Select();
+        auditIncomingList.Columns.Add_Chat();
+        auditIncomingList.Columns.Add_Links();
+        auditIncomingList.Columns.Add_AppType();
+        auditIncomingList.Columns.Add_AppState();
+        auditIncomingList.Columns.Add_VIN();
+        auditIncomingList.Columns.Add_RNo();
+        auditIncomingList.Columns.Add_RepoDate();
+        auditIncomingList.Columns.Add_Odometer();
+        auditPCodeList.Columns.Add_Group();
+        auditIncomingList.Columns.Add_Outcome();
+        auditIncomingList.Columns.Add_NotesAudit();
+        auditIncomingList.Columns.Add_Internal();
+        auditIncomingList.Columns.Add_AssignedUser();
+    }
+
+    <div class="audit_Incomingheader">
+    </div>
+    <div class="eta_audit_button">
+        <div class="audit_Incomingrealtimer custom_btn btn btn-default"></div>
+    </div>
+    @{
+        await Html.RenderPartialAsync("_VendorRequestList", auditIncomingList);
+    }
+</div>
+
+<h2 class="sub_heading">Audit-Tickle-FollowUp</h2>
+@{
+    var followUpAuditInstructions = new MyDMVpro.Models.AuditInstructionsModel
+            {
+                CollapseId = "One4",
+                Title = "Please click and read the Incoming audit instructions below",
+                Instructions = new List<string>
+                {
+                    "Review the record to determine who / what we need to follow up with/about.",
+                    "Reach out to the party detailed in the follow up and aggressively work toward a solution. If we can get this record resolved today, there will be less to do tomorrow!",
+                    "Add detailed notes about your follow up efforts. If needed, set the next follow up date. Important – if there is anything Maggard can do to move the record forward, take the initiative to do so!"
+                }
+            };
+    await Html.RenderPartialAsync("_AuditInstructions", followUpAuditInstructions);
+}
+<div class="white_box p_15 mb_20 Audits_view">
+    @{
+        {
+            VendorFollowUpViewModel Followuplist = new VendorFollowUpViewModel(VendorViewType.FollowupAudit, PageName)
+                {
+                    
+                    DataUrl = "/FollowUp/VendorFollowForAudit/",
+                    ListId = "DT_FollowupAudit",
+                    TableVarName = "FollowupAuditTable",
+                    AllowMove = false,
+                    AllowDelete = false,
+                    PageLength = 10,
+                    AllowLengthChange = true,
+                    EnableKeyNavigation = false,
+                    AllowMultilineVin = false,
+                    AllowMultiSelect = true,
+                    AddLastModified = false,
+                    AddLastModifiedBy = false,
+                    AddRequestId = false,
+                    EnableAdvancedSearch = true,
+                    AllowStatusEdit = false,
+                    AllowRefresh = false,
+                    AllowCancel = false,
+                    EnableExport = false,
+                    AllowAutoIMSRefresh = false,
+                    ShowColVisButton = false,
+                    UpdateAuditsButton = true,
+                    AllowEdit = false,
+                    AllowComplete = false
+                };
+            Followuplist.Columns.Add_Select();
+            Followuplist.Columns.Add_Chat();
+            Followuplist.Columns.Add_Links();
+            Followuplist.Columns.Add("VIN", "reqVIN asearch");
+            Followuplist.Columns.Add_RNo();
+            Followuplist.Columns.Add("Created", "reqCreated dsearch");
+            Followuplist.Columns.Add("Due Date", "reqDueDate drofilterempty");
+            Followuplist.Columns.Add("Title", "reqTitle asearch");
+            Followuplist.Columns.Add_Outcome();
+            Followuplist.Columns.Add_NotesFollowUpAudit();
+            Followuplist.Columns.Add_Internal();
+            Followuplist.Columns.Add_AssignedUser();
+
+            <div class="audit_FollowUpheader">
+            </div>
+            <div class="eta_audit_button">
+                <div class="audit_Followuprealtimer custom_btn btn btn-default"></div>
+            </div>
+         
+           await Html.RenderPartialAsync("_vendorFollowUpsList", Followuplist);
+            
+        }
+    }
+</div>

@@ -1,0 +1,198 @@
+﻿@model MyDMVpro.Models.RequestsViewModels.CheckMergeViewModel
+@using MyDMVpro.Models.RequestsViewModels
+
+@{
+    void GetClearedText(CheckDetailViewModel item)
+    {
+        if (item.Cleared)
+        {
+            <span class="fa fa-stack">
+                <i class="fa fa-solid fa-bank fa-stack-1x"></i>
+                <i class="fa fa-solid fa-check fa-stack-2x" style="color:green"></i>
+            </span>
+        }
+    }
+    string GetVinHtml(string vin)
+    {
+        if (vin.Length != 17) return vin;
+        var left11 = vin.Substring(0, 11);
+        var right6 = vin.Substring(11);
+        var str = $"<div class='vin'>{left11}<span>{right6}</span></div>";
+        return str;
+    }
+    List<Guid> GetRequestsWithExistingChecks()
+    {
+        return Model.CheckDetails.DistinctBy(x => x.RequestId).Where(x => x.ExistingCheckNumber != null).Select(x => x.RequestId).ToList();
+    }
+    List<CheckDetailViewModel> GetChecksForRequest(Guid requestId)
+    {
+        return Model.CheckDetails.Where(x => x.RequestId == requestId).ToList();
+    }
+    void RenderAllChecks()
+    {
+        foreach (var requestId in GetRequestsWithExistingChecks())
+        {
+            var checks = GetChecksForRequest(requestId);
+            if (checks.Count == 0) continue;
+
+            var item = checks.First();
+            RenderItem(item, true);
+            if (checks.Count > 1)
+            {
+                for (var i = 1; i < checks.Count; i++)
+                {
+                    RenderSecondItem(checks[i]);
+                }
+            }
+        }
+    }
+    void AddSelectRadio(CheckDetailViewModel item)
+    {
+        <input type="radio" value="@item.RequestNo" name="useThisCheck@(item.RequestNo)" data-checkno="@item.ExistingCheckNumber" data-requestno="@item.RequestNo" data-requestid="@item.RequestId" />
+    }
+    void RenderSecondItem(CheckDetailViewModel item)
+    {
+        <tr>
+            <td></td>
+            <td class="dt-center">@{GetClearedText(item);}</td>
+            <td class="dt-right">@item.ExistingCheckNumber</td>
+            <td class="dt-center">@{AddSelectRadio(item);}</td>
+            @if (item.Amount == null || item.Amount != Model.DMVFee)
+            {
+                <td class="dt-right payToMismatch">
+                    @item.Amount?.ToString("C2")
+                </td>
+            }
+            else
+            {
+                <td class="dt-right">@item.Amount?.ToString("C2")</td>
+            }
+            @if (string.Equals(item.PayToName, Model.PayToName, StringComparison.InvariantCultureIgnoreCase))
+            {
+                <td class="dt-center"></td>
+            }
+            else
+            {
+                <td class="dt-center">
+                    <div class="payToMismatch">
+                    </div>
+                </td>
+            }
+        </tr>
+    }
+    void RenderItem(CheckDetailViewModel item, bool includeRadioButton)
+    {
+        <tr>
+            <td>@Html.Raw(GetVinHtml(item.VIN))</td>
+            <td class="dt-center">@{GetClearedText(item);}</td>
+            <td class="dt-right">@item.ExistingCheckNumber</td>
+            <td class="dt-center">@{if (includeRadioButton) AddSelectRadio(item);}</td>
+            @if (item.Amount == null || item.Amount != Model.DMVFee)
+            {
+                <td class="dt-right payToMismatch">
+                    @item.Amount?.ToString("C2")
+                </td>
+            }
+            else
+            {
+                <td class="dt-right">@item.Amount?.ToString("C2")</td>
+            }
+            @if (string.Equals(item.PayToName, Model.PayToName, StringComparison.InvariantCultureIgnoreCase))
+            {
+                <td class="dt-center"><input type="checkbox" value="0" name="createNewCheck" data-requestno="@item.RequestNo" data-requestid="@item.RequestId" /></td>
+            }
+            else
+            {
+                <td class="dt-center">
+                    <div class="payToMismatch">
+                        <input type="checkbox" value="0" name="createNewCheck" data-requestno="@item.RequestNo" data-requestid="@item.RequestId"
+                               data-toggle="tooltip" title="Pay To mismatch '@(item.PayToName)'" ; />
+                    </div>
+                </td>
+            }
+        </tr>
+    }
+}
+
+<text>
+    <style>
+    .outer-div {
+        padding: 5%;
+        justify-content: center; /* Center horizontally */
+        /*align-items: center; */ /* Center vertically */
+    }
+    .bold {
+        font-weight: bold;
+    }
+    .cmVIN {
+        width: 180px;
+        padding-right: 10px;
+    }
+    .cmExisting {
+        width: 80px;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    .cmCleared {
+        width: 50px;
+        text-align: center;
+    }
+    .cmCreateNew {
+        width: 50px;
+        text-align: center;
+    }
+
+    table.disbursement-table {
+        margin-top: 20px;
+        margin-left: 10px;
+    }
+    table.disbursement-table > tbody > tr > td {
+        padding-right: 10px;
+    }
+
+    table.disbursement-table > tbody > tr > th {
+        text-align: center;
+    }
+
+    .cmHeader {
+        background-color: cornflowerblue;
+    }
+
+    .payToMismatch {
+        background-color: orange;
+    }
+</style>
+</text>
+
+<div class="row">
+    <div class="col-md-12" id="bulkMergeStep1">
+        <h4 style="text-align: center;">Merge Checks for <b>@Model.State</b> <b>@Model.AppType</b></h4>
+
+        <div class="outer-div">
+            <span>Pay To: <span class="bold">@Model.PayToName</span></span><br/>
+            <span>DMV Fee: <span class="bold">@(Model.DMVFee?.ToString("C2"))</span></span>
+            @if (GetRequestsWithExistingChecks().Count > 0)
+            {
+                <table class="disbursement-table">
+                    <thead>
+                        <tr class="cmHeader">
+                            <th class="dt-center cmVIN">VIN</th>
+                            <th class="dt-center cmCleared"></th>
+                            <th class="dt-center cmExisting">Existing Check#</th>
+                            <th class="dt-center cmSelect"></th>
+                            <th class="dt-center cmAmount">Amount</th>
+                            <th class="dt-center cmCreateNew">Create New</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @{RenderAllChecks();}
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+    <div class="col-md-12" id="bulkMergeStep2" style="display: none;">
+        Your file for <span style="font-weight:bold" id="bulkFileName"></span>
+        is being generated and will be available for printing shortly. Please check the Bulk Applications for Download List for the file.
+    </div>
+</div>

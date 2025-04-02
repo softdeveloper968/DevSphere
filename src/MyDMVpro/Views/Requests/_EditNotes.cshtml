@@ -1,0 +1,98 @@
+﻿@model MyDMVpro.Models.RequestsViewModels.EditNotesModel
+
+@if (Model.StandaloneForm)
+{
+    <div class="notesEditor p-0 relative">
+        @if (ViewBag.HelpLink != null)
+        {
+            <div style="position:absolute;top:0;right:0;"><a href="@ViewBag.HelpLink" target="_blank"><span style="font-family:FontAwesome;font-size:large">&#x0f05a;</span></a></div>
+        }
+        <form class="notesForm">
+            <input type="hidden" asp-for="RequestId" id="note-RequestId" />
+            <div class="form-group">
+                <label asp-for="Code" class="control-label">Code</label>
+                <input asp-for="Code" maxlength="10" class="form-control w-100" />
+                <span asp-validation-for="Code" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Note" class="control-label">Note</label>
+                <textarea asp-for="Note" cols="80" placeholder="" class="form-control"></textarea>
+                <span asp-validation-for="Note" class="text-danger"></span>
+            </div>
+            <div class="form-group note-body">
+                @{
+                    await Html.RenderPartialAsync("_NoteHistory", Model.CurrentNotes);
+                }
+            </div>
+            <div class="form-group">
+                <label asp-for="Remark" class="control-label">Internal remarks</label>
+                <textarea asp-for="Remark" cols="80" placeholder="" class="form-control"></textarea>
+                <span asp-validation-for="Remark" class="text-danger"></span>
+            </div>
+            <div class="form-group note-body">
+                @{
+                    await Html.RenderPartialAsync("_RemarkHistory", Model.CurrentNotes);
+                }
+            </div>
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input type="checkbox" id="SpecialBilling" name="SpecialBilling" @Html.Raw(Model.SpecialBilling ? "checked" : "") />
+                        <b>Special billing</b> <br /><span style="font-size:small">(changing value requires providing internal remark)</span>
+                    </label>
+                </div>
+            </div>
+            <div class="form-group mb-0">
+                <input type="submit" value="Update Notes" class="btn btn-success custom_btn" />
+                <button type="button" class="btn btn-default btn-close custom_btn">Close</button>
+            </div>
+        </form>
+    </div>
+}
+else
+{
+    <div class="notesEditor">
+        <form class="notesForm">
+            <input type="hidden" asp-for="RequestId" id="note-RequestId" />
+            <div class="row gap_15">
+                <div class="form-group col-md-3 mb_10">
+                    <label asp-for="Code" class="control-label">Code</label>
+                    <input asp-for="Code" maxlength="10" class="form-control w-100" />
+                    <span asp-validation-for="Code" class="text-danger"></span>
+                </div>
+                <div class="form-group col-md-4 mb_10">
+                    <label asp-for="Note" class="control-label">Note</label>
+                    <textarea asp-for="Note" placeholder="" class="form-control"></textarea>
+                    <span asp-validation-for="Note" class="text-danger"></span>
+                    <div class="note-body-inline">
+                        @{
+                            await Html.RenderPartialAsync("_NoteHistory", Model.CurrentNotes);
+                        }
+                    </div>
+                </div>
+                <div class="form-group col-md-4 mb_10">
+                    <label asp-for="Remark" class="control-label">Internal remarks</label>
+                    <textarea asp-for="Remark" cols="80" placeholder="" class="form-control"></textarea>
+                    <span asp-validation-for="Remark" class="text-danger"></span>
+                    <div class="note-body-inline">
+                        @{
+                            await Html.RenderPartialAsync("_RemarkHistory", Model.CurrentNotes);
+                        }
+                    </div>
+                </div>
+                <div class="form-group col-md-4 mb_10">
+                    <label>
+                        <input type="checkbox" id="SpecialBilling" name="SpecialBilling" @Html.Raw(Model.SpecialBilling ? "checked" : "") />
+                        <b>Special billing</b> <br /><span style="font-size:small">(changing value requires providing internal remark)</span>
+                    </label>
+                </div>
+                <div class="form-group col-md-4 d-flex gap_5 mb_10">
+                    <input type="submit" value="Save" class="btn btn-success custom_btn" />
+                    <button type="button" class="btn btn-default btn-close custom_btn">Close</button>
+                </div>
+            </div>
+            
+            
+        </form>
+    </div>
+}

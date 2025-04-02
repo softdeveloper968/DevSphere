@@ -1,0 +1,12 @@
+﻿@model BulkEditViewModel
+
+@{
+}
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+<div>
+    <h2>Bulk Edit (@Model.QueueName)</h2>
+    @{
+        await Html.RenderPartialAsync("_VendorBulkEditList", Model);
+    }
+</div>

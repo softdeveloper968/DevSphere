@@ -1,0 +1,871 @@
+﻿@model MyDMVpro.Models.AppFormModels.AppFormViewModel
+@using System.Text;
+@using MyDMVpro.Models;
+
+@functions {
+    List<int> fieldsAdded = new List<int>();
+    string SectionDescriptionHtml(AppFormSections section)
+    {
+        if (string.IsNullOrWhiteSpace(section.Description))
+        {
+            return "";
+        }
+        return $"<div class=\"box-body sectionDescription\"><span class=\"help-block\">{section.Description}</span></div>";
+    }
+    string AppFormDescription(ApplicationTypes appType)
+    {
+        if (string.IsNullOrWhiteSpace(appType.Description))
+        {
+            return "";
+        }
+        return $"<div class=\"appDescription\"><span class=\"help-block\">{appType.Description}</span></div>";
+    }
+    string FieldId(AppFormFields field)
+    {
+        // yes, FormId has the FieldId (FieldId (int) is no longer used)
+        return field.FormId.ToLower();
+    }
+    string Tooltip(AppFormFields field)
+    {
+        if (string.IsNullOrWhiteSpace(field.FieldPopupText))
+        {
+            return "";
+        }
+        return $@"data-toggle=""tooltip"" title=""{field.FieldPopupText}""";
+    }
+    string HelpText(AppFormFields field)
+    {
+        if (string.IsNullOrWhiteSpace(field.FieldHelpLink))
+        {
+            return "";
+        }
+        return $@"data-help=""{field.FieldHelpLink}""";
+    }
+    string HelpTextIcon(AppFormFields field)
+    {
+        if (string.IsNullOrWhiteSpace(field.FieldHelpLink))
+        {
+            return "";
+        }
+        return "<i style=\"float:right\" class=\"fa fa-align-right fa-info-circle\"></i>";
+    }
+    string SectionId(AppFormSections section)
+    {
+        return $"id=\"{section.SectionId}\"";
+    }
+    string SectionData(AppFormSections section)
+    {
+        string encoded = System.Net.WebUtility.HtmlEncode(section.SectionTitle);
+        return $"data-section=\"{encoded}\"";
+    }
+    string FieldData(AppFormFields field)
+    {
+        string encoded = System.Net.WebUtility.HtmlEncode(field.ExcelName);
+        return $"data-field=\"{encoded}\"";
+    }
+    string SectionClasses(AppFormSections section)
+    {
+        if (!string.IsNullOrEmpty(section.HelpText))
+        {
+            return "";
+        }
+        return "form-help";
+    }
+    string HelpText(AppFormSections section)
+    {
+        if (string.IsNullOrWhiteSpace(section.HelpText))
+        {
+            return "";
+        }
+        return $@"data-help=""{section.HelpText}""";
+    }
+    string HelpTextIcon(AppFormSections section)
+    {
+        if (string.IsNullOrWhiteSpace(section.HelpText))
+        {
+            return "";
+        }
+        return "<i style=\"float:right\" class=\"fa fa-align-right fa-info-circle\"></i>";
+    }
+    string AriaDescribedBy(AppFormFields field)
+    {
+        if (string.IsNullOrWhiteSpace(field.FieldDesc))
+        {
+            return "";
+        }
+        return $@"aria-describedby=""help-{field.FormId}""";
+    }
+    string ReadOnly(AppFormFields field)
+    {
+        string valmsg = $@"readonly='readonly'";
+        return (!Model.EditMode || field.IsReadOnly) ? valmsg : "";
+    }
+    string DisableSection(AppFormSections section)
+    {
+        return Model.EditMode ? "" : @"disabled";
+    }
+    string DisableEntireForm()
+    {
+        return Model.EditMode ? "" : @"disabled";
+    }
+    string DisableOnReadOnly(AppFormFields field)
+    {
+        string valmsg = $@"disabled";
+        return (!Model.EditMode || field.IsReadOnly) ? "disabled" : "";
+    }
+    string Required(AppFormFields field)
+    {
+        if (Model.VendorMode)
+            return "";
+        string valmsg = $@"data-val-required='The {field.FieldLabel} field is required'";
+        return (field.IsRequired != null && field.IsRequired.Value == true) ? valmsg : "";
+    }
+    string RequiredClass(AppFormFields field)
+    {
+        if (Model.VendorMode)
+            return "";
+        return (field.IsRequired != null && field.IsRequired == true) ? "required" : "";
+    }
+    string SelectRequired(AppFormFields field)
+    {
+        if (Model.VendorMode)
+            return "";
+        return (field.IsRequired != null && field.IsRequired == true) ? "required" : "";
+    }
+    string OuterDivClassName(AppFormFields field)
+    {
+        return "";
+    }
+    string EditorFor(AppFormFields field, string fValue)
+    {
+        return EditorForWithDatalist(field, fValue, "", false);
+    }
+    string EditorForWithDatalist(AppFormFields field, string fValue, string addtlClasses, bool hasDatalist)
+    {
+        string reqmsg = (field.IsRequired == true && !Model.VendorMode) ?
+            $@"data-val-required='The {field.FieldLabel} is required'" : "";
+        string stype = "text";
+        if (field.FieldType == FieldTypes.PastDate || 
+            field.FieldType == FieldTypes.FutureDate || 
+            field.FieldType == FieldTypes.Date)
+        {
+            stype = "date";
+        }
+        else if (field.FieldType == FieldTypes.ChoiceList)
+        {
+            stype = "choice";
+        }
+        else if (field.FieldType == FieldTypes.MultilineText)
+        {
+            stype = "textarea";
+        }
+        string regex = "";
+        if (!string.IsNullOrEmpty(field.RegExValidator))
+        {
+            string regexmsg = field.RegExValMsg;
+            if (string.IsNullOrEmpty(regexmsg))
+                regexmsg = $@"{field.FieldLabel} field is invalid.";
+            regex = $@"data-val-regex-pattern=""{field.RegExValidator}"" data-val-regex=""{regexmsg}""";
+        }
+        if (stype == "date")
+        {
+            DateTime dt;
+
+            if (!string.IsNullOrWhiteSpace(fValue))
+            {
+                // remove whitespace
+                string sdt = fValue.Trim().Replace(" ", "");
+
+                if (DateTime.TryParse(sdt, out dt))
+                {
+                    fValue = dt.ToString("yyyy-MM-dd");
+                }
+            }
+            var idx = (fValue ?? "").IndexOf("T");
+            if (idx > 0)
+            {
+                fValue = fValue.Substring(0, idx);
+            }
+        }
+        string onblurhandler = @"onblur=""this.value=trimspaces(this.value);""";
+        string datalist = "";
+        if (hasDatalist)
+        {
+            datalist = $@"list=""appform_datalist_{field.FormId}""";
+        }
+        string extraValidationRules = "";
+        if (field.FieldType == FieldTypes.PastDate)
+        {
+            extraValidationRules = "data-rule-pastdate=\"true\"";
+        }
+        else if (field.FieldType == FieldTypes.FutureDate)
+        {
+            extraValidationRules = "data-rule-futuredate=\"true\"";
+        }
+        string s = "";
+        if (stype == "choice")
+        {
+        }
+        else if (stype == "textarea")
+        {
+            s = $@"<textarea id=""{field.FormId}"" name=""{field.ExcelName}"" class=""form-control vresize {addtlClasses}"" data-val=""true"" {reqmsg} {regex} {ReadOnly(field)} {AriaDescribedBy(field)} {Tooltip(field)} {HelpText(field)} {extraValidationRules}>{System.Net.WebUtility.HtmlEncode(fValue)}</textarea>";
+        }
+        else
+        {
+            var ronly = $"{ReadOnly(field)}";
+            if (field.FieldType == FieldTypes.VIN && (fValue??"").Length > 0)
+            {
+                ronly = "readonly";
+                if (!addtlClasses.Contains("vinchange")) {
+                    addtlClasses = addtlClasses + " vinchange";
+                }
+            }
+            s = $@"<input type=""{stype}"" id='{field.FormId}' name='{field.ExcelName}' class=""form-control {addtlClasses}"" data-val=""true"" value=""{fValue}""  data-fieldid=""{field.FormId}"" {datalist} {onblurhandler} {reqmsg} {regex} {ronly} {AriaDescribedBy(field)} {Tooltip(field)} {HelpText(field)} {extraValidationRules} />";
+        }
+        // <div class="box-header" >
+        //    <h3 style="display:block" class="box-title">@Html.Raw(section.SectionTitle) <i style="float:right" class="fa fa-align-right fa-info-circle"></i></h3>
+        //</div>
+
+        return s;
+    }
+    public class SelectValues
+    {
+        public string Value { get; set; }
+        public string Text { get; set; }
+    }
+
+    List<SelectValues> GetSelectValues(string s)
+    {
+        s ??= "";
+        // add code to parse s in the format text|value with multiple lines
+        List<SelectValues> lst = new List<SelectValues>();
+        string[] lines = s.Split(new char[] { '\r', '\n' });
+        foreach (string line in lines)
+        {
+            string[] parts = line.Split('|');
+            string text, value;
+            if (parts.Length == 1)
+            {
+                text = parts[0].Trim();
+                value = text;
+                lst.Add(new SelectValues { Text = text, Value = value });
+            }
+            if (parts.Length == 2)
+            {
+                text = parts[0].Trim();
+                value = parts[1].Trim();
+                lst.Add(new SelectValues { Text = text, Value = value });
+            }
+        }
+        return lst;
+    }
+    string[] GetDatalistFromString(string d)
+    {
+        return d.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+    }
+}
+<script type="text/javascript" asp-add-nonce="true">
+    function trimspaces(s) {
+        if (typeof s == undefined)
+            return s;
+        return s.trim();
+    }
+</script>
+
+<div class="scrollable">
+    <h2>@MyDMVpro.Controllers.USState.GetStateName(Model.AppTypeState) - @Model.AppForm.Title</h2>
+    @Html.Raw(AppFormDescription(Model.AppForm))
+    <form id="dynamicAppForm" asp-controller="AppForm" asp-action="SaveForm" method="post" enctype="multipart/form-data" class="form-horizontal">
+        <input type="hidden" name="RequestId" value="@Model.RequestId" />
+        <input type="hidden" name="AppType" value="@Model.AppForm.AppType" />
+        <input type="hidden" name="AppTypeState" value="@Model.AppTypeState" />
+        <input type="hidden" name="VendorCode" value="@Model.VendorCode" />
+        @if (Model.IsOnBehalfOf)
+        {
+            <input type="hidden" name="IsOnBehalfOf" value="@Model.IsOnBehalfOf" />
+            <input type="hidden" name="GroupId" value="@Model.GroupId" />
+            <input type="hidden" name="UserId" value="@Model.UserId" />
+            <div class="box-body bg-info mb_5">On behalf of <b>@Model.UserDisplayName (@Model.GroupName)</b></div>
+        }
+        @{
+            int fileUploadCount = 0;
+
+            foreach (var section in Model.AppForm.AppFormSections.OrderBy(s => s.SectionSortOrder))
+            {
+                if (!Model.VendorMode && string.Equals(section.AppFormType, "REG", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (!string.Equals(section.SectionTitle, "Information", StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+                }
+                if (section.AppFormSectionFields.All(f => (f.Field.IsVisible == false || fieldsAdded.Contains(f.FieldId))
+                && !((f.Field.VendorOnlyVisible != null && f.Field.VendorOnlyVisible == true) && Model.VendorMode == true)))
+                {
+                    // Fields in section are hidden, so skip section
+                    continue;
+                }
+
+                <div class="sectionBox @Html.Raw(SectionClasses(section))" @(Html.Raw(SectionData(section))) @(Html.Raw(SectionId(section))) @Html.Raw(HelpText(section))>
+                    <div class="box-header">
+                        <h3 style="display:inline-block" class="box-title">@Html.Raw(section.SectionTitle)@Html.Raw(HelpTextIcon(section))</h3>
+                        @{ await Html.RenderPartialAsync("_profileCategorySelect", (Model.GroupId, section.SectionIdGuid, section.GroupProfileCategoryID, section.GroupProfileCategoryName)); }
+                    </div>
+                    <div class="formBackground">
+                        @Html.Raw(SectionDescriptionHtml(section))
+                    </div>
+                    <div class="box-body flex_row_col">
+                        @{
+                            foreach (var afsf in section.AppFormSectionFields.OrderBy(f => f.SortOrder))
+                            {
+                                if (fieldsAdded.Contains(afsf.FieldId))
+                                {
+                                    continue; // don't allow repeated fields
+                                }
+                                fieldsAdded.Add(afsf.FieldId);
+
+                                var field = afsf.Field;
+                                if (field.IsVisible != null && field.IsVisible == false)
+                                {
+                                    if (!Model.VendorMode)
+                                    {
+                                        continue;
+                                    }
+                                    if (field.VendorOnlyVisible == false)
+                                    {
+                                        continue;
+                                    }
+                                    field.IsVisible = true;
+                                }
+                                var fValue = Model.Value(field);
+                                <div class="form-group @RequiredClass(field)" @(Html.Raw(FieldData(field)))>
+                                    @if (field.FieldType == FieldTypes.StatesDDL)
+                                    {
+                                        // State DDL
+                                        <label for="@field.ExcelName" class="control-label text-left">@(afsf.FieldLabel ?? field.FieldLabel ?? field.FormId)</label>
+                                        <div>
+                                                <select id="@field.FormId" name="@field.ExcelName" asp-items="@(Model.GetUSStates(fValue, field.IsReadOnly || !Model.EditMode))" class="form-control" data-required="@SelectRequired(field)" data-fieldid="@FieldId(field)">
+                                                @if (Model.EditMode)
+                                                {
+                                                    <option value=""></option>
+                                                }
+                                            </select>
+                                            <span class="field-validation-valid text-danger" data-valmsg-for="@field.ExcelName" data-valmsg-replace="true"></span>
+                                        </div>
+                                    }
+                                    else if (field.FieldType == FieldTypes.MileageBrandDDL)
+                                    {
+                                        // Mileage brands
+                                        <label for="@field.ExcelName" class="control-label text-left">@(afsf.FieldLabel ?? field.FieldLabel ?? field.FormId)</label>
+                                        <div>
+                                                    <select id="@field.FormId" name="@field.ExcelName" asp-items="Model.GetMileageBrands(fValue, field.IsReadOnly || !Model.EditMode)" class="form-control" data-val="true" data-required="@SelectRequired(field)" data-fieldid="@FieldId(field)"></select>
+                                            <span class="field-validation-valid text-danger" data-valmsg-for="@field.ExcelName" data-valmsg-replace="true"></span>
+                                        </div>
+                                    }
+                                    else if (field.FieldType == FieldTypes.OdometerDigitsDDL)
+                                    {
+                                        // Odometer Digits
+                                        <label for="@field.ExcelName" class="control-label text-left">@(afsf.FieldLabel ?? field.FieldLabel ?? field.FormId)</label>
+                                        <div>
+                                                            <select id="@field.FormId" name="@field.ExcelName" asp-items="Model.GetOdometerDigitsDDL(fValue, field.IsReadOnly || !Model.EditMode)" class="form-control" data-required="@SelectRequired(field)" data-fieldid="@FieldId(field)"></select>
+                                            <span class="field-validation-valid text-danger" data-valmsg-for="@field.ExcelName" data-valmsg-replace="true"></span>
+                                        </div>
+                                    }
+                                    else if (field.FieldType == FieldTypes.PastDate)
+                                    {
+                                        // Date past
+                                        <label for="@field.ExcelName" class="control-label text-left">@(afsf.FieldLabel ?? field.FieldLabel ?? field.FormId)</label>
+                                        <div>
+                                            @Html.Raw(EditorFor(field, fValue))
+                                            <span class="field-validation-valid text-danger" data-valmsg-for="@field.ExcelName" data-valmsg-replace="true"></span>
+                                        </div>
+                                    }
+                                    else if (field.FieldType == FieldTypes.FutureDate)
+                                    {
+                                        // Date future
+                                        <label for="@field.ExcelName" class="control-label text-left">@(afsf.FieldLabel ?? field.FieldLabel ?? field.FormId)</label>
+                                        <div>
+                                            @Html.Raw(EditorFor(field, fValue))
+                                            <span class="field-validation-valid text-danger" data-valmsg-for="@field.ExcelName" data-valmsg-replace="true"></span>
+                                        </div>
+                                    }
+                                    else if (field.FieldType == FieldTypes.PoliceAgencyDDL)
+                                    {
+                                        // Police Agency list
+                                        <label for="@field.ExcelName" class="control-label">@(afsf.FieldLabel ?? field.FieldLabel ?? field.FormId)</label>
+                                        <div class="@OuterDivClassName(field)">
+                                                    <input id="@field.FormId" name="@field.ExcelName" class="form-control" list="PoliceAgencyList" value="@fValue" data-fieldid="@FieldId(field)" @Required(field) @ReadOnly(field) @AriaDescribedBy(field) @Tooltip(field) />
+                                            <datalist id="PoliceAgencyList">
+                                                @foreach (var agency in Model.PoliceAgencies)
+                                                {
+                                                    <option value="@(agency.NameAndAddress)" />
+                                                }
+                                            </datalist>
+                                            <span class="field-validation-valid text-danger" data-valmsg-for="@field.ExcelName" data-valmsg-replace="true"></span>
+                                        </div>
+                                    }
+                                    else if (field.FieldType == FieldTypes.DmvDDL)
+                                    {
+                                        // DMV list
+                                        <label for="@field.ExcelName" class="control-label">@(afsf.FieldLabel ?? field.FieldLabel ?? field.FormId)</label>
+                                        <div class="@OuterDivClassName(field)">
+                                                    <input id="@field.FormId" name="@field.ExcelName" class="form-control" list="DmvDistrictOfficeList" value="@fValue" @Required(field) @ReadOnly(field) @AriaDescribedBy(field) @Tooltip(field) data-fieldid="@FieldId(field)" />
+                                            <datalist id="DmvDistrictOfficeList">
+                                                @foreach (var dmv in Model.Dmvoffices)
+                                                {
+                                                    <option value="@(dmv.NameAndAddress)" />
+                                                }
+                                            </datalist>
+                                            <span class="field-validation-valid text-danger" data-valmsg-for="@field.ExcelName" data-valmsg-replace="true"></span>
+                                        </div>
+                                    }
+                                    else if (field.FieldType == FieldTypes.DmvDDL)
+                                    {
+                                        if (Model.VendorMode)
+                                        {
+                                            <label class="control-label" style="margin-right:10px">
+                                                <strong>Damage Disclosure</strong><br />
+                                                <div>
+                                                    <div class="d-flex align-center mb_5">
+                                                                <input class="m-0" type="radio" id="huey1" name="@field.ExcelName" value="1" data-fieldid="@FieldId(field)" @Required(field) @ReadOnly(field) @AriaDescribedBy(field) @Tooltip(field) />
+                                                        <label for="huey1" class="m-0">has been wrecked</label>
+                                                    </div>
+                                                    <div class="d-flex align-center mb_5">
+                                                                <input class="m-0" type="radio" id="dewey1" name="@field.ExcelName" value="2" data-fieldid="@FieldId(field)" @Required(field) @ReadOnly(field) @AriaDescribedBy(field) @Tooltip(field) />
+                                                        <label for="dewey1" class="m-0">has not been wrecked</label>
+                                                    </div>
+                                                </div>
+                                            </label>
+                                        }
+                                        else
+                                        {
+                                            <label class="control-label underPerjury" style="margin-right:10px">
+                                                <strong>DAMAGE DISCLOSURE STATEMENT</strong><br />
+                                                I certify that, to the best of my knowledge, this vehicle:
+                                                <div>
+                                                    <div class="d-flex align-center mb_5">
+                                                                <input class="m-0" type="radio" id="huey1" name="@field.ExcelName" value="1" data-fieldid="@FieldId(field)" @Required(field) @ReadOnly(field) @AriaDescribedBy(field) @Tooltip(field) />
+                                                        <label for="huey1" class="m-0">has been</label>
+                                                    </div>
+                                                    <div class="d-flex align-center mb_5">
+                                                        <input class="m-0" type="radio" id="dewey1" name="@field.ExcelName" value="2" data-fieldid="@FieldId(field)" @Required(field) @ReadOnly(field) @AriaDescribedBy(field) @Tooltip(field) />
+                                                        <label for="dewey1" class="m-0">has not been</label>
+                                                    </div>
+                                                </div>
+                                                wrecked, destroyed or damaged to such an extent that the total estimate, or actual cost, of parts and labor to rebuild or reconstruct the vehicle to the condition it was in before an accident, and for legal operation on the road or highways, is more than 75% of the retail value of the vehicle at the time of the loss. (Checking the "has been" box means the vehicle must have an anti-theft examination before being registered, and that the title issued will have the statement "Rebuilt Salvage: NY" on it.)
+                                            </label>
+                                        }
+                                    }
+                                    else if (field.FieldType == FieldTypes.ZipCode)
+                                    {
+                                        // Zip code
+                                        <label for="@field.ExcelName" class="control-label">@(afsf.FieldLabel ?? field.FieldLabel ?? field.FormId)</label>
+                                        <div>
+                                            @Html.Raw(EditorFor(field, fValue))
+                                            <span class="field-validation-valid text-danger" data-valmsg-for="@field.ExcelName" data-valmsg-replace="true"></span>
+                                        </div>
+                                    }
+                                    else if (field.FieldType == FieldTypes.VIN)
+                                    {
+                                        // VIN
+                                        <label for="@field.ExcelName" class="control-label">@(afsf.FieldLabel ?? field.FieldLabel ?? field.FormId)<span class="vinvalidation"></span></label>
+
+                                        @* label for validation message *@
+                                        <div class="@OuterDivClassName(field) vininput-container" style="display:block">
+                                            @Html.Raw(EditorForWithDatalist(field, fValue, "vinupper vincheck", false))
+                                            @if (Model.EditMode && !field.IsReadOnly) {
+                                                <span class="change-vin-icon" onclick="changeVinHandler()">✏️</span>
+                                            }
+                                            <span class="field-validation-valid text-danger" data-valmsg-for="@field.ExcelName" data-valmsg-replace="true"></span>
+                                        </div>
+                                    }
+                                    else if (field.FieldType == FieldTypes.Email)
+                                    {
+                                        // email
+                                        <label for="@field.ExcelName" class="control-label">@(afsf.FieldLabel ?? field.FieldLabel ?? field.FormId)</label>
+                                        <div>
+                                                    <input type="email" id="@field.FormId" name="@field.ExcelName" class="form-control" data-val="true" data-val-email="Valid email address required" data-fieldid="@FieldId(field)" @ReadOnly(field) @AriaDescribedBy(field) @Tooltip(field) />
+                                            <span class="field-validation-valid text-danger" data-valmsg-for="@field.ExcelName" data-valmsg-replace="true"></span>
+                                        </div>
+                                    }
+                                    else if (field.FieldType == FieldTypes.PowerTypeDDL)
+                                    {
+                                        // DMV list
+                                        <label for="@field.ExcelName" class="control-label">@(afsf.FieldLabel ?? field.FieldLabel ?? field.FormId)</label>
+                                        <div>
+                                                    <select id="@field.FormId" name="@field.ExcelName" asp-items="Model.GetPowerTypes(fValue)" class="form-control" data-required="@SelectRequired(field)" data-fieldid="@FieldId(field)"></select>
+                                            <span class="field-validation-valid text-danger" data-valmsg-for="@field.ExcelName" data-valmsg-replace="true"></span>
+                                        </div>
+                                    }
+                                    else if (field.FieldType == FieldTypes.Oath)
+                                    {
+                                        if (Model.VendorMode)
+                                        {
+                                            <div>
+                                                <label class="text-muted d-inline-flex gap-2 font-500">
+                                                            <input class="m-0" type="checkbox" id="@field.FormId" name="@field.ExcelName" data-fieldid="@FieldId(field)" @Required(field) @ReadOnly(field) @AriaDescribedBy(field) @Tooltip(field) />
+                                                    Affirmed Section 425(1)
+                                                </label>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div>
+                                                <label class="text-muted d-inline-flex gap-2 font-500">
+                                                    <input class="m-0" type="checkbox" id="@field.FormId" name="@field.ExcelName" data-fieldid="@FieldId(field)" @Required(field) @ReadOnly(field) /> Under the penalties of perjury, I affirm that I have complied with Section 425(1) of the New York State Vehicle and Traffic Law and/ or any applicable laws in the state where the vehicle was repossessed, pertaining to the repossession of the vehicle described above.I further affirm that, if there are any other open perfected liens on the vehicle, and a lien release is not obtained, I have advised the purchaser of the outstanding liens on the vehicle.
+                                                </label>
+                                            </div>
+                                        }
+                                    }
+                                    else if (field.FieldType == FieldTypes.MileageCertification)
+                                    {
+                                        if (Model.VendorMode)
+                                        {
+                                            <label class="control-label" style="margin-right:10px">
+                                                <span>Mileage Disclosure</span><br />
+                                                <div>
+                                                    <div class="d-flex align-center mb_5">
+                                                        <input class="m-0" type="radio" id="actualMileage" name="@field.ExcelName" value="1" data-fieldid="@FieldId(field)" @Required(field) checked @ReadOnly(field) />
+                                                        <label for="actualMileage" class="m-0">Reflects the "actual mileage"</label>
+                                                    </div>
+                                                    <div class="d-flex align-center mb_5">
+                                                        <input class="m-0" type="radio" id="exceedsMileage" name="@field.ExcelName" data-fieldid="@FieldId(field)" @Required(field) value="2" @ReadOnly(field) />
+                                                        <label for="exceedsMileage" class="m-0">"Exceeds the mechanical"</label>
+                                                    </div>
+                                                    <div class="d-flex align-center mb_5">
+                                                        <input class="m-0" type="radio" id="notActualMileage" name="@field.ExcelName" data-fieldid="@FieldId(field)" @Required(field) value="3" @ReadOnly(field) />
+                                                        <label for="notActualMileage" class="m-0">is "NOT the actual mileage. Warning: Odometer discrepency"</label>
+                                                    </div>
+                                                </div>
+                                            </label>
+                                        }
+                                        else
+                                        {
+                                            <label class="control-label underPerjury" style="margin-right:10px">
+                                                <strong>MILEAGE DISCLOSURE STATEMENT</strong><br />
+                                                I certify that, to the best of my knowledge, the mileage of the above-disclosed vehicle&#39;s odometer reading: <br />(Select One)
+                                                <div>
+                                                    <div class="d-flex align-center mb_5">
+                                                                <input class="m-0" type="radio" id="actualMileage" name="@field.ExcelName" value="1" data-fieldid="@FieldId(field)" @Required(field) checked @ReadOnly(field) />
+                                                        <label for="actualMileage" class="m-0">Reflects the "ACTUAL MILEAGE"</label>
+                                                    </div>
+                                                    <div class="d-flex align-center mb_5">
+                                                                <input class="m-0" type="radio" id="exceedsMileage" name="@field.ExcelName" data-fieldid="@FieldId(field)" @Required(field) value="2" @ReadOnly(field) />
+                                                        <label for="exceedsMileage" class="m-0">"EXCEEDS THE MECHANICAL LIMITS"</label>
+                                                    </div>
+                                                    <div class="d-flex align-center mb_5">
+                                                                <input class="m-0" type="radio" id="notActualMileage" name="@field.ExcelName" data-fieldid="@FieldId(field)" @Required(field) value="3" @ReadOnly(field) />
+                                                        <label for="notActualMileage" class="m-0">is "NOT THE ACTUAL MILEAGE. WARNING: ODOMETER DISCREPANCY"</label>
+                                                    </div>
+                                                </div>
+                                            </label>
+                                        }
+                                    }
+                                    else if (field.FieldType == FieldTypes.VINs)
+                                    {
+                                        // VIN(s)
+                                        <label for="@field.ExcelName" class="control-label">@(afsf.FieldLabel ?? field.FieldLabel ?? field.FormId)</label>
+                                        <div>
+                                            @*<input type="text" id="@field.FormId" name="@field.ExcelName" class="form-control" data-val="true" data-val-regex="Invalid VIN format" data-val-regex-pattern="^[A-HJ-NPR-Z\d]{8}[\dX][A-HJ-NPR-Z\d]{2}\d{6}$" value="@fValue" @Required(field) />*@
+                                            @Html.Raw(EditorForWithDatalist(field, fValue, "vinupper", false))
+                                            <span class="field-validation-valid text-danger" data-valmsg-for="@field.ExcelName" data-valmsg-replace="true" @ReadOnly(field) @AriaDescribedBy(field) @Tooltip(field)></span>
+                                        </div>
+                                    }
+                                    else if (field.FieldType == FieldTypes.Auction)
+                                    {
+                                        // Auction list
+                                        <label for="@field.ExcelName" class="control-label">@(afsf.FieldLabel ?? field.FieldLabel ?? field.FormId)</label>
+                                        <div class="@OuterDivClassName(field)">
+                                                    <input id="@field.FormId" name="@field.ExcelName" class="form-control" list="DmvDistrictOfficeList" value="@fValue" data-fieldid="@FieldId(field)" Required(field) @ReadOnly(field) @AriaDescribedBy(field) @Tooltip(field) />
+                                            <datalist id="AuctionList">
+                                                @foreach (var auction in new string[] { "" })
+                                                {
+                                                    <option value="@(auction)" />
+                                                }
+                                            </datalist>
+                                            <span class="field-validation-valid text-danger" data-valmsg-for="@field.ExcelName" data-valmsg-replace="true"></span>
+                                        </div>
+                                    }
+                                    else if (field.FieldType == FieldTypes.ChoiceList) // Choice List
+                                    {
+                                        // Choice list
+                                        <label for="@field.ExcelName" class="control-label text-left">@(afsf.FieldLabel ?? field.FieldLabel ?? field.FormId)</label>
+                                        <div class="@OuterDivClassName(field)">
+                                                    <select id="@field.FormId" name="@field.ExcelName" class="form-control" data-required="@SelectRequired(field)" data-fieldid="@FieldId(field)">
+                                                @{
+                                                    var choices = GetSelectValues(afsf.ChoiceListValues?.Trim());
+                                                    if (!choices.Any(c => c.Value == ""))
+                                                    {
+                                                        <option value="">Select a value</option>
+                                                    }
+                                                    foreach (var choice in choices)
+                                                    {
+                                                        if (choice.Value == fValue)
+                                                        {
+                                                            <option value="@choice.Value" selected>@choice.Text</option>
+                                                        }
+                                                        else
+                                                        {
+                                                            <option value="@choice.Value">@choice.Text</option>
+                                                        }
+                                                    }
+                                                }
+                                            </select>
+                                        </div>
+                                    }
+                                    else if (field.FieldType == FieldTypes.Calculated) // Calculated field
+                                    {
+                                    }
+                                    else if (field.FieldType == FieldTypes.SinglefileUpload) // Single-file upload
+                                    {
+                                        <div class="@OuterDivClassName(field)">
+                                            <div class="form-group">
+                                                <label for="dynform-filedesc-@(++fileUploadCount)" class="control-label">@(field.FieldLabel)</label>
+                                                        <input type="text" class="form-control" name="dynform-filedesc-@(fileUploadCount)" id="dynform-filedesc-@(fileUploadCount)" data-fieldid="@FieldId(field)" />
+                                            </div>
+                                            <div class="form-group">
+                                                        <input type="file" name="dynform-file-@(fileUploadCount)" x="dynform-file-@(fileUploadCount)" class="form-control" data-fieldid="@FieldId(field)" />
+                                            </div>
+                                        </div>
+                                    }
+                                    else if (field.FieldType == FieldTypes.MultifileUpload) // File upload
+                                    {
+                                        <div class="@OuterDivClassName(field)">
+                                            <div class="form-group">
+                                                <label for="dynform-file-@(++fileUploadCount)" class="control-label">@(field.FieldLabel)</label>
+                                                        <input type="text" class="form-control" name="dynform-filedesc-@(fileUploadCount)" id="dynform-filedesc-@(fileUploadCount)" data-fieldid="@FieldId(field)" />
+                                            </div>
+                                            <div class="form-group">
+                                                        <input type="file" name="dynform-file-@(fileUploadCount)" class="form-control" multiple="multiple" data-fieldid="@FieldId(field)" />
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <label for="@field.ExcelName" class="control-label">@(afsf.FieldLabel ?? field.FieldLabel ?? field.FormId)</label>
+                                        <div class="@OuterDivClassName(field)">
+                                            @Html.Raw(EditorForWithDatalist(field, fValue, "", !string.IsNullOrEmpty(afsf.Datalist)))
+                                            @if (!string.IsNullOrEmpty(afsf.Datalist))
+                                            {
+                                                <datalist id="appform_datalist_@FieldId(field)">
+                                                    @foreach (var val in GetDatalistFromString(afsf.Datalist))
+                                                    {
+                                                        <option value="@(val)" />
+                                                    }
+                                                </datalist>
+                                            }
+                                            @* 20 is a name/address field *@
+                                            @if (field.FieldType == FieldTypes.NameAddressParse)
+                                            {
+                                                <p class="form-control-static">
+                                                    <button class=" addressParser" title="Parse"><i class="fa fa-scissors" aria-hidden="true"></i></button>
+                                                </p>
+                                            }
+                                            <span class="field-validation-valid text-danger" data-valmsg-for="@field.ExcelName" data-valmsg-replace="true"></span>
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(field.FieldDesc))
+                                    {
+                                        <div>
+                                            <small id="help-@(field.FormId)" class="form-text text-muted help-block">@field.FieldDesc</small>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        }
+                    </div>
+                    
+                </div>
+            }
+        }
+        @if (Model.VendorMode)
+        {
+            if (!Model.HideSubmit)
+            {
+                <button id="dynamicAppSubmit" type="submit" class="btn btn-success custom_btn">Save</button>
+            }
+        }
+        else
+        {
+            if (!Model.HideSubmit)
+            {
+                <button id="dynamicAppSubmit" type="submit" class="btn btn-success custom_btn">Send Form to Vendor</button>
+            }
+        }
+        @if (!Model.HideSaveDefaults)
+        {
+            <button class="btn btn-success custom_btn" id="dynamicAppFormSetDefaults" onclick="saveFormDefaults(); return false;">Save as defaults</button>
+        }
+    </form>
+
+</div>
+
+<style>
+
+    .highlighted {
+        border: 2px solid #1ea52e;
+        background-color: #e5fae4;
+    }
+
+    .highlighted-section {
+        background-color: #e5fae4;
+        border-left: 4px solid #1ea52e;
+    }
+
+</style>
+<script asp-add-nonce="true">
+    $(document).ready(() => {
+        var $form = $('#dynamicAppForm');
+
+        $('input, select, textarea').each(function () {
+            var $input = $(this);
+            $input.data('original-value', $input.val());
+        });
+
+        $form.find('input, select, textarea').on('change input', function () {
+            var $input = $(this);
+            var originalValue = $input.data('original-value');
+            var $section = $input.closest('.sectionBox'); 
+
+            if ($input.val() !== originalValue) {
+                $input.addClass('highlighted');
+                $section.addClass('highlighted-section');
+            } else {
+                $input.removeClass('highlighted');
+            }
+
+            var allReverted = true;
+            $section.find('input, select, textarea').each(function () {
+                if ($(this).val() !== $(this).data('original-value')) {
+                    allReverted = false;
+                    return false;
+                }
+            });
+
+            if (allReverted) {
+                $section.removeClass('highlighted-section');
+            }
+        });
+
+        $form.find('input, select, textarea').on('focus', function () {
+            var $input = $(this);
+            var originalValue = $input.data('original-value');
+
+            if ($input.val() !== originalValue) {
+                $input.closest('.sectionBox').addClass('highlighted-section');
+            }
+        });
+
+        $form.find('input, select, textarea').on('blur', function () {
+            var $input = $(this);
+            var originalValue = $input.data('original-value');
+
+            if ($input.val() === originalValue) {
+                var $section = $input.closest('.sectionBox');
+                var allReverted = true;
+
+                $section.find('input, select, textarea').each(function () {
+                    if ($(this).val() !== $(this).data('original-value')) {
+                        allReverted = false;
+                        return false;
+                    }
+                });
+
+                if (allReverted) {
+                    $section.removeClass('highlighted-section');
+                }
+            }
+        });
+
+        $form.find('[name="Vehicle Vin"], [name="VIN"]').on('input', function (e) {
+            var vin = $(this).val();
+            var ctl = $(this).parent().parent().find(".vinvalidation");
+            getVinDetail(vin, ctl);
+        });
+
+        $form.find('[name="Borrower Name"]').on('input', function (e) {
+            if ($(this).val() != '') {
+                $(this).closest("button.addressParser").show();
+            }
+            else {
+                $(this).closest("button.addressParser").hide();
+            }
+        });
+       
+        $('button.addressParser').off('click').on('click', function (e) {
+            e.preventDefault();
+            var val = $(this).closest('.form-group').find('input').val();
+            if (val !== undefined) {
+                parseAddress($form, val, 'Borrower Name', 'Borrower Address', 'Borrower City', 'Borrower State', 'Borrower Zip');
+            }
+        });
+       
+        $form.find('[name="Borrower Zip"]').on('input', function (e) {
+            getZipInfo($(this).val(), 'Borrower City', 'Borrower State');
+        });
+        $form.find('[name="Lien Holder Zip"]').on('input', function (e) {
+            getZipInfo($(this).val(), 'Lien Holder City', 'Lien Holder State', 'Lien Holder County');
+        });
+        $form.find('[name="Lien Holder Legal Zip"]').on('input', function (e) {
+            getZipInfo($(this).val(), 'Lien Holder L C', 'Lien Holder L S', 'Lien Holder Legal County');
+        });
+        $form.find('[data-required="required"]').each(function () {
+            $(this).prop('required', true);
+            $(this).removeAttr('data-required');
+        });
+        $form.find('[data-required]').removeAttr('data-required');
+
+    @if (Model.VendorMode)
+    {
+        <text>
+                $("#AppTypeState").change(function () {
+                    var state = $(this).val();
+                    $.ajax({
+                        url: '/AppForm/FormTypes/' + state,
+                        type: 'get',
+                        success: function (data) {
+                            $('#AppType').val('');
+                            $('#AppType option').each(function () {
+                                var val = $(this).val();
+                                if ($.inArray(val, data) > -1) {
+                                    $(this).show();
+                                }
+                                else {
+                                    $(this).hide();
+                                }
+                            });
+                        },
+                        error: function (err) {
+                            alert(err.responseText);
+                        }
+                    });
+                });
+
+            $(".accordion").off('click').on('click', function (e) {
+                e.preventDefault();
+                $(this).toggleClass("active");
+                var panel = this.nextElementSibling;
+                if (panel.style.display === "block") {
+                    panel.style.display = "none";
+                } else {
+                    panel.style.display = "block";
+                }
+            });
+        </text>
+    }
+            $(function () {
+                $('[data-toggle="tooltip"]').tooltip()
+            });
+
+        // Initialize popover component
+        $(function () {
+            $('[data-toggle="popover"]').popover()
+        });
+    });
+</script>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

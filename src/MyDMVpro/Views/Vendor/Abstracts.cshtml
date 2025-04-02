@@ -1,0 +1,65 @@
+﻿@{
+    const string PageName = VendorPageNames.Abstracts;
+    ViewData["Title"] = "Abstracts / Documents";
+}
+
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+@*<script src="~/lib/js-xls/xlsx.js" asp-append-version="true"></script>*@
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+
+
+@{ await Html.RenderPartialAsync("_Chat", new Chats()); }
+@{ await Html.RenderPartialAsync("_AttachmentList"); }
+@{ await Html.RenderPartialAsync("_MoveDialog"); }
+@{ await Html.RenderPartialAsync("_BulkDialog"); }
+@{ await Html.RenderPartialAsync("_EditDetails"); }
+@{ await Html.RenderPartialAsync("_MarkFinished"); }
+@{ await Html.RenderPartialAsync("_ExportItems"); }
+
+@{ await Html.RenderPartialAsync("_lc_dialogs"); }
+
+@{
+    VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.Abstracts, PageName)
+    {
+        QueueTitle = "Abstracts",
+        QueueName = "Abstracts"
+        //DataUrl = GetUrl("Abstracts"),
+        //ListId = "DT_AbstractRequests",
+        //TableVarName = "AbstractsTable"
+    };
+    list.Columns.Add_Select();
+    list.Columns.Add_Chat();
+    list.Columns.Add_Attachments();
+    list.Columns.Add_DupeCheck();
+    list.Columns.Add_EditIcon();
+
+    list.Columns.Add_AppType(true);
+    list.Columns.Add_AppState();
+    list.Columns.Add_VIN();
+    list.Columns.Add_RNo();
+    list.Columns.Add_DateToVendor();
+    list.Columns.Add_DateToDMV();
+    list.Columns.Add_CheckNumber();
+    list.Columns.Add_TrackingNumber();
+    list.Columns.Add_DateFromDMV();
+
+    list.Columns.Add_LItoDMV();
+    list.Columns.Add_LICheckNumber();
+    list.Columns.Add_LITrackingToDMV();
+    list.Columns.Add_FinishDate();
+    list.Columns.Add_ELT();
+    list.Columns.Add_LienExpiration();
+    list.Columns.Add_Group();
+    list.Columns.Add_Notes();
+    list.Columns.Add_Code();
+    list.Columns.Add_SubmittedBy();
+    list.Columns.Add_ClientRef();
+
+    list.SortColumns.Add("reqType");
+    list.SortColumns.Add("reqState");
+    list.SortColumns.Add("reqVIN");
+
+    await Html.RenderPartialAsync("_VendorRequestList", list);
+}
+@* DROP LOCATION FOR UPDATES VIA SPREADSHEET *@
+

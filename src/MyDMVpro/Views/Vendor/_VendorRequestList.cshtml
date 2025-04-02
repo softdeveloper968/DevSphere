@@ -1,0 +1,2396 @@
+﻿@model VendorRequestViewModel
+@using MyDMVpro.Common.ViewHelpers;
+@{
+    string SortableIconColumnWidth()
+    {
+        return "36px";
+    }
+    string IconColumnWidth() {
+        return "30px";
+    }
+    var columnCount = 0;
+    string filterList()
+    {
+        List<string> filterFields = new List<string>();
+        foreach (DatatableColumnInfo col in Model.Columns)
+        {
+            if (!string.IsNullOrEmpty(col.FilterField))
+            {
+                filterFields.Add(col.FilterField);
+            }
+        }
+        return string.Join(",", filterFields);
+    }
+    string BuildDOM()
+    {
+        if (Model.ViewType == VendorViewType.FormAnalyzer)
+        {
+            return "t";
+        }
+
+        string dom = "";
+        if (Model.ViewType == VendorViewType.LinkedRequests || Model.ViewType == VendorViewType.LinkSearch)
+        {
+            dom = "<'row'<'col-sm-12't>"
+                    + "<'col-sm-12'B>>";
+        }
+        else
+        {
+            dom = "<'row'<'col-sm-6'l><'col-sm-6'<'#buttonContainer.site-datatable-button-container'C>>>"
+            + "<'row'<'col-sm-12'tr>>"
+            //+ "<'row'<'col-sm-5'i><'col-sm-7'p>><'#feePanel'><'alert row'><'col-sm-12'B>";
+            + "<'row'<'col-sm-4'i><'col-sm-1'><'#orderInfo.col-sm-4'><'col-sm-3'p>><'#feePanel'><'alert row'><'col-sm-12'B>";
+            if (Model.ShowColVisButton)
+            {
+                //dom = dom + "C";
+            }
+        }
+        return dom;
+    }
+    string OrderableOption(bool f)
+    {
+        if (Model.AllowSort && f)
+        {
+            return "true";
+        }
+        return "false";
+    }
+    string OrderSequenceOption()
+    {
+        if (Model.AllowSort)
+        {
+            return ",\"orderSequence\": [\"desc\",\"asc\"]";
+        }
+        return "";
+    }
+    string SortableOption(bool f)
+    {
+        if (Model.AllowSort && f)
+        {
+            return "true";
+        }
+        return "false";
+    }
+    string SearchableOption(bool f)
+    {
+        if (Model.EnableFilter && f)
+        {
+            return "true";
+        }
+        return "false";
+    }
+    if (Model.AddLinkIcon)
+    {
+        for (int i = 0; i < Model.Columns.Count; i++)
+        {
+            if (Model.Columns[i].Class == "reqChkbx")
+            { 
+                Model.Columns.Insert(i+1, new DatatableColumnInfo(){ Title="", Class="reqHasLink"});
+                break;
+            }
+        }
+    }
+    if (Model.AddLastModified)
+    {
+        Model.Columns.Add("Modified", "reqLastMod dsearch nowrap");
+    }
+    if (Model.AddLastModifiedBy)
+    {
+        bool hasFilter = false;
+        foreach (var c in Model.Columns)
+        {
+            if (!string.IsNullOrEmpty(c.FilterField))
+            {
+                hasFilter = true;
+                break;
+            }
+        }
+        Model.Columns.Add_ModifiedBy(hasFilter);
+    }
+    Model.Columns.Add_RequestId();
+
+    string getbool(bool f)
+    {
+        if (f) return "true";
+        return "false";
+    }
+}
+<style asp-add-nonce="true">
+    .filterToggle .advanced {
+            display: none;
+        }
+    .filterToggle .simple {
+            display: inline-block;
+        }
+    .filterToggle.advancedOn
+        .advanced {
+            display: inline-block;
+        }
+    .filterToggle.advancedOn
+        .simple {
+            display: none;
+        }
+    #feePanel {
+        width: 100%;
+    }
+    .billedRow {
+        background-color: darkgray !important;
+    }
+    .etaPastDue1dayRow {
+        background-color: #ffa07a !important;
+    }
+    .etaPastDueRow {
+        background-color: #d9004c !important;
+        color: white !important;
+    }
+    .mindate {
+        display: block;
+        width: 100%;
+    }
+    .maxdate {
+        display: block;
+        width: 100%;
+    }
+    td.numericCol {
+        text-align: right !important;
+        padding-right: 30px;
+    }
+    th.numericCol {
+        text-align: right !important;
+        padding-right: 30px;
+    }
+    @if (Model.TableLayoutFixed) { 
+    }
+    #@(Model.ListId)_wrapper tfoot {
+        display: table-footer-group;
+        font-weight: bold;
+    }
+    #@(Model.ListId)_wrapper thead {
+        display: table-header-group;
+    }
+    .notesview {
+        margin-left: 50px;
+    }
+    .notesview::before {
+        content: 'notes:';
+        margin-right: 5px;
+    }
+    .multivinSearch {
+        resize: none;
+        font-size: x-small;
+    }
+</style>
+@if (Model.ViewType == VendorViewType.RT_ShipToLH)
+{
+    await Html.RenderPartialAsync("_ShipToLH");
+}
+@if (Model.ViewType == VendorViewType.RT_TitlePending)
+{
+    await Html.RenderPartialAsync("_ShipToLH");
+}
+@if (Model.ViewType == VendorViewType.RT_ReadyForPacking || Model.ViewType == VendorViewType.RT_WVRejections || Model.ViewType == VendorViewType.RT_WVSendQueue)
+{
+    await Html.RenderPartialAsync("_ShipToDmv");
+}
+@if (Model.ViewType == VendorViewType.Abstracts)
+{
+    await Html.RenderPartialAsync("_ShipToDmv");
+}
+@if (Model.ViewType == VendorViewType.RT_Sign && Model.EnablePDF)
+{
+    <script asp-add-nonce="true">
+        function createBatch(idList) {
+            var formData = new FormData();
+
+            if (idList == undefined)
+                return;
+
+            if (!Array.isArray(idList) || idList.length == 0)
+                return;
+
+            idList.forEach(function (id) {
+                formData.append("ids[]", id);
+            });
+
+            var succeeded = false;
+            $.ajax({
+                url: '/Forms/CreateBackgroundBatch',
+                type: 'POST',
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                async: true,
+                data: formData,
+                dataType: 'json',
+                cache: false,
+                contentType: false,
+                processData: false,
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data.error) {
+                        if (data.error !== '') {
+                            alert(data.error);
+                            return;
+                        }
+                    }
+                    window.location = "/Forms/SignBatch/" + data.batchId;
+                },
+                error: function () {
+                    succeeded = false;
+                }
+            });
+        }
+
+    </script>
+}
+@if (Model.ViewType == VendorViewType.RT_ReadyForPrinting ||
+    Model.ViewType == VendorViewType.LI_ReadyForPrinting ||
+    Model.ViewType == VendorViewType.TC_ReadyForPrinting ||
+    Model.ViewType == VendorViewType.Other_ReadyForPrinting)
+{
+    await Html.RenderPartialAsync("_Print");
+}
+@if (Model.ViewType == VendorViewType.RT_Incoming ||
+    Model.ViewType == VendorViewType.LI_Incoming ||
+    Model.ViewType == VendorViewType.TC_Incoming ||
+    Model.ViewType == VendorViewType.Other_Incoming)
+{
+    await Html.RenderPartialAsync("_ReceiveFromLH");
+    await Html.RenderPartialAsync("_ReceiveFromLH_NotReady_Multi");
+}
+@if (Model.ViewType == VendorViewType.RT_ReadyToProcess)
+{
+    await Html.RenderPartialAsync("_PrintCRs");
+}
+@if (Model.ViewType == VendorViewType.RT_NotReadyToProcess ||
+    Model.ViewType == VendorViewType.LI_NotReadyToProcess ||
+    Model.ViewType == VendorViewType.TC_NotReadyToProcess ||
+    Model.ViewType == VendorViewType.Other_NotReadyToProcess)
+{
+    await Html.RenderPartialAsync("_MoveNotReadyToReady");
+}
+@if (Model.ViewType == VendorViewType.RT_ReadyToProcess)
+{
+}
+@if (Model.ViewType == VendorViewType.RT_InProcessing)
+{
+}
+@if (Model.ViewType == VendorViewType.RT_ReadyForPacking)
+{
+}
+@if (Model.ViewType == VendorViewType.RT_Receiving)
+{
+    await Html.RenderPartialAsync("_ReceiveItems");
+}
+@if (Model.ViewType == VendorViewType.RT_TitlePending)
+{
+    await Html.RenderPartialAsync("_TitlePending");
+    await Html.RenderPartialAsync("_WorkingList");
+}
+
+@if (Model.ViewType == VendorViewType.WorkingList)
+{
+    await Html.RenderPartialAsync("_WorkingListTitlePending");
+    await Html.RenderPartialAsync("_WorkingList");
+}
+
+<div class="white_box p_15 mb_20">
+    <table style="width:100%" class="display stripe dt-responsive @Model.TableClass" id="@Model.ListId" cellspacing="0" align="left">
+        <thead>
+            <tr id="headerRow-@Model.ListId">
+                @if (Model.Columns.Count > 0)
+                {
+                    foreach (var c in Model.Columns)
+                    {
+                        <th class="@c.Class @c.FilterClass dt-center" @Html.Raw(c.GetHoverTextAttribute())>@c.Title</th>
+                    }
+                    columnCount = Model.Columns.Count;
+                }
+            </tr>
+            @if (Model.EnableFilter)
+{
+                <tr id="filterRow-@Model.ListId">
+                    @for (var i = 0; i < Model.Columns.Count; i++)
+                    {
+                        DatatableColumnInfo c = Model.Columns[i];
+                        string cls = c.Class;
+
+                        if (i == 0)
+                        {
+                            <th class="clearFilter" data-toggle="tooltip" title="Clear filter">&nbsp;</th>
+                        }
+                        else if (i == 1 && Model.EnableAdvancedSearch)
+                        {
+                            <th class="advancedFilter" data-toggle="tooltip" title="Advanced filter"></th>
+                        }
+                        else
+                        {
+                            <th>&nbsp;</th>
+                        }
+                    }
+                </tr>
+}
+        </thead>
+        <tbody></tbody>
+        <tfoot>
+            <tr>
+                @for (var i = 0; i < Model.Columns.Count; i++)
+{
+                    <th></th>
+}
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+<script asp-add-nonce="true">
+
+var stage1 = "New Deal - Follow Up Review";
+var stage2 = "New Deal - Not Ready To Accept";
+var stage3 = "Accepted Incoming";
+var stage4 = "Accepted - Not Ready To Process";
+var stage5 = "Ready to Process";
+var stage6 = "Accepted - Follow Up Review";
+var stage7 = "Could Not Process";
+var stage8 = "Completed";
+var stage9 = "Returned Temporarily";
+var stage0 = "Processed Reconcile";
+
+        var allOutcomeOptions = {};
+            $.ajax({
+                url: '/Vendor/GetAllAuditOutcomeComboboxData',
+                type: 'GET',
+                success: function (data) {
+                    data.forEach(function (item) {
+                        if (!allOutcomeOptions[item.auditType]) {
+                            allOutcomeOptions[item.auditType] = [];
+                        }
+                        allOutcomeOptions[item.auditType].push('<option value="' + item.name + '">' + item.name + '</option>');
+                    });
+                },
+                error: function (error) {
+                    console.log('Error fetching outcome options:', error);
+                }
+            });
+
+        var assignedUserOptions = [];
+          $.ajax({
+                        url: '/Vendor/GetAssignedUsersDataForCombobox',
+                        type: 'GET',
+                        success: function(data) {
+                            assignedUserOptions = data.map(function(user) {                     
+                                return `<option value="${user.userId}">${user.displayName}</option>`;                 
+                            });
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error fetching data: ', error);
+                        }
+        });
+
+        function isNotBlankOrEmpty(val) {
+            return (val != '' && val != '(empty)' && val != '(not empty)');
+        }
+
+        var userWritePermission = false
+        var userReadPermission = false
+
+        $(document).ready(function () {
+            var tblid = '@Model.ListId';
+            var defaultStatusFilterValue = '';
+            var colFilters = [];
+            var initCompleted = false;
+            var defaultSortOrder = [];
+
+            GetBillingAccessData();
+            
+            @if (Model.AllowSort)
+            {
+                @:defaultSortOrder = [
+                for (var i = 0; i < Model.SortColumns.Count; i++)
+                {
+                    if (i > 0) { <text>,</text>} @:[$('#@Model.ListId .@Model.SortColumns[i].Name').index(), '@(Model.SortColumns[i].Descending ? "desc" : "asc")']
+                }
+                @:];
+            }
+
+                function disableButtons() {
+                    if (userReadPermission && !userWritePermission) {
+
+                        $('.noEditInvoicingAccess').each(function () {
+                            $(this).prop('disabled', true);
+                        });
+
+                        document.querySelectorAll('.noEditInvoicingAccess').forEach((button) => {
+                            button.disabled = true;
+                        });
+
+                        document.querySelectorAll('.noEditInvoicingAccess select-checkbox').forEach(el => {
+                            el.addEventListener('click', function (event) {
+                                event.preventDefault();
+                                event.stopPropagation();
+                            });
+                        });
+
+                        document.querySelectorAll('.noEditInvoicingAccess a').forEach(link => {
+                                link.addEventListener('click', function (event) {
+                                    event.preventDefault();
+                                    event.stopPropagation();
+                                });
+                        });
+
+                         $(".noEditInvoicingAccess").css({
+                            "pointer-events": "none",
+                            "opacity": "0.5"
+                         });
+                    }
+                }
+
+            function pushColumnSort(table, sortorder, colSelector, dir) {
+                let col = table.column(colSelector);
+                if (col) {
+                    let idx = col.index();
+                    if (idx >= 0) {
+                        sortorder.push([ col.index(), dir ]);
+                    }
+                }
+            }
+            
+            function getSortOrder(table,idx) {
+                var sortorder = [];
+                if (idx == 0) {
+                    pushColumnSort(table, sortorder, '.reqGroup', 'asc');
+                    pushColumnSort(table, sortorder, '.reqRTLH', 'asc');
+                    pushColumnSort(table, sortorder, '.reqVIN', 'asc');
+                }
+                if (idx == 1) {
+                    pushColumnSort(table, sortorder, '.reqGroup', 'asc');
+                    pushColumnSort(table, sortorder, '.reqDTLH', 'asc');
+                    pushColumnSort(table, sortorder, '.reqVIN', 'asc');
+                }
+                return sortorder;
+            }
+          
+            function sortOrderName(idx){
+                if (idx == 0) {
+                    return "Group,RT-LH,VIN";
+                }
+                if (idx == 1) {
+                    return "Group,DT-LH,VIN";
+                }
+                return "Default";
+            }
+            
+            $.fn.dataTable.render.shortDate = datatable_render_shortdate;
+            
+            var $tbl = $('#' + tblid);
+            
+            var table = $tbl
+                .on('preXhr.dt', function (e, settings, data) {
+                    data.dropdownFilters = '@filterList()';
+                })
+                .on('xhr.dt', function (e, settings, json, xhr) {
+                    if (json == null || typeof json === 'undefined') {
+                        return;
+                    }
+                    colFilters = json.columnFilters;
+                    @if (Model.EnableFilter) {
+    <text>
+                    if (initCompleted && typeof table !== 'undefined') {
+                        if (colFilters && @(Model.RefreshDropdownFiltersOnDraw ? "true" : "false")) {
+                            refreshDropdownFilters($(`#${tblid}`).DataTable(), tblid, colFilters, defaultStatusFilterValue, @getbool(Model.IncludeCancelledStatus));
+                        }
+                    }
+    </text>
+                    }
+                }) 
+                .DataTable(
+                    {
+                    @if (Model.EnableKeyNavigation) {
+                        @:@Model?.KeyNavigation
+                    }
+                        responsive: false,
+                        stateSave: @Model.SaveState.ToString().ToLower(),
+                    @if (Model.ViewType == VendorViewType.LinkedRequests || Model.ViewType == VendorViewType.LinkSearch)
+                    {
+                        <text>
+                        scrollX: true,
+                        </text>
+                    }
+                    else {
+                        <text>
+                        colReorder: true,
+                        scrollX: true,
+                        bSortCellsTop: true,
+                        </text>
+                    }
+                        select: {
+                            style: @if (Model.AllowMultiSelect) 
+                            {
+                     
+                                @if (Model.ViewType == VendorViewType.RT_TitlePending)
+                                {
+                                        @:"multi",
+
+                                }
+                                else
+                                {
+                                        @:"os",
+                                }
+                            } 
+                            else {
+                                @:"single",
+                            }
+                            selector: 'td:not(.norowselect)',
+                            items: "row",
+                            info: true
+                        },
+                        searching: true,
+                        searchDelay: 500,
+                    @if (Model.ViewType == VendorViewType.Master)
+                    {
+                        <text>
+                        searchCols: [
+                        @if (Model.Columns.Count > 0)
+                        {
+                            foreach (var c in Model.Columns)
+                            {
+                                if (!string.IsNullOrEmpty(c.DefaultFilterValue))
+                                {
+                                    @:{ search: "@c.DefaultFilterValue" },
+                                }
+                                else
+                                {
+                                    @:null,
+                                }
+                            }
+                            columnCount = Model.Columns.Count;
+                        }
+                        ],
+                        </text>
+                    }
+                        @if (Model.ViewType == VendorViewType.LinkedRequests) {
+                        <text>
+                        lengthChange: false,
+                        pageLength: 10,
+                        </text>
+                    }
+                    else if (Model.ViewType == VendorViewType.LinkSearch)
+                    {
+                        <text>
+                        lengthChange: false,
+                        pageLength: 5,
+                        </text>
+                    }
+                    else
+                    {
+                        <text>
+                        lengthMenu: @Model.LengthMenu,
+                        pageLength: @Model.PageLength,
+                        </text>
+                    }
+                        language: {
+                        @if (Model.ViewType == VendorViewType.LinkedRequests) { <text>
+                            emptyTable: "No linked records",
+                        </text> }
+                        else if (Model.ViewType == VendorViewType.LinkSearch) { <text>
+                            emptyTable: "No records found",
+                        </text> }
+                            select: {
+                                rows: "<span class='info_xrowsselected'>%d rows selected</span>"
+                                ,selector: 'td:not(.norowselect)'
+                            }
+                        },
+                    @if (Model.DeferLoading) { <text>
+                        deferLoading: 0,
+                    </text> }
+                        "FixedHeader": true,
+                    @if (Model.SortColumns.Count > 0) { <text>order: defaultSortOrder,</text> }
+                        "columnDefs": [
+                            {
+                                "targets": "reqChkbx",
+                                "orderable": false,
+                                "className": "select-checkbox nohide iconColumn dt-center noexport noEditInvoicingAccess",
+                                "autowidth": false,
+                                "width": "@IconColumnWidth()",
+                                "min-width": "@IconColumnWidth()",
+                                "max-width": "@IconColumnWidth()",
+                                "sortable": false,
+                            },
+                            {
+                                "targets": "reqHelpLink",
+                                "orderable": false,
+                                "className": "iconColumn dt-center noexport",
+                                "autowidth": false,
+                                "width": "@IconColumnWidth()",
+                                "min-width": "@IconColumnWidth()",
+                                "max-width": "@IconColumnWidth()",
+                                "render": datatable_render_internalhelplink
+                            },
+                            {
+                                "targets": "reqAutoIMS",
+                                "orderable": false,
+                                "className": "autoIMS iconColumn dt-center noexport",
+                                "width": "@IconColumnWidth()",
+                                "min-width": "@IconColumnWidth()",
+                                "max-width": "@IconColumnWidth()",
+                                "autowidth": false,
+                                "sortable": false,
+                                "render": datatable_render_autoims
+                            },
+                            {
+                                "targets": "reqChat",
+                                "autowidth": false,
+                                "width": "@SortableIconColumnWidth()",
+                                "min-width": "@SortableIconColumnWidth()",
+                                "max-width": "@SortableIconColumnWidth()",
+                                "orderable": @Html.Raw(OrderableOption(true)),
+                                "data": "chatSort",
+                                "className": " noEditInvoicingAccess chatcol @((Model.ViewType == VendorViewType.LinkedRequests || Model.ViewType == VendorViewType.LinkSearch) ? "" : "iconSortableColumn") dt-center noexport norowselect",
+                                "render": datatable_render_chat
+                            @Html.Raw(OrderSequenceOption())
+                            },
+                            {
+                                "targets": "reqLastChat",
+                                "width": "120px",
+                                "className": "dt-nowrap dt-right dt-datetimepad",
+                                "data": "lastChatDate", "render": getfn_datatable_render_datetime_short()
+                            @Html.Raw(OrderSequenceOption())
+                            },
+                            {
+                                "targets": "reqAtt",
+                                "autowidth": false,
+                                "width": "@IconColumnWidth()",
+                                "min-width": "@IconColumnWidth()",
+                                "max-width": "@IconColumnWidth()",
+                                "searchable": false,
+                                "orderable": true,
+                                "data": "attachmentStatus",
+                                "className": " noEditInvoicingAccess iconColumn dt-center noexport norowselect",
+                                "render": datatable_render_attIcon
+                            },
+                            { "targets": "reqBlank", "defaultContent": "", "sortable": false, "orderable": false, "autowidth": true, "className": "noexport" },
+                            { "targets": "advancedFilter", "defaultContent": "", "sortable": false, "orderable": false, "autowidth": true },
+                    @if (Model.EnablePDF)
+                    {
+                        <text>
+                            {
+                                "targets": "reqLinks",
+                                "autowidth": false,
+                                "width": "@IconColumnWidth()",
+                                "min-width": "@IconColumnWidth()",
+                                "max-width": "@IconColumnWidth()",
+                                "className": "iconColumn dt-center noexport norowselect",
+                                "searchable": false, "orderable": false, sortable: false,
+                                "render": datatable_render_vendorlinks
+                            },
+                        </text>
+                        } else {
+                        <text>
+                            {
+                                "targets": ["reqLinks", "reqEditRequest"],
+                                "autowidth": false,
+                                "width": "@IconColumnWidth()",
+                                "min-width": "@IconColumnWidth()",
+                                "max-width": "@IconColumnWidth()",
+                                "className": "iconColumn dt-center noexport norowselect noEditInvoicingAccess",
+                                "searchable": false, "orderable": false, sortable: false,
+                                "render": datatable_render_editrequest_link
+                            },
+                        </text>
+                        }
+                            {
+                                "targets": ["reqHasLink"], "data": "hasLink", "className": "iconColumn dt-center noexport norowselect",
+                                "autowidth": false,
+                                "width": "@IconColumnWidth()",
+                                "min-width": "@IconColumnWidth()",
+                                "max-width": "@IconColumnWidth()",
+                                "searchable": false, "orderable": false, sortable: false,
+                                "render": datatable_render_linkedicon
+                            },
+                            {
+                                "targets": "reqEditStatus",
+                                "width": "@IconColumnWidth()",
+                                "min-width": "@IconColumnWidth()",
+                                "max-width": "@IconColumnWidth()",
+                                "className": "iconColumn dt-center noexport norowselect",
+                                "searchable": false, "orderable": false,
+                                "render": datatable_render_editstatus
+                            },
+                            {
+                                "targets": "reqTitleScanTime", "data": "titleScanTime", "render": datatable_render_datetime_with_hi_res_sort, "width": "100px", "className": "dt-nowrap dt-center" @Html.Raw(OrderSequenceOption())
+                            },
+                            {
+                                "targets": "reqSpecialBilling", "data": "specialBilling", "className": "nohide dt-center", "searchable": false,
+                                "className": "process dt-center", "render": datatable_render_specialbilling 
+                            },
+                            { "targets": "reqState", "data": "state", "className": "nohide dt-center", "searchable": @Html.Raw(SearchableOption(true)), "orderable": @Html.Raw(OrderableOption(true)), "sortable": @Html.Raw(SortableOption(true))  },
+                            { "targets": "reqType", "data": "appType", "width": "80px", "min-width": "80px", "className": "nohide dt-center", "searchable": @Html.Raw(SearchableOption(true)), "orderable": @Html.Raw(OrderableOption(true)), "sortable": @Html.Raw(SortableOption(true)) },
+                            { "targets": "reqLastModBy", "sortable": @Html.Raw(SortableOption(true)), "data": "lastModifiedBy", "className": "dt-nowrap dt-center modinfo" },
+                            { "targets": "reqLastMod", "sortable": @Html.Raw(SortableOption(true)), "data": "lastModified", "className": "dt-nowrap dt-center modinfo", "render": getfn_datatable_render_datetime_short() @Html.Raw(OrderSequenceOption()) },
+                            { "targets": "reqVIN", "type": "text-vin", "data": "vin", "render": datatable_render_vin, "className": "nohide", "searchable": @Html.Raw(SearchableOption(true)), "sortable": @Html.Raw(SortableOption(true)) },
+                            {
+                                "targets": "reqStage", "data": "processStageId", "searchable": @Html.Raw(SearchableOption(true)), "sortable": @Html.Raw(SortableOption(true)),
+                                "className": "process dt-center",
+                                "render": datatable_render_stage
+                            },
+                            {
+                                "targets": "reqStageName", "data": "processStageName", "searchable": @Html.Raw(SearchableOption(true)), "sortable": @Html.Raw(SortableOption(true)),
+                                "className": "process dt-center"
+                            },
+                            {
+                                "targets": "reqStatus", "data": "statusId", "searchable": @Html.Raw(SearchableOption(true)), "sortable": @Html.Raw(SortableOption(true)),
+                                "className": "process dt-center",
+                                "render": datatable_render_status
+                            },
+                            { "targets": "reqReasonCancelled", "data": "reasonCancelled" },
+                            { "targets": "reqCode", "data": "code", "className": "process" },
+                            { "targets": "reqCodeCount", "data": "codeCount", "className": "codered", searchable: false, orderable: false, render: datatable_render_codecount },
+                            { "targets": "reqELT", "data": "elt" },
+                            { "targets": "reqMake", "data": "vehicleMake", "className": "vehinfo" },
+                            { "targets": "reqYear", "data": "vehicleYear", "className": "vehinfo" },
+                            { "targets": "reqSigned", "data": "dateSigned", "className": "processdate" },
+                            { "targets": "reqPrinted", "data": "datePrinted" @Html.Raw(OrderSequenceOption()) },
+                            // { "targets": "reqDateToVendor", "data": "dateToVendor" @Html.Raw(OrderSequenceOption()) },
+                            // { "targets": "reqDateFromLH", "data": "dateReceived" @Html.Raw(OrderSequenceOption()) },
+                            {
+        "targets": "reqDateToVendor",
+        "data": "dateToVendor",
+        "render": function(data, type, row) {
+            return formatDateTime(data);
+        }
+        @Html.Raw(OrderSequenceOption())
+    },
+    {
+        "targets": "reqDateFromLH",
+        "data": "dateReceived",
+        "render": function(data, type, row) {
+            return formatDateTime(data);
+        }
+        @Html.Raw(OrderSequenceOption())
+    },
+    {
+        "targets": "reqDateFromNRA",
+        "data": "notReadyToAccept",
+        "render": function(data, type, row) {
+            return formatDateTime(data);
+        }
+        @Html.Raw(OrderSequenceOption())
+    },
+    {
+        "targets": "reqDateFromAD",
+        "data": "acceptedDate",
+        "render": function(data, type, row) {
+            return formatDateTime(data);
+        }
+        @Html.Raw(OrderSequenceOption())
+    },
+    {
+        "targets": "reqDateFromNRP",
+        "data": "notReadyToProcess",
+        "render": function(data, type, row) {
+            return formatDateTime(data);
+        }
+        @Html.Raw(OrderSequenceOption())
+    },
+    {
+        "targets": "reqDateFromRD",
+        "data": "returnedDate",
+        "render": function(data, type, row) {
+            return formatDateTime(data);
+        }
+        @Html.Raw(OrderSequenceOption())
+    },
+    {
+        "targets": "reqRejection",
+        "data": "rejectionDate",
+        "render": function(data, type, row) {
+            return formatDateTime(data);
+        }
+        @Html.Raw(OrderSequenceOption())
+    },
+                            {"targets": "reqREG_LH_Name", "data": "reG_LH_Name", "searchable": @Html.Raw(SearchableOption(true))},
+                        
+                            {"targets": "reqREG_Reg_Name", "data": "reG_Reg_Name", "searchable": @Html.Raw(SearchableOption(true))},
+                            {
+                                "targets": "reqCheckNumber", "data": "checkNumber",
+                                "className": "invdetail"
+                            },
+                            { "targets": "reqLIDateToDMV", "data": "lI_DateToDmv" @Html.Raw(OrderSequenceOption()) },
+                            { "targets": "reqLIDateFromDMV", "data": "lI_DateFromDmv" @Html.Raw(OrderSequenceOption()) },
+                            { "targets": "reqLICheckNumber", "data": "lI_CheckNumber" },
+                            { "targets": "reqLItoDMVCourier", "data": "lI_ToDmvCourier" },
+                            { "targets": "reqLItoDMVTracking", "data": "lI_ToDmvTracking" },
+                            { "targets": "reqRepoDate", "data": "repoDate" },
+                            { "targets": "reqToVendorCourier", "data": "toVendorCourier" },
+                            { "targets": "reqToVendorTracking", "data": "toVendorTracking" },
+                            { "targets": "reqDateToDMV", "data": "dateToDmv" @Html.Raw(OrderSequenceOption()) },
+                            { "targets": "reqDateFromDMV", "data": "dateFromDmv" @Html.Raw(OrderSequenceOption()) },
+                            { "targets": "reqFinished", "data": "dateShipped" @Html.Raw(OrderSequenceOption()) },
+                            { "targets": "reqETA", "className": "text_nowrap", "data": "eta" @Html.Raw(OrderSequenceOption()) },
+                            {
+                                "targets": "reqInvoiceNo", "data": "invoiceNo"
+                                , "className": "invdetail"
+                            },
+                            {
+                                "targets": "reqInvoiceDate", "data": "invoiceDate"
+                                , "className": "invdetail"
+                            @Html.Raw(OrderSequenceOption())
+                            },
+                            {
+                                "targets": "reqInvoiceDatePaid", "data": "invoiceDatePaid"
+                                , "className": "invdetail" @Html.Raw(OrderSequenceOption())
+                            },
+                            {
+                                "targets": "reqInvoiceNote", "data": "invoiceNote"
+                                , "className": "invdetail"
+                            },
+                            { "targets": "reqLienExpDate", data: "lienExpDate" @Html.Raw(OrderSequenceOption()) },
+                            {
+                                "targets": ["reqNotes"], "sortable": false, "className": "details-control",
+                                "orderable": false, "data": "notesAbbrev", "defaultContent": '',
+                                "searchable": @Html.Raw(SearchableOption(true)), "autowidth": true, "max-width": "200px", "width": "150px"
+                            },
+                            {
+                                "targets": ["reqFullNotes"], "sortable": false,
+                                "orderable": false, "data": "notesAbbrev", "defaultContent": '',
+                                "searchable": false, "autowidth": true, "visible": false
+                            },
+                            {
+                                "targets": "reqClientRef", "sortable": @Html.Raw(SortableOption(true)), "searchable": @Html.Raw(SearchableOption(true)), "orderable": @Html.Raw(OrderableOption(true)),
+                                "data": "clientRef", "max-width": "120px"
+                            },
+                            { "targets": "reqAuctioneer", "data": "auction" },
+                            { "targets": "reqOdometer", "data": "odometer", "className": "odometer vehinfo", sortable: false },
+                            { "targets": "reqMileageBrand", "data": "mileageBrand", "className": "vehinfo", sortable: false, render: datatable_render_mileagebrand },
+                            {
+                                "targets": "reqLH", "data": "lienholderName"
+                                , "className": "vehinfo"
+                            },
+                            {
+                                "targets": "reqRTLH", "data": "rT_LH"
+                                , "className": "vehinfo"
+                            },
+                            {
+                                "targets": "reqDTLH", "data": "dT_LH_Name"
+                                , "className": "vehinfo"
+                            },
+                            {   "targets": "processingDaysearchcomboboxColumn",
+        "data": "processingDay", "visible": false,
+        "searchable": true, "orderable": false, "sortable": false
+    },
+    {
+        "targets": "outcomecomboboxColumn",
+        "width": "@IconColumnWidth()",
+        "min-width": "@IconColumnWidth()",
+        "max-width": "@IconColumnWidth()",
+        "className": "dt-center norowselect",
+        "searchable": false,
+        "orderable": false,
+        "data": "outcome",
+        "render": function (data, type, row, meta) {
+            var selectHtml = '<select class="comboboxColumn getoutcomedata form-control">';
+            var normalizedData = data ? data.trim().toLowerCase() : '';
+            var matchFound = false;
+            if (!normalizedData) {
+                selectHtml += '<option value="" disabled selected>Select an outcome ...</option>';
+            }
+            var outComeOptions = getOutcomeOptionsByTblid(tblid);
+            var renderedOptions = {}; 
+            for (var i = 0; i < outComeOptions.length; i++) {
+                var optionValue = outComeOptions[i].match(/value="([^"]*)"/)[1];
+                var optionText = outComeOptions[i].match(/>([^<]*)</)[1];
+                var normalizedOptionValue = optionValue.trim().toLowerCase();
+                if (!renderedOptions[normalizedOptionValue]) {
+                    renderedOptions[normalizedOptionValue] = true;
+                    var selected = (normalizedOptionValue === normalizedData) ? ' selected' : '';
+                    selectHtml += '<option value="' + optionValue + '"' + selected + '>' + optionText + '</option>';
+                    if (selected) {
+                        matchFound = true;
+                    }
+                }
+            }
+            if (!matchFound && normalizedData) {
+                selectHtml += '<option value="' + normalizedData + '" selected>' + data + '</option>';
+            }
+
+            selectHtml += '</select>';
+            return selectHtml;
+            }
+    },
+        {
+        "data": "assignedUser",
+        "targets": "assignedusercomboboxColumn",
+        "width": "@IconColumnWidth()",
+        "min-width": "@IconColumnWidth()",
+        "max-width": "@IconColumnWidth()",
+        "className": "dt-center norowselect",
+        "searchable": @Html.Raw(SearchableOption(true)),
+        "orderable": false,
+        "render": function (data, type, row, meta) {
+        var selectHtml = '<select class="comboboxColumn getassigneduserdata form-control">';
+        var found = false;
+        selectHtml += '<option value="" disabled ' + (data === null || data === "" ? 'selected' : '') + '>Select a user ...</option>';
+    
+        for (var i = 0; i < assignedUserOptions.length; i++) {
+            var optionValue = $(assignedUserOptions[i]).val();
+            if (optionValue === data) {
+                selectHtml += '<option value="' + optionValue + '" selected>' + $(assignedUserOptions[i]).text() + '</option>';
+                found = true;
+            } else {
+                selectHtml += '<option value="' + optionValue + '">' + $(assignedUserOptions[i]).text() + '</option>';
+            }
+        }
+    
+        if (!found && data !== null && data !== "") {
+            selectHtml += '<option value="' + data + '" selected>' + data + '</option>';
+        }
+
+        selectHtml += '</select>';
+        return selectHtml;
+    }
+    },{
+        "data": "assignedProcessor",
+        "targets": "assignedprocessorcomboboxColumn",
+        "width": "@IconColumnWidth()",
+        "min-width": "@IconColumnWidth()",
+        "max-width": "@IconColumnWidth()",
+        "className": "dt-center norowselect",
+        "searchable": @Html.Raw(SearchableOption(true)),
+        "orderable": false,
+        "render": function (data, type, row, meta) {
+        var selectHtml = '<select class="comboboxColumn getassignedProcessordata form-control">';
+        var found = false;
+        selectHtml += '<option value="" disabled ' + (data === null || data === "" ? 'selected' : '') + '>Select a user ...</option>';
+    
+        for (var i = 0; i < assignedUserOptions.length; i++) {
+            var optionValue = $(assignedUserOptions[i]).val();
+            if (optionValue === data) {
+                selectHtml += '<option value="' + optionValue + '" selected>' + $(assignedUserOptions[i]).text() + '</option>';
+                found = true;
+            } else {
+                selectHtml += '<option value="' + optionValue + '">' + $(assignedUserOptions[i]).text() + '</option>';
+            }
+        }
+    
+        if (!found && data !== null && data !== "") {
+            selectHtml += '<option value="' + data + '" selected>' + data + '</option>';
+        }
+
+        selectHtml += '</select>';
+        return selectHtml;
+    }
+    },
+        {
+        "data": "assignedShipper",
+        "targets": "assignedshippercomboboxColumn",
+        "width": "@IconColumnWidth()",
+        "min-width": "@IconColumnWidth()",
+        "max-width": "@IconColumnWidth()",
+        "className": "dt-center norowselect",
+        "searchable": @Html.Raw(SearchableOption(true)),
+        "orderable": false,
+        "render": function (data, type, row, meta) {
+        var selectHtml = '<select class="comboboxColumn getassignedShipperdata form-control">';
+        var found = false;
+        selectHtml += '<option value="" disabled ' + (data === null || data === "" ? 'selected' : '') + '>Select a user ...</option>';
+    
+        for (var i = 0; i < assignedUserOptions.length; i++) {
+            var optionValue = $(assignedUserOptions[i]).val();
+            if (optionValue === data) {
+                selectHtml += '<option value="' + optionValue + '" selected>' + $(assignedUserOptions[i]).text() + '</option>';
+                found = true;
+            } else {
+                selectHtml += '<option value="' + optionValue + '">' + $(assignedUserOptions[i]).text() + '</option>';
+            }
+        }
+    
+        if (!found && data !== null && data !== "") {
+            selectHtml += '<option value="' + data + '" selected>' + data + '</option>';
+        }
+
+        selectHtml += '</select>';
+        return selectHtml;
+    }
+    },
+    {
+        "targets": "InternalInputbox",
+        "width": "@IconColumnWidth()",
+        "min-width": "@IconColumnWidth()",
+        "max-width": "@IconColumnWidth()",
+        "className": "inputColumn dt-center norowselect",
+        "searchable": false,
+        "orderable": false,
+        "data": "internal",
+        "render": function (data, type, row, meta) {
+            var value = (data !== undefined && data !== null) ? data : '';
+            var placeholder = (data === undefined || data === null || data === '') ? ' placeholder="Add an internal note ..."' : '';
+            return '<textarea class="inputboxColumn getinputdata form-control"' + placeholder + '>' + value + '</textarea>';
+        }
+    },
+    {
+        "targets": "NotesInputbox",
+        "width": "@IconColumnWidth()",
+        "min-width": "@IconColumnWidth()",
+        "max-width": "@IconColumnWidth()",
+        "className": "inputColumn dt-center norowselect",
+        "searchable": false,
+        "orderable": false,
+        "data": "notes",
+        "render": function (data, type, row, meta) {
+            var value = (data !== undefined && data !== null) ? data : '';
+            var placeholder = (data === undefined || data === null || data === '') ? ' placeholder="Add a note ..."' : '';
+            var required = (data === undefined || data === null || data === '') ? ' required' : '';
+            var requiredSpan = (data === undefined || data === null || data === '') ? '<span class="requiredAudit">*</span>' : '';
+            return '<div style="position: relative;"><textarea class="inputboxColumn getnotesdata form-control"' + placeholder + required + '>' + value + '</textarea>' + requiredSpan + '</div>';
+        }
+    },
+                            { "targets": "reqGroup", "data": "groupName", "searchable": @Html.Raw(SearchableOption(true)), "sortable": @Html.Raw(SortableOption(true))  },
+                            { "targets": "reqSubmittedBy", "data": "submittedBy" },
+                            { "targets": "reqVendor", "data": "vendorCode" },
+                            { "targets": "reqCourier", "data": "courier" },
+                            { "targets": "reqTracking", "data": "trackingNumber" },
+                            { "targets": "reqDmvCourier", "data": "dmvCourier" },
+                            { "targets": "reqDmvTracking", "data": "dmvTrackingNumber" },
+                            { "targets": "reqTitleIssued", "data": "dateTitleIssued" },
+                            { "targets": "reqId", "visible": false, "sortable": false, "className": "hidcol", "data": "requestId", "searchable": false },
+                            {
+                                "targets": "reqNo", "visible": true, "sortable": @Html.Raw(SortableOption(true)), "data": "requestNo",
+                                "width": "80px", "min-width": "100px",
+                                "render": function (data, type, full, meta) {
+                                    if (type == 'display') return leftPad(data, 6);
+                                    return data;
+                                }
+                                @Html.Raw(OrderSequenceOption())
+                            },
+                            {
+                                "targets": "reqInvNo", "data": "invoiceNo", "width": "100px", "autowidth": false
+                                , "className": "invdetail" @Html.Raw(OrderSequenceOption())
+                            },
+                            {
+                                "targets": "reqInvDate", "data": "invoiceDate"
+                                , "className": "invdetail" @Html.Raw(OrderSequenceOption())
+                            },
+                            {
+                                "targets": "reqInvPaid", "data": "invoiceDatePaid"
+                                , "className": "invdetail" @Html.Raw(OrderSequenceOption())
+                            },
+                            {
+                                "targets": "reqInvSvcFee", "data": "serviceFee", "width": "75px", "className": "dt-nowrap", "autowidth": false
+                                , "className": "invdetail"
+                            },
+                            {
+                                "targets": "reqInvDmvFee", "data": "dmvFee", "width": "75px", "className": "dt-nowrap", "autowidth": false
+                                , "className": "invdetail"
+                            },
+                            {
+                                "targets": "reqInvOthFee", "data": "otherFee", "width": "75px", "className": "dt-nowrap", "autowidth": false
+                                , "className": "invdetail"
+                            },
+                            {
+                                "targets": "reqInvOthDesc", "data": "otherDesc", "className": "dt-nowrap"
+                                , "className": "invdetail"
+                            },
+                            {
+                                "targets": "reqInvTtlDue", "data": "totalDue", "className": "dt-nowrap", "width": "75px", "autowidth": false
+                                , "className": "invdetail"
+                            },
+                            {
+                                "targets": "reqDupeCheck",
+                                "orderable": false,
+                                "className": "iconColumn dt-center noexport",
+                                "autowidth": false,
+                                "width": "@IconColumnWidth()",
+                                "min-width": "@IconColumnWidth()",
+                                "max-width": "@IconColumnWidth()",
+                                "sortable": false,
+                                "render": datatable_render_dupecheck
+                            },
+                            {
+                                @* must go before dsearch, or it will be overridden *@
+                                "targets": ["elapseddays"],
+                                "render": datatable_render_date_with_elapseddays
+                            },
+                            {
+                                "targets": ["dfilter", "drfilter", "datefmt", "drofilter", "dsearch" ],
+                                "sortable": @Html.Raw(SortableOption(true)),
+                                "width": "80px",
+                                "defaultContent": "",
+                                "render": getfn_datatable_render_date('@Model.DefaultDateFormat')
+                            },
+                            { "targets": "hidcol", "visible": false },
+                            {
+                                "targets": ["currency", "currencyFmt"], className: "numericCol",
+                                "render": $.fn.dataTable.render.number(',', '.', 2, '$ ')
+                            },
+                            {
+                                "targets": "_all", "searchable": @Html.Raw(SearchableOption(true)), "className": "dt-center", "autowidth": true, "defaultContent": "",
+                                "sortable": @Html.Raw(SortableOption(true)),
+                                render: $.fn.dataTable.render.text()
+                            },
+                            { "targets": "reqPaymentAmount", "data": "totalCharge" },
+                            { "targets": "reqRefNumber", "data": "referenceNumber" },
+                            { "targets": "reqRecordNumber", "data": "id" },
+                            { "targets": "reqPaymentType", "data": "paymentTypeName"},
+                            { "targets": "reqNoRequestsNotes", "data": "notes"},
+                            { "targets": "reqDateReceived", "data": "dateReceived", 
+                                "render": getfn_datatable_render_date('@Model.DefaultDateFormat')
+                            },
+                            {
+                                "targets": "reqPaymentDate",
+                                "data": "paymentDate",
+                                "render": getfn_datatable_render_date('@Model.DefaultDateFormat')
+                            },
+                             {
+                                "targets": "reqShippedNote",
+                                "data": "shippedNote",
+                            },
+                             {
+                                "targets": "reqDateShipped",
+                                "data": "dateShipped",
+                                "render": getfn_datatable_render_date('@Model.DefaultDateFormat')
+                            },
+                            {
+                                "targets": "reqDocumentName", 
+                                "data": "documentName",
+                                "render": function(data, type, row) {
+                                    console.log("reqDocumentName", data , row, type)
+                                    if (data) {
+                                        return '<a href="#" class="view-pdf" data-pdf-id="' + row.DocumentReceivedID + '" data-pdf-name="' + data + '">' + data + '</a>';
+                                    }
+                                    return 'No Document';
+                                }
+                            },
+
+
+                        @*@if (!Model.AllowSort)
+                        {
+                        @:{ "orderable": false, "targets": 0 }
+                        }*@
+                        ],
+                        "processing": true,
+                        "serverSide": true,
+                        //"filter": true,
+                        ajax: {
+                            "url": "@Model.DataUrl",
+                            "type": "POST",
+                            "dataType": "JSON",
+                            "data": function (data) {
+                                var all = GetDtSetting("@Model.ListId", "includeArchived");
+                                if (all == "true") data.includeArchived = "true";
+
+                                var expandNotes = GetDtSetting("@Model.ListId", "expandNotes");
+                                if (expandNotes == 'true') {
+                                    var expandedNotesLength = GetGlobalSetting("ExpandNotesLength", "500");
+                                    data.notesLength = `${expandedNotesLength}`;
+                                }
+                                let jsonFilter = $("#@Model.ListId").data("jsonFilter");
+                                if (jsonFilter) {
+                                    data.jsonFilter = jsonFilter;
+                                }
+                                else { 
+                                    data.jsonFilter = null;
+                                }
+
+                                var paymentCreditType; 
+                                var paymentDebitType; 
+                                var filterPaymentType = $('#filterPaymentTypeID').val();  
+                                var paymentDate = $('#reportPaymentDate').val();  
+
+                                if(filterPaymentType == "credit"){
+                                   paymentCreditType = $('#reportCreditPaymentType').val();  
+
+                                }
+                                else{
+                                   paymentDebitType = $('#reportDebitPaymentType').val();  
+
+                                }
+
+                                var selectedAppType = []; 
+
+                                var appType = $('#reportAppType').val() || [];  
+
+                                var selectedState = []; 
+
+                                var stateType = $('#reportStateType').val() || []; 
+                                var selectedStateString;
+                                var selectedAppTypeString;
+
+                                let selectedPaymentType = $("#filterPaymentTypeID").val();
+
+                                 if (selectedPaymentType === "credit") {
+                                     data.isCredit = true;
+                                 } 
+                                 else if (selectedPaymentType === "debit") {
+                                     data.isCredit = false;
+                                 }
+                                 else {
+                                     data.isCredit = null;
+                                 }
+
+                                if (stateType.length > 0) {
+                                    selectedState = [...stateType]; 
+                                    selectedStateString = selectedState.join(","); 
+                                }
+
+                                if (appType.length > 0) {
+                                    selectedAppType = [...appType]; 
+                                    selectedAppTypeString = selectedAppType.join(","); 
+                                }
+
+                                if (paymentCreditType) data.paymentType = paymentCreditType;
+                                if (paymentDebitType) data.paymentType = paymentDebitType;
+                                if (paymentDate) data.paymentDate = paymentDate; 
+                                if (selectedStateString) data.stateType = selectedStateString;
+                                if (selectedAppTypeString) data.appType = selectedAppTypeString;
+
+                            },
+                            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                            "dataSrc": function (json) {
+                                 if (json.totalPayments !== undefined && json.totalAmount !== undefined) {
+                                     $("#total-payments").text(json.totalPayments);
+                                     $("#total-amount").text(parseFloat(json.totalAmount).toLocaleString('en-US', { minimumFractionDigits: 2 }));
+                                 }
+                                 return json.data; // Continue processing table data
+                            },
+                        },
+                        createdRow: function (row, data, dataIndex) {
+                            @if (Model.ColorizeStatus) 
+                            { 
+                                <text>
+                                if (data.statusId) {
+                                    if (data.statusId == 2) {
+                                        $(row).addClass('statusCompleted');
+                                    }
+                                    else if (data.statusId == 9) {
+                                        $(row).addClass('statusHold');
+                                    }
+                                }
+                                </text> 
+                            }
+                            @{
+                                            <text>
+                                                if (data.isMatched == true) 
+                                                {
+                                                $(row).addClass('matchedData');
+                                                }
+                                            </text>
+                            }      
+                            @if (Model.DisplayRequiredAttachmentsAsChildRow) 
+                            { 
+                                
+                             <text>
+                                @*if (typeof data !== 'undefined' && data.notesAbbrev != null && data.notesAbbrev.length > 0)*@ {
+                                    var api = this.api();
+                                    var div = $("<div style='display:none' class='reqattview'></div>");
+                                    api.row(row).child(div[0].outerHTML);
+                                }
+                            </text> 
+                            }
+                            @if (Model.DisplayFullNotesAsChildRow) { <text>
+                            if (typeof data.notesAbbrev !== 'undefined' && data.notesAbbrev != null && data.notesAbbrev.length > 0) {
+                                var api = this.api();
+                                var div = $("<div class='notesview'></div>");
+                                div.text(data.notesAbbrev);
+                                api.row(row).child(div[0].outerHTML).show();
+                            }
+                            </text> }    
+                            @if (Model.ViewType == VendorViewType.Audits)
+                            {
+                                <text>
+                                    if (data.auditstatus == "In Progress") {
+                                    $(row).addClass('row-Frozen red');
+                                    }
+                                    HandleAuditData(data, "Audits", enableDisableInProgressForETA, enableDisableNotInProgressForETA);
+                                </text>
+                            }
+
+                            @if (Model.ViewType == VendorViewType.PCodeAudit)
+                            {
+                                <text>
+                                    if (data.auditstatus == "In Progress") {
+                                    $(row).addClass('row-Frozen red');
+                                    }
+                                    HandleAuditData(data, "PCodeAudit", enableDisableInProgressForPCode, enableDisableNotInProgressForPCode);
+                                </text>
+                            }
+
+                            @if (Model.ViewType == VendorViewType.HoldAudit)
+                            {
+                                <text>
+                                    if (data.auditstatus == "In Progress") {
+                                    $(row).addClass('row-Frozen red');
+                                    }
+                                    HandleAuditData(data, "HoldAudit", enableDisableInProgressForHOLD, enableDisableNotInProgressForHOLD);
+                                </text>
+                            }
+
+                             @if (Model.ViewType == VendorViewType.DocumentsReceived_NoRequest)
+                            {
+                                <text>
+                                    if (data.isMatched == true) {
+                                    $(row).addClass('matchedData');
+                                    }
+                                </text>
+                            }  
+
+                            @if (Model.ViewType == VendorViewType.IncomingAudit)
+                            {
+                                <text>
+                                    if (data.auditstatus == "In Progress") {
+                                    $(row).addClass('row-Frozen red');
+                                    }
+                                    HandleAuditData(data, "IncomingAudit", enableDisableInProgressForIncoming, enableDisableNotInProgressForIncoming);
+                                </text>
+                            }               
+                        },
+                        "buttons":
+                        @if (Model.IsLinkedRequestView) { <text>
+                            [
+                                {
+                                    "text": 'Connect New Record',
+                                    "className":"noEditInvoicingAccess",
+                                    "action": function (e) {
+                                        e.preventDefault();
+                                        return vendor_show_linkRecord(table);
+                                    }
+                                },
+                                {
+                                    "text": 'Unlink', 
+                                    "className": "selectOnOff  selectOne noEditInvoicingAccess",
+                                    "action": function (e) {
+                                        e.preventDefault();
+                                        return vendor_show_unlinkRequests(table);
+                                    }
+                                }
+                            ],
+                        </text> }
+                        else if (Model.UseButtonList)
+                        {
+                            @:[],
+                        }
+                        else { 
+                        <text>
+                        [
+                            @if (Model.AddSelectDeselectButtons) {<text>
+                            {
+                                extend: 'selectAll',
+                                className: 'selectall noEditInvoicingAccess',
+                                action: function (e) {
+                                    e.preventDefault();
+                                    table.rows({ search: 'applied' }).deselect();
+                                    table.rows({ search: 'applied' }).select();
+                                }
+                            },
+                            'selectNone',
+                            </text>}
+                            @if (Model.ViewType == VendorViewType.RT_Sign && Model.EnablePDF) {<text>
+                            {
+                                "text": 'Review',
+                                "className":'noEditInvoicingAccess'
+                                "action": function () {
+                                    var a = [];
+                                    $.each(table.rows({ selected: true }).data(), function () {
+                                        a.push(this["requestId"]);
+                                    });
+                                    if (a.length == 0) {
+                                        alert('Please select items to be signed');
+                                    }
+                                    else {
+                                        createBatch(a);
+                                    }
+                                }
+                            },
+                            </text>}
+                            @if (Model.ViewType == VendorViewType.UploadPending)
+                            {
+                                @* place button to move to receiving queue *@
+                            }
+                            @if (Model.ViewType == VendorViewType.RT_TitlePending)
+                            {
+                                @:{ text: "Title Issued", className: "selectOnOff  noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_TitleIssued(table); } },
+                                @:{ text: "Process Issued Titles", className: "selectOnOff  noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_WorkingList(table); } },
+                            }
+                            @if (Model.ViewType == VendorViewType.WorkingList)
+                        {
+                            @:{ text: "Title Issued", className: "selectOnOff  noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_TitleIssuedWorkingList(table); } },
+                            @:{ text: "Reject", className: "selectOnOff  noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_Move_Reject(table); } },
+                            @:{ text: "Pending", className: "selectOnOff  noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_Move_Pending(table); } },
+                        }
+                            @if (Model.ViewType == VendorViewType.RT_ReadyForPacking || Model.ViewType == VendorViewType.RT_WVRejections || Model.ViewType == VendorViewType.RT_WVSendQueue)
+                            {
+                                if (Model.PageName == "ToDoWVClearing")
+                                {
+                                    @:{ text: "Send to Clearinghouse", className: "selectOnOff  noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_SubmitToChamps(table); } },
+                                }
+                                else
+                                {
+                                    @:{ text: "Sent to DMV", className: "selectOnOff  noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_DmvShipItems(table); } },
+                                }
+                            }
+                            @if (Model.ViewType == VendorViewType.RT_ShipToLH)
+                            {
+                                @:{ text: "Shipped", className: "selectOnOff  noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_Ship(table); } },
+                            }
+                            @if (Model.AllowAutoIMSRefresh)
+                            {
+                                @:{ text: "Refresh AutoIMS", className: "selectOnOff  noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_AutoIMS(table); } },
+                            }
+                            @if (Model.ViewType == VendorViewType.RT_ReadyToProcess)
+                            {
+                            }
+                            @if (Model.ViewType == VendorViewType.RT_Receiving)
+                            {
+                                @:{ text: "Received", className: "selectOnOff  noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_ReceiveFromDmv(table); } },
+                            }
+                            @if (Model.ViewType == VendorViewType.RT_Incoming ||
+                                Model.ViewType == VendorViewType.LI_Incoming ||
+                                Model.ViewType == VendorViewType.TC_Incoming ||
+                                Model.ViewType == VendorViewType.Other_Incoming
+                            )
+                            {
+                                @:{ text: "Received - Not Ready for Processing", className: "selectOnOff  noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_ReceiveFromLH_NotReady(table); } },
+                                @:{ text: "Received - Ready for Processing", className: "selectOnOff  noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_ReceiveFromLH(table); } },
+                            }
+                            @if (Model.ViewType == VendorViewType.RT_NotReadyToProcess ||
+                                Model.ViewType == VendorViewType.LI_NotReadyToProcess ||
+                                Model.ViewType == VendorViewType.TC_NotReadyToProcess ||
+                                Model.ViewType == VendorViewType.Other_NotReadyToProcess
+                            )
+                            {
+                                @:{ text: "Received - Ready for Processing", className: "selectOnOff  noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_ReceiveFromLH(table); } },
+                            }
+
+                        // Maunual Queue
+
+                            @if(Model.ViewType == VendorViewType.MQ_NotReadyToAccept){
+                            @:{ text: stage1, className: "selectOnOff  noEditInvoicingAccess selectOne", action: function (e) { e.preventDefault(); manualStages_move_button(table,stage1,62); } },
+                            @:{ text: stage9, className: "selectOnOff  noEditInvoicingAccess selectOne", action: function (e) { e.preventDefault(); manualStages_move_button(table,stage9,70); } },
+                            }
+                            @if(Model.ViewType == VendorViewType.MQ_FollowUpReview){
+                            @:{ text: stage2, className: "selectOnOff  noEditInvoicingAccess selectOne", action: function (e) { e.preventDefault(); manualStages_move_button(table,stage2,61); } },
+                            @:{ text: stage3, className: "selectOnOff  noEditInvoicingAccess selectOne", action: function (e) { e.preventDefault(); manualStages_move_button(table,stage3,63); } },
+                                @:{ text: stage9, className: "selectOnOff  noEditInvoicingAccess selectOne", action: function (e) { e.preventDefault(); manualStages_move_button(table,stage9,70); } },
+                            }
+                            @if(Model.ViewType == VendorViewType.MQ_AcceptedIncoming){
+                            @:{ text: stage4, className: "selectOnOff  noEditInvoicingAccess selectOne", action: function (e) { e.preventDefault(); manualStages_move_button(table,stage4,64); } },
+                            @:{ text: stage5, className: "selectOnOff  noEditInvoicingAccess selectOne", action: function (e) { e.preventDefault(); manualStages_move_button(table,stage5,66); } },
+                            @:{ text: stage9, className: "selectOnOff  noEditInvoicingAccess selectOne", action: function (e) { e.preventDefault(); manualStages_move_button(table,stage9,70); } },
+                            }
+                            @if(Model.ViewType == VendorViewType.MQ_AcceptedNotReadyToProcess){
+                            @:{ text: stage6, className: "selectOnOff  noEditInvoicingAccess", action: function (e) { e.preventDefault(); manualStages_move_button(table,stage6,65); } },
+                            @:{ text: stage9, className: "selectOnOff  noEditInvoicingAccess", action: function (e) { e.preventDefault(); manualStages_move_button(table,stage9,70); } },
+                            }
+                            @if(Model.ViewType == VendorViewType.MQ_Accepted_FollowUpReview){
+                            @:{ text: stage5, className: "selectOnOff  noEditInvoicingAccess selectOne", action: function (e) { e.preventDefault(); manualStages_move_button(table,stage5,66); } },
+                            @:{ text: stage4, className: "selectOnOff  noEditInvoicingAccess selectOne", action: function (e) { e.preventDefault(); manualStages_move_button(table,stage4,64); } },
+                            @:{ text: stage9, className: "selectOnOff  noEditInvoicingAccess selectOne", action: function (e) { e.preventDefault(); manualStages_move_button(table,stage9,70); } }, 
+                            }
+                            @if(Model.ViewType == VendorViewType.MQ_CouldNotProcess){
+                                @:{ text: stage5, className: "selectOnOff  noEditInvoicingAccess selectOne", action: function (e) { e.preventDefault(); manualStages_move_button(table,stage5,66); } },
+                                @:{ text: stage9, className: "selectOnOff  noEditInvoicingAccess selectOne", action: function (e) { e.preventDefault(); manualStages_move_button(table,stage9,70); } }, 
+                            }
+                            @if(Model.ViewType == VendorViewType.MQ_ReadyToProcess){
+                            @:{ text: stage0, className: "selectOnOff  noEditInvoicingAccess selectOne", action: function (e) { e.preventDefault(); manualStages_move_button(table,stage0,68); } },
+                            @:{ text: stage7, className: "selectOnOff  noEditInvoicingAccess selectOne", action: function (e) { e.preventDefault(); manualStages_move_button(table,stage7,67); } },
+                            @:{ text: stage9, className: "selectOnOff  noEditInvoicingAccess selectOne", action: function (e) { e.preventDefault(); manualStages_move_button(table,stage9,70); } }, 
+                            }                   
+                            @if(Model.ViewType == VendorViewType.MQ_ProcessedReconcile){
+                            @:{ text: stage8, className: "selectOnOff  noEditInvoicingAccess selectOne", action: function (e) { e.preventDefault(); manualStages_move_button(table,stage8,69); } },
+                            @:{ text: stage9, className: "selectOnOff  noEditInvoicingAccess selectOne", action: function (e) { e.preventDefault(); manualStages_move_button(table,stage9,70); } },    
+                            }
+                            @if(Model.ViewType == VendorViewType.MQ_Completed){
+                            @:{ text: stage9, className: "selectOnOff  noEditInvoicingAccess selectOne", action: function (e) { e.preventDefault(); manualStages_move_button(table,stage9,70); } },                
+                            }
+
+                        @if (Model.ViewType == VendorViewType.RT_ReadyForPrinting ||
+                            Model.ViewType == VendorViewType.LI_ReadyForPrinting ||
+                            Model.ViewType == VendorViewType.TC_ReadyForPrinting ||
+                            Model.ViewType == VendorViewType.Other_ReadyForPrinting)
+                        {
+                            @:{ text: "Printed", className: "selectOnOff noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_Print(table); } },
+                        }
+                        @if (Model.AddProcessButton)
+                        {
+                            @:{ text: "Process", className: "selectOnOff noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_MoveToInProcessing(table); } },
+                        }
+                        @if (Model.ViewType == VendorViewType.RT_InProcessing ||
+                            Model.ViewType == VendorViewType.LI_InProcessing ||
+                            Model.ViewType == VendorViewType.TC_InProcessing ||
+                            Model.ViewType == VendorViewType.Other_InProcessing)
+                        {
+                            @:{ text: "Bulk Edit", className: "BulkUpdateUniversal noEditInvoicingAccess selectOnOff", action: function (e, dt, button, config) { e.preventDefault(); vendor_UniversalBulkEdit('@Model.QueueName', table); }},
+                        }
+                        @if (Model.ViewType == VendorViewType.RT_InProcessing ||
+                            Model.ViewType == VendorViewType.LI_InProcessing ||
+                            Model.ViewType == VendorViewType.TC_InProcessing ||
+                            Model.ViewType == VendorViewType.Other_InProcessing)
+                        {
+                            @:{ text: "Ready To Print", className: "selectOnOff noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_MoveToReadyForPrinting(table); } },
+                        }
+                        @if (Model.ViewType == VendorViewType.LI_ReadyForPacking ||
+                            Model.ViewType == VendorViewType.TC_ReadyForPacking ||
+                            Model.ViewType == VendorViewType.Other_ReadyForPacking)
+                        {
+                            @:{ text: "Shipped", className: "selectOnOff noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_ShipToDmv(table); } },
+                        }
+                        @if (Model.ViewType == VendorViewType.RT_ReadyToProcess)
+                        {
+                        }
+                        @if (Model.ViewType == VendorViewType.LC_Request)
+                        {
+                            @* "LC Requested" button removed per MDP-207 11/8/24
+                            { text: "LC Requested", className: "selectOnOff", action: function (e) { e.preventDefault(); vendor_show_LCRequested(table); } },
+                            *@
+                        }
+                        @if (Model.ViewType == VendorViewType.LC_Completed)
+                        {
+                            @:{ text: "Mark Finished", className: "selectOnOff noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_MarkFinished(table); } },
+                            @:{ text: "Rejected", className: "selectOnOff noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_LCRejected(table); } },
+                        }
+                        @if (Model.ViewType == VendorViewType.LCLI_Request)
+                        {
+                            @:{ text: "LI Requested", className: "selectOnOff noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_LIRequested(table); } },
+                            @* HOTFIX MDP-193: LC Requested button removed per request from Andrew 9/11/24 *@
+                        }
+                        @if (Model.ViewType == VendorViewType.LI_Pending || 
+                            Model.ViewType == VendorViewType.LCLI_Pending)
+                        {
+                            @:{ text: "LI Received", className: "selectOnOff noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_LIReceivedFromDmv(table); } },
+                        }
+                        @if (Model.ViewType == VendorViewType.LI_ReadyToProcess && !Model.TableVarName.EndsWith("needtoprocess"))
+                        {
+                            @:{ text: "LI Requested", className: "selectOnOff noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_LIRequested(table); } },
+                        }
+                        @if (Model.ViewType == VendorViewType.TC_Pending || 
+                            Model.ViewType == VendorViewType.Other_Pending)
+                        {
+                            @:{ text: "Received", className: "selectOnOff noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_ReceiveFromDmv(table); } },
+                        }
+                        @if (Model.ViewType == VendorViewType.TC_Completed || 
+                            Model.ViewType == VendorViewType.Other_Completed)
+                        {
+                            @:{ text: "Mark Finished", className: "selectOnOff noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_MarkFinished(table); } },
+                            @:{ text: "Rejected", className: "selectOnOff noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_Rejected(table); } },
+                        }
+                        @if (Model.ViewType == VendorViewType.RT_InTransit)
+                        {
+                            @:{ text: "Received by LH", className: "selectOnOff noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_MarkAsReceivedByLH(table); } },
+                        }
+                        @if (Model.ViewType == VendorViewType.Abstracts)
+                        {
+                            @:{ text: "LI Requested", className: "selectOnOff noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_LIRequested(table); } },
+                            @:{ text: "LI Received", className: "selectOnOff noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_LIReceivedFromDmv(table); } },
+                            @:{ text: "LC Requested", className: "selectOnOff noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_LCRequested(table); } },
+                            @:{ text: "Mark Finished", className: "selectOnOff noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_MarkFinished(table); } },
+                            @:{ text: "Rejected", className: "selectOnOff noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_LCRejected(table); } },
+                        }
+                        @if ((Model.ViewType == VendorViewType.UnbilledList) && !Model.AllowAddToInvoice)
+                        {
+                            @:{ text: "Invoice", className: "selectOnOff noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_MarkInvoiced(table); } },
+                        }
+                        @if (Model.AllowMove)
+                        {
+                            @:{ text: "Move", className: "selectOnOff noEditInvoicingAccess selectOne", action: function (e) { e.preventDefault(); vendor_show_Move(table); } },
+                        }
+                        @if (Model.AllowDirectToBilling)
+                        {
+                            @:{ text: "Bill", className: "selectOnOff noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_DirectToBilling(table); } },
+                        }
+                        @if (Model.AllowDelete)
+                        {
+                            @:{ text: "Delete", className: "selectOnOff noEditInvoicingAccess selectOne", action: function (e) { e.preventDefault(); vendor_show_DeleteItems(table); } },
+                        }
+                        @if  (Model.AllowStatusEdit)
+                        {
+                            @:{ text: "Edit Status", className: "selectOnOff noEditInvoicingAccess selectOne", action: function (e) { e.preventDefault(); vendor_show_EditStatus(table); } },
+                        }
+                        @if  (Model.ViewType == VendorViewType.Deletes && Model.UserIsVendorAdmin)
+                        {
+                            @:{ text: "Finalize Delete", className: "selectOnOff noEditInvoicingAccess selectOne", action: function (e) { e.preventDefault(); vendor_show_FinalizeDelete(table); } },
+                            @:{ text: "Undelete", className: "selectOnOff noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_show_Undelete(table); } },
+                        }
+                        @if (Model.AllowReassign)
+                        {
+                            @:{ text: "Reassign", className: "btnReassignUser noEditInvoicingAccess selectOnOff", action: function (e) { e.preventDefault(); AssignToUser(table, ''); } },
+                        }
+                        @if (Model.EnablePrintInstructionPacket)
+                        {
+                            @: { text: "Print Instruction packet", className: "selectOnOff noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_PrintInstructionPackets(table); } },
+                        }
+                        @if (Model.EnableExportAll)
+                        {
+                            @:{ text: "Export All", className: "noEditInvoicingAccess", action: function (e) { e.preventDefault(); ExportAll(table, ''); } },
+                        }
+                        @if (Model.EnableSortButton)
+                        {<text>
+                            {
+                                extend: 'collection',
+                                text: 'Sort',
+                                className: "noEditInvoicingAccess",
+                                "dropup": true,
+                                autoClose: true,
+                                background: false,
+                                buttons: [
+                                    { text: function ( dt, button, config ) { return sortOrderName(0); }, className: "noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_sort_table(table,getSortOrder(table,0)); } },
+                                    { text: function ( dt, button, config ) { return sortOrderName(1); }, className: "noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_sort_table(table,getSortOrder(table,1)); } },
+                                    { text: "Default", className: "noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_sort_table(table, defaultSortOrder); } }
+                                ]
+                            },
+                        </text>}
+                        @if (Model.EnableExport) {<text>
+                            {
+                                extend: 'collection',
+                                text: 'Export',
+                                className: "noEditInvoicingAccess",
+                                "dropup": true,
+                                autoClose: true,
+                                background: false,
+                                buttons: [
+                                    {
+                                        extend: 'copy',
+                                        className: "noEditInvoicingAccess",
+                                        exportOptions: {
+                                            columns: '@Model.CopyExportSelector'
+                                        }
+                                    },
+                                    {
+                                        extend: 'excelHtml5',
+                                        className: "noEditInvoicingAccess",
+                                        autoFilter: true,
+                                        sheetName: 'myDMV.pro',
+                                        exportOptions: {
+                                            columns: '@Model.ExcelExportSelector'
+                                        }
+                                    },
+                                    {
+                                        extend: 'pdfHtml5',
+                                        className: "noEditInvoicingAccess",
+                                        orientation: 'landscape',
+                                        pageSize: 'LEGAL',
+                                        exportOptions: {
+                                            columns: '@Model.PdfExportSelector',
+                                        }
+                                    },
+                                    {
+                                        extend: "print",
+                                        className: "noEditInvoicingAccess",
+                                        exportOptions: {
+                                            columns: '@Model.PrintExportSelector'
+                                        }
+                                    },
+                                @if (!Model.DisableCsvExport)
+                                {
+                                <text>
+                                    {
+                                        name: 'ExportCsvData',
+                                        className: 'exportCsvData selectOnOff noEditInvoicingAccess',
+                                        text: 'Data as CSV',
+                                        action: function (e) {
+                                            e.preventDefault();
+                                            exportItemsToCsv(table);
+                                        }
+                                    },
+                                </text>}
+                                    @if (Model.EnableUniversalExport)
+                                    {<text>
+                                    {
+                                        name: 'UniversalExportCsvData',
+                                        className: 'universalExportCsvData selectOnOff noEditInvoicingAccess',
+                                        text: 'Universal Export',
+                                        action: function (e) {
+                                            e.preventDefault();
+                                            universalExportItemsToCsv(table);
+                                        }
+                                    }
+                                    </text>}
+                                ]
+                            },
+                        </text>}
+                        @if (Model.AllowRefresh) {
+                            @:{ text: "", titleAttr: "Refresh", className: "listRefresh noEditInvoicingAccess", action: function (e) { e.preventDefault(); table.ajax.reload(); } },
+                        }
+                        @if (Model.ViewType == VendorViewType.UnbilledList && Model.AllowAddToInvoice) {
+                            @:{ text: "Add to Invoice", className: "selectOnOff noEditInvoicingAccess", attr: { id: "addToInvoiceButton" }, action: function (e) { e.preventDefault(); vendorAddToInvoiceBuilderNew_Action(table); } },
+                        }
+                            @if (Model.AddOCRReviewButton) {
+                            @:{ text: "OCR Review", className: "selectOnOff noEditInvoicingAccess", attr: { id: "addToOCRReviewButton" }, action: function (e) { e.preventDefault(); vendorOcrReviewticket(table); } },
+                        }
+                        @if (Model.AddCalculateTax) {<text>
+                            {
+                                extend: 'collection',
+                                text: 'Tax',
+                                className: "noEditInvoicingAccess",
+                                "dropup": true,
+                                autoClose: true,
+                                background: false,
+                                buttons: [
+                                    {
+                                        text: "Calculate",
+                                        className: "calculateTax noEditInvoicingAccess",
+                                        action: function (e, dt, button, config) {
+                                            e.preventDefault();
+                                            calculateTaxes(table);
+                                        },
+                                    },
+                                    {
+                                        text: "View",
+                                        className: "viewTax noEditInvoicingAccess",
+                                        action: function (e, dt, button, config) {
+                                            e.preventDefault();
+                                            viewTaxes(table);
+                                        },
+                                    }
+                                ]
+                            },
+                        </text> }
+                            @if (Model.ViewType == VendorViewType.DocumentsReceived_NoRequest)
+                            {
+                                @:{ text: "Mark as Shipped", className: "selectOnOff noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_Mark_as_Shipped(table); } },
+                                @:{ text: "Mark as Associated", className: "selectOnOff noEditInvoicingAccess", action: function (e) { e.preventDefault(); vendor_Mark_as_Associated(table); } },
+                            }
+                        @if (Model.UpdateAuditsButton) {<text>
+                            {
+                                extend: 'collection',
+                                text: 'Audit',
+                                className:"selectOnOff noEditInvoicingAccess",
+                                "dropup": true,
+                                autoClose: true,
+                                background: false, 
+                                buttons: [
+                                    {
+                                        text: "Single Audit",
+                                        className: "UpdateAuditNote noEditInvoicingAccess",
+                                        action: function (e) {
+                                            e.preventDefault();
+                                            vendor_UpdateAudit(table,tblid);
+                                        },
+                                    },
+                                        {
+                                        text: "Bulk Audit",
+                                        className: "BulkUpdateAuditNote noEditInvoicingAccess",
+                                        action: function (e) {
+                                            e.preventDefault();
+                                            vendor_BulkUpdateAudit(table,tblid);
+                                        },
+                                    }  
+                                ]
+                            }, 
+
+                            </text> } 
+                            @if (Model.UpdateNeedToProcessButton) {<text>
+                                {
+                                    extend: 'collection',
+                                    text: 'Update',
+                                    className:"selectOnOff noEditInvoicingAccess",
+                                    "dropup": true,
+                                    autoClose: true,
+                                    background: false, 
+                                    buttons: [
+                                        {
+                                            text: "Single Update",
+                                            className: "UpdateAuditNote noEditInvoicingAccess",
+                                            action: function (e) {
+                                                e.preventDefault();
+                                                vendor_UpdateNeedToProcess(table,tblid);
+                                            },
+                                        },
+                                            {
+                                            text: "Bulk Update",
+                                            className: "BulkUpdateAuditNote noEditInvoicingAccess",
+                                            action: function (e) {
+                                                e.preventDefault();
+                                                vendor_BulkUpdateNeedToProcess(table,tblid);
+                                            },
+                                        }  
+                                    ]
+                                }, 
+
+                            </text> }
+                            @if (Model.UpdateAuditsButton) { <text>
+                                [
+                                    {
+            "text": 'Start',
+            "className": function (e) {
+            return `start_${tblid} btn btn-primary noEditInvoicingAccess`;
+        },
+            "action": function (e) {
+                e.preventDefault();
+                table.page.len(1000).draw();
+
+                table.one('draw', function() {
+                    audit_startbutton(table,tblid);
+                    table.page.len(10).draw();
+                });
+            }
+        },
+                                    {
+                                        "text": 'Complete', 
+                                        "className": function (e) {
+                            return `complete_${tblid} btn btn-success noEditInvoicingAccess`;
+                        },
+                                        "action": function (e) {
+                                            e.preventDefault();
+                table.page.len(1000).draw();
+                table.one('draw', function() {
+                    audit_completebutton(table,tblid);          
+                });
+                           
+                                        }
+                                    },
+                                    {
+                                        "text": 'Previous Audits', "className": "Prior_Audits noEditInvoicingAccess",
+                                        "action": function (e) {
+                                            e.preventDefault();
+                                            return Prior_Auditbutton(table,tblid);
+                                        }
+                                    }
+                                ],
+                            </text> }
+                            @if (Model.EnableBulkEdit) {<text>
+                                {
+                                    extend: 'collection',
+                                    text: 'Update',
+                                    className: "noEditInvoicingAccess",
+                                    "dropup": true,
+                                    autoClose: true,
+                                    background: false,
+                                    buttons: [
+                                        {
+                                            text: "Update Notes",
+                                            className: "BulkUpdateNote noEditInvoicingAccess",
+                                            action: function (e, dt, button, config) {
+                                                e.preventDefault();
+                                                vendor_BulkUpdateNote(table);
+                                            },
+                                        },
+                                        {
+                                            text: "Update Codes",
+                                            className: "BulkUpdateCode noEditInvoicingAccess",
+                                            action: function (e, dt, button, config) {
+                                                e.preventDefault();
+                                                vendor_BulkUpdateCode(table);
+                                            },
+                                        },
+                                        {
+                                            text: "Update ETAs",
+                                            className: "BulkUpdateETA noEditInvoicingAccess",
+                                            action: function (e, dt, button, config) {
+                                                e.preventDefault();
+                                                vendor_BulkUpdateETA(table);
+                                            },
+                                        },
+                                        {
+                                            text: "Universal",
+                                            className: "BulkUpdateUniversal noEditInvoicingAccess",
+                                            action: function (e, dt, button, config) {
+                                                e.preventDefault();
+                                                vendor_UniversalBulkEdit('@Model.QueueTitle', table);
+                                            },
+                                        }
+                                    ]
+                                },
+                            </text> }                    
+                            @if (Model.AddExpandNotesOption || Model.AddIncludeArchivedOption) {<text>
+                                {
+                                    extend: 'collection',
+                                    text: 'Options',
+                                    "dropup": true,
+                                    className: "noEditInvoicingAccess",
+                                    autoClose: true,
+                                    background: false,
+                                    buttons: [
+                                        @if (Model.AddExpandNotesOption) { <text>
+                                        {
+                                            text: function (dt, button, config) { return GetExpandNotesButtonText("@Model.ListId"); },
+                                            className: "btnExpandNotes noEditInvoicingAccess",
+                                            action: function (e, dt, button, config) {
+                                                e.preventDefault();
+                                                var btnText = "Expand Notes";
+                                                if (ToggleExpandNotes(table, "@Model.ListId") == "true") {
+                                                    btnText = "Collapse Notes";
+                                                }
+                                                button.find('a').text(btnText);
+                                            },
+                                        },
+                                        </text>}
+                                        @if (Model.AddIncludeArchivedOption) { <text>
+                                        {
+                                            text: function (dt, button, config) { return GetIncludedArchivedButtonText("@Model.ListId"); },
+                                            className: "btnIncludeArchived noEditInvoicingAccess",
+                                            action: function (e, dt, button, config) {
+                                                e.preventDefault();
+                                                var btnText = "Include Archived";
+                                                if (ToggleIncludeArchived(table, "@Model.ListId") == "true") {
+                                                    btnText = "Exclude Archived";
+                                                }
+                                                button.find('a').text(btnText);
+                                            }
+                                        },
+                                        </text>}
+                                    ]
+                                },
+                            </text> }
+                            @if (Model.EnablePresets) { <text>
+                            {
+                                extend: 'collection',
+                                text: 'Presets',
+                                className: "noEditInvoicingAccess",
+                                dropup: true,
+                                background: false,
+                                buttons: [
+                                    {
+                                        extend: 'colvisGroup',
+                                        text: 'Show all',
+                                        className: "noEditInvoicingAccess",
+                                        show: ':hidden:not(.hidcol)'
+                                    },
+                                    {
+                                        extend: 'colvisGroup',
+                                        text: 'Show none',
+                                        className: "noEditInvoicingAccess",
+                                        hide: ':visible:not(.nohide)'
+                                    },
+                                    {
+                                        extend: 'colvisGroup',
+                                        text: 'Vehicle Info',
+                                        className: "noEditInvoicingAccess",
+                                        show: '.vehinfo',
+                                    },
+                                    {
+                                        extend: 'colvisGroup',
+                                        text: 'Invoice Detail',
+                                        className: "noEditInvoicingAccess",
+                                        show: '.invdetail'
+                                    }]
+                            },
+                            </text> }
+                            @if (Model.EnableReportBuilder) { <text>
+                            {
+                                extend: 'colvis',
+                                dropup: true,
+                                className: "noEditInvoicingAccess",
+                                text: 'Report Builder',
+                                columns: ':not(.hidcol):not(.noexport)',
+                                collectionLayout: 'fixed four-column',
+                                columnText: function (dt, idx, title) {
+                                    if (title == '') {
+                                        return (idx + 1) + ':  untitled';
+                                    }
+                                    else {
+                                        return title;
+                                    }
+                                }
+                            },
+                            </text>}
+                            @if (
+                                /* Ready for Printing lists */
+                                Model.ViewType == VendorViewType.RT_ReadyForPrinting || 
+                                Model.ViewType == VendorViewType.Other_ReadyForPrinting || 
+                                Model.ViewType == VendorViewType.TC_ReadyForPrinting || 
+                                Model.ViewType == VendorViewType.LI_ReadyForPrinting || 
+                                /* Ready for Packing lists */
+                                Model.ViewType == VendorViewType.RT_ReadyForPacking ||
+                                Model.ViewType == VendorViewType.Other_ReadyForPacking || 
+                                Model.ViewType == VendorViewType.TC_ReadyForPacking || 
+                                Model.ViewType == VendorViewType.LI_ReadyForPacking ||
+                                /* WV Rejections */
+                                Model.ViewType == VendorViewType.RT_WVRejections
+                                ) { 
+                                <text>
+                                { text: "Print Attachments", className: "selectOnOff  noEditInvoicingAccess", attr: { id: "printAttachments" }, action: function (e) { e.preventDefault(); vendorVerifyAndDisplayAttachmentsForPrinting_Action(table); } },
+                                { text: "Merge Applications", className: "selectOnOff  noEditInvoicingAccess", attr: { id: "mergeApplication" }, action: function (e) { e.preventDefault(); vendorVerifyAndDisplayMergeApplicationsForPrinting_Action(table); } },
+                                { text: "Merge Checks", className: "selectOnOff  noEditInvoicingAccess", attr: { id: "mergeChecks" }, action: function (e) { e.preventDefault(); vendorVerifyAndDisplayCheckMerge_Action(table); } }
+                                </text>
+                            }
+                        ],
+                             </text>
+                        }
+                    initComplete: function (settings, json) {
+                            
+                            if(json?.data.length == 0){
+                               SetStartCompleteButton(tblid);
+                            }
+
+                            @if (Model.ViewType == VendorViewType.UnbilledList)
+                            { <text>
+                                setTimeout(() => disableButtons(), 100);
+                                </text>
+                            }
+
+                            @if (Model.ViewType == VendorViewType.Audits ||
+                                Model.ViewType == VendorViewType.PCodeAudit ||
+                                Model.ViewType == VendorViewType.HoldAudit ||
+                                Model.ViewType == VendorViewType.IncomingAudit ||
+                                Model.ViewType == VendorViewType.FollowupAudit)
+                            {
+                                <text>
+                                    SetheaderForPreviousCompleteButton(table, tblid);
+                                </text>
+                            }
+                            var api = this.api();
+                            colFilters = json.columnFilters;
+                            @if (Model.ViewType == VendorViewType.Master)
+                            {
+                                @:defaultStatusFilterValue = '@DataHelpers.GetDefaultFilterValue("Vendor_Master", "Status")';
+                            }
+                            @if (Model.EnableFilter) {
+                                <text>
+                                api.columns(['.reqNo']).every(getfn_datatable_reqno_search(tblid)); // Make all reqNo fields searchable
+                                api.columns(['.asearch']).every(getfn_datatable_asearch(tblid));
+                                api.columns(['.usersearch']).every(getfn_datatable_usersearch(tblid));
+                                api.columns(['.outcomesearch']).every(getfn_datatable_outcomesearch(tblid));
+                                api.columns(['.dsearch']).every(getfn_datatable_dsearch(tblid));
+                                api.columns(['.reqVIN']).every(getfn_datatable_vin(tblid, @getbool(Model.AllowMultilineVin)));
+                                api.columns(['.reqClientRef']).every(getfn_datatable_clientref(tblid));
+                                api.columns(['.emptyornot']).every(getfn_datatable_emptyornotfilter(tblid, true));
+                                api.columns(['.reqSpecialBilling']).every(getfn_datatable_getyesnofilter(tblid));
+                                api.columns(['.processingDaysearch']).every(getfn_datatable_processingDaysearch(tblid));
+                                api.columns(['.allStatesFilter']).every(getfn_datatable_allStatesFilter(tblid));
+                                refreshDropdownFilters(api, tblid, colFilters, defaultStatusFilterValue, @getbool(Model.IncludeCancelledStatus));
+                                </text>
+                            }
+                            initCompleted = true;
+                            fixupColumnWidths(this);
+                            datatable_initcomplete(tblid);
+                        },
+                    "dom": "@Html.Raw(BuildDOM())",
+                    @if ((Model.ViewType == VendorViewType.UnbilledList) && Model.AllowAddToInvoice)
+                    {
+                        @:"rowCallback": datatable_rowCallback_unbilled,
+                    }
+                    else
+                    {
+                    if (Model.ViewType != VendorViewType.Audits && Model.ViewType != VendorViewType.PCodeAudit && Model.ViewType != VendorViewType.HoldAudit && Model.ViewType != VendorViewType.IncomingAudit && Model.ViewType != VendorViewType.FollowupAudit) {
+                        @:"rowCallback": datatable_rowCallback_etaCheck,
+                    }
+                    }
+
+        });
+        
+        @if (Model.ViewType == VendorViewType.LinkedRequests){<text>
+            @*{ // Add instance data
+                var dt = $("#@Model.ListId");
+                dt.data("reqid", '@Model.PrimaryRequestId');
+                dt.data("reqno", '@Model.PrimaryRequestNo');
+                dt.data("vin", '@Model.PrimaryVIN');
+            }*@
+        </text>}
+        @if (Model.EnableKeyNavigation){<text>
+            var shiftKeyDown = false;
+            var ctrlKeyDown = false;
+            document.addEventListener('keydown', function (e) {
+                if (e.shiftKey) {//shift
+                    shiftKeyDown = true;
+                }
+                else if (e.ctrlKey) {//ctrl
+                    ctrlKeyDown = true;
+                }
+            });
+            document.addEventListener('keyup', function (e) {
+                if (e.keyCode === 16) { //shift
+                    shiftKeyDown = false;
+                }
+                else if (e.keyCode === 17) { //ctrl
+                    ctrlKeyDown = false;
+                }
+            });
+            table.on('key-focus.dt', function (e, datatable, cell) {
+                var row = table.row(cell.index().row);
+                if (shiftKeyDown || ctrlKeyDown) {
+                    //if (row.selected()) {
+                    //    row.deselect();
+                    //}
+                    //else {
+                    //    row.select();
+                    //}
+                    row.select();
+                }
+                else {
+                    table.rows().deselect();
+                    row.select();
+                }
+            });
+
+            table.on('key-blur.dt', function (e, datatable, cell) {
+                if (!shiftKeyDown && !ctrlKeyDown) {
+                    table.row(cell.index().row).deselect();
+                }
+            });
+            // Handle click on table cell
+            table.on('click', 'tbody td', function(e){
+                e.stopPropagation();
+
+                // Get index of the clicked row
+                var rowIdx = table.cell(this).index().row;
+                var row = table.row(rowIdx);
+                if (row.selected()) {
+                    row.deselect();
+                } else {
+                    // Select row
+                    row.select();
+                }
+            });
+        </text>}
+        @if (Model.EnableKeyShortcuts){<text>
+            table.on('key.dt', function (e, datatable, key, cell, originalEvent) {
+                if (key === 32) {
+                    // Toggle selection
+                    var row = table.row(cell.index().row);
+                    if ($(row.node()).hasClass('selected'))
+                        row.deselect();
+                    else
+                        row.select();
+                }
+                else if (key === 65) { // 'a'
+                    var data = table.row(cell.index().row).data();
+                    showAttachments(data.requestId, data.vin);
+                }
+                else if (key === 67) { // 'c'
+                    var data = table.row(cell.index().row).data();
+                    showChat(data.requestId, data.vin);
+                }
+                else if (key === 69) { // 'e'
+                    var data = table.row(cell.index().row).data();
+                    vendorEditRequest(data.requestId);
+                }
+            });
+        </text>}
+
+        @Model.TableVarName = table;
+
+        table.on( 'order.dt', function () {
+            var order = table.order();
+            let html = "";
+            for (let i = 0; i < order.length; i++) {
+                let colidx = order[i][0];
+                let title = $(table.column(colidx).header()).html();
+                html += (i > 0 ? ', ' : '') + title + ' (' + order[i][1] + ')';
+            }
+            html = `Sorted by ${html}`;
+            $('#@(Model.ListId)_wrapper').find('#orderInfo').html(html);
+        } );
+
+        
+        $('#reportCreditPaymentType').on('change', function () {
+            table.ajax.reload(); 
+        });
+
+         $('#reportDebitPaymentType').on('change', function () {
+            table.ajax.reload(); 
+        });
+
+        $('#reportPaymentDate').on('change', function () {
+            table.ajax.reload();
+        });
+
+        $('#reportAppType').on('change', function () {
+            table.ajax.reload();
+        });
+
+        $('#reportStateType').on('change', function () {
+            table.ajax.reload();
+        });
+
+        $('#paymentFilterResetButton').on('click', function () {
+             var $form = $("#payment_disbursement_filter_section");
+             $form.find("#creditTypePaymentDiv").hide();
+             $form.find("#debitTypePaymentDiv").hide();
+             var paymentCreditType = $('#reportCreditPaymentType').val("");  
+             var paymentDebitType = $('#reportDebitPaymentType').val("");  
+             $(".js-select2-multi").val(null).trigger('change');
+             $('#filterPaymentTypeID').val("");  
+             $("#reportPaymentDate").val('');
+             table.ajax.reload();
+
+
+        });
+
+         $("#filterPaymentTypeID").change(function () {
+            var $form = $("#payment_disbursement_filter_section");
+            var selectedType = ($(this).val());
+
+            if (selectedType === "credit") {
+                var paymentDebitType = $('#reportDebitPaymentType').val("");  
+                table.ajax.reload();
+                $form.find("#creditTypePaymentDiv").show();
+                $form.find("#debitTypePaymentDiv").hide();
+            } else if(selectedType === "debit") {
+                var paymentCreditType = $('#reportCreditPaymentType').val("");  
+                table.ajax.reload();
+                $form.find("#debitTypePaymentDiv").show();
+                $form.find("#creditTypePaymentDiv").hide();
+            }
+            else{
+                $form.find("#creditTypePaymentDiv").hide();
+                $form.find("#debitTypePaymentDiv").hide();
+            }
+        });
+
+         var selectedGroupID;
+         var selectedAttachmentTypeId;
+
+        $('#GroupId_NoRequest').change(function () {
+            var selectedId = $(this).val(); 
+            selectedGroupID = selectedId
+        });
+
+         $('#AttachmentType_NoRequest').change(function () {
+            var selectedId = $(this).val(); 
+            selectedAttachmentTypeId = selectedId
+        });
+
+        $("#addDocumentForm").off("submit").on("submit", function (event) {
+            event.preventDefault();
+            var formData = new FormData(this);
+            if(selectedGroupID == "" || selectedGroupID == null){
+                alert("please select Group First")
+                return
+            }
+
+            if(selectedAttachmentTypeId == "" || selectedAttachmentTypeId == null){
+                 alert("please select attachment type First")
+                 return
+            }
+
+            formData.append("GroupId", selectedGroupID);
+            formData.append("AttachmentTypeId", selectedAttachmentTypeId);
+
+            $.ajax({
+                url: '@Url.Action("Create", "DocumentsReceivedNoRequest")',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    if (response.success) {
+                        $('#addDocumentModal').modal('hide');
+                        $('#addDocumentForm')[0].reset();
+                        selectedGroupID = null;
+                        var table = $('#DocumentsReceived_NoRequest').DataTable();
+                        table.ajax.reload();
+                    }
+                    else
+                    {
+                      alert(response.message);
+                    }
+                    
+                },
+                error: function (xhr) {
+                    alert('Error adding document. Please try again.');
+                    jqToast.error({ text: 'Error adding document. Please try again.' });
+                }
+            });
+        });
+
+        @if (Model.ViewType != VendorViewType.LinkedRequests)
+        { <text>
+            $('#@Model.ListId tbody').on('click', 'td.details-control', function(e) {
+                e.stopPropagation();
+                var tr = $(this).closest('tr');
+                var row = table.row(tr);
+
+                if (row.child.isShown()) {
+                    // This row is already open - close it
+                    row.child.hide();
+                    tr.removeClass('shown');
+                }
+                else {
+                    // Open this row
+                    vendorShowNotes(row.data(), tr, row);
+                }
+            });
+        </text>}
+      
+        $('#@Model.ListId tbody').on('click', 'td.attDD', function (e) {
+            e.stopPropagation();
+            var tr = $(this).closest('tr');
+            var row = table.row(tr);
+            var rdata = row.data();
+            showAttachments(rdata.requestId, rdata.vin);
+        });
+       
+        table.on('draw', function () {
+            if (table.rows({ selected: true }).indexes().length === 0) {
+                table.buttons('.selectOnOff').disable();
+            }
+            else if (table.rows({ selected: true }).indexes().length === 1) {
+                table.buttons('.selectOnOff').enable();
+            }
+            else {
+                table.buttons('.selectOnOff').enable();
+                table.buttons('.selectOnOff .selectOne').disable();
+            }
+        });
+
+        @if (Model.ViewType == VendorViewType.Audits || Model.ViewType == VendorViewType.PCodeAudit ||Model.ViewType == VendorViewType.HoldAudit || Model.ViewType == VendorViewType.IncomingAudit 
+        || Model.ViewType == VendorViewType.FollowupAudit)
+            {   <text>
+                    table.on('select deselect', function (e, dt, type, indexes) {
+                if (type === 'row') {
+                var allRowsHaveClass = true;
+        
+                table.rows().every(function () {
+                    if (!$(this.node()).hasClass('row-Frozen')) {
+                        allRowsHaveClass = false;
+                        return false; 
+                    }
+                });
+
+                if (!allRowsHaveClass || table.rows({ selected: true }).indexes().length === 0) {
+                    table.buttons('.selectOnOff').disable();
+                } else if (table.rows({ selected: true }).indexes().length === 1) {
+                    table.buttons('.selectOnOff').enable();
+                } else {
+                    table.buttons('.selectOnOff').enable();
+                    table.buttons('.selectOnOff .selectOne').disable();
+                }
+            }
+        });          
+        </text>
+        }
+        else
+        {
+            <text>
+                table.on('select deselect', function (e, dt, type, indexes) {
+                if (type === 'row') {
+                    if (table.rows({ selected: true }).indexes().length === 0) {
+                        table.buttons('.selectOnOff').disable();
+                    }
+                    else if (table.rows({ selected: true }).indexes().length === 1) {
+                        table.buttons('.selectOnOff').enable();
+                    }
+                    else {
+                        table.buttons('.selectOnOff').enable();
+                        table.buttons('.selectOnOff .selectOne').disable();
+                    }
+                }
+            });
+            </text>
+        }
+
+        table.buttons('.selectOnOff').disable();
+
+        $('#filterRow-@Model.ListId').find('.clearFilter').on('click', function (e) {
+            e.stopPropagation();
+            $('#filterRow-@Model.ListId').find('.customFilter').val('');
+            table.search('').columns().search('').draw();
+        });
+
+        $('#filterRow-@Model.ListId').find('.advancedFilter').on('click', function (e) {
+            e.stopPropagation();
+            $('#filterRow-@Model.ListId').find('.filterToggle').toggleClass('advancedOn');
+            table.columns.adjust().draw();
+            //table.draw();
+        });
+
+        @if (Model.ViewType == VendorViewType.UnbilledList)
+        {
+            <text>
+                $("#feePanel").empty('');
+                table.on('select deselect', function (e, dt, type, indexes) {
+                    vendorSelectUnbilledInvoiceItem_Action(table);
+                });
+            </text>
+        }   
+        
+  });
+</script>

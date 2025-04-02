@@ -1,0 +1,52 @@
+﻿@model MyDMVpro.Models.VendorViewModels.InvoiceBuilderAddItemsModel
+@{
+    string Required(Decimal? val)
+    {
+        if (val == null) return "required";
+        return "";
+    }
+}
+<div class="invoiceItemFeeInput mt_15 mb_15">
+    <div class="row primaryInvoice mb_15 gap_15">
+        <div class="defaultSvcFee col-md-2 form-group">
+            <label for="defaultSvcFee">Service Fee</label>
+            <input class="form-control" type="number" id="defaultSvcFee" name="defaultSvcFee" value="@Model.Primary?.ServiceFee" placeholder="Enter fee" @Html.Raw(Required(Model.Primary?.ServiceFee)) />
+        </div>
+        <div class="defaultDmvFee col-md-3 form-group">
+            <label for="defaultDmvFee">DMV Fee</label>
+            <input class="form-control" type="number" name="defaultDmvFee" id="defaultDmvFee" value="@Model.Primary?.DMVFee" placeholder="Enter fee" @Html.Raw(Required(Model.Primary?.DMVFee)) />
+        </div>
+        <div class="defaultOtherFee col-md-4 form-group">
+            <label for="defaultOtherFee">Other Fee</label>
+            <div class="d-flex gap-2">
+                <input class="form-control" type="number" id="defaultOtherFee" value="@Model.Primary?.OtherFee" placeholder="Enter fee" @Html.Raw(Required(Model.Primary?.OtherFee)) />
+                <input class="form-control" type="text" id="defaultOtherDesc" name="defaultOtherDesc" value="@Model.Primary?.OtherFeeDesc" placeholder="Enter description" />
+
+            </div>
+             </div>
+        <div class="defaultGLCode col-md-2 form-group">
+            <label for="glCode">GL Code</label>
+            <input class="form-control" type="text" id="glCode" name="glCode" value="" placeholder="" />
+        </div>
+    </div>
+    @if (Model.Secondary != null)
+    {
+        <div class="secondaryInvoice">
+            <h4>Secondary invoice:</h4>
+            <div class="row gap_15">
+                <div class="defaultSvcFee col-md-3 form-group">
+                    <label for="defaultSvcFee_2">Service Fee</label>
+                    <input class="form-control" type="number" id="defaultSvcFee_2" name="defaultSvcFee_2" value="@Model.Secondary.ServiceFee" placeholder="Enter fee" />
+                </div>
+                <div class="defaultOtherFee col-md-4 form-group">
+                    <label for="defaultOtherFee_2">Other Fee</label>
+                    <div class="d-flex gap-2">
+                        <input class="form-control" type="number" id="defaultOtherFee_2" value="@Model.Secondary.OtherFee" placeholder="Enter fee" />
+                        <input class="form-control" type="text" id="defaultOtherDesc_2" name="defaultOtherDesc_2" value="@Model.Secondary.OtherFeeDesc" placeholder="Enter description" />
+                    </div>
+                </div>
+            </div>
+           
+        </div>
+    }
+</div>

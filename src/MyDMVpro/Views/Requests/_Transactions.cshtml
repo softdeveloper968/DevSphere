@@ -1,0 +1,197 @@
+﻿@model MyDMVpro.Models.RequestsViewModels.RequestAccountingViewModel
+@using MyDMVpro.Common;
+@using MyDMVpro.Controllers;
+
+@{
+    var disbursements = Model.Disbursements;
+    var invoiceDetails = Model.InvoiceDetails;
+    string BoolText(bool? bval, string yesText = "Yes", string noText = "No")
+    {
+        return (bval ?? false) ? yesText : noText;
+    }
+    string CurrencyText(decimal? dval)
+    {
+        return dval.HasValue ? dval.Value.ToString("C") : string.Empty;
+    }
+    string DateText(DateTime? dval)
+    {
+        return dval.HasValue ? dval.Value.ToString("MM/dd/yyyy") : string.Empty;
+    }
+    string GetDetailTarget(RequestDisbursement disbursement)
+    {
+        return $"disbDetailRow{disbursement.id}";
+    }
+    string GetInvoiceDetailTarget(InvoiceDetail detail)
+    {
+        return $"invoiceDetailRow{detail.Id}";
+    }
+    string UserName(Users user)
+    {
+        return user?.DisplayName ?? "unknown";
+    }
+}
+<style>
+    td .chevron:after {
+        content: "\f078";
+    }
+
+    td.collapsed .chevron:after {
+        content: "\f054";
+    }
+    span.invDetail {
+        float: right;
+    }
+</style>
+<div class="transactionPanel">
+<div>
+    @if (disbursements.Count == 0)
+    {
+            <h5>No Disbursements</h5>
+    }
+    else {
+        <h5>Disbursements</h5>
+        <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th></th>
+                            <th>Date</th>
+                            <th>Check#</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var disbursement in disbursements)
+                        {
+                            <tr>
+                                <td class="collapsed" data-toggle="collapse" data-target="#@GetDetailTarget(disbursement)"><i class="chevron fa fa-fw"></i></td>
+                                <td>
+                                    @if (disbursement.Cleared ?? false)
+                                    {
+                                        <text>
+                                            <span class="fa fa-stack">
+                                                <i class="fa fa-solid fa-bank fa-stack-1x"></i>
+                                                <i class="fa fa-solid fa-check fa-stack-2x" style="color:green"></i>
+                                            </span>
+                                        </text>
+                                    }
+                                    @if (disbursement.Voided ?? false)
+                                    {
+                                        <text>
+                                            <span class="fa fa-stack">
+                                                <i class="fa fa-solid fa-bank fa-stack-1x"></i>
+                                                <i class="fa fa-solid fa-ban fa-stack-2x" style="color:Tomato"></i>
+                                            </span>
+                                        </text>
+                                    }
+                                </td>
+                                <td class="text-center">@DateText(disbursement.Date)</td>
+                                <td class="text-right">@disbursement.CheckNumber</td>
+                                <td class="text-right">@CurrencyText(disbursement.Amount)</td>
+                            </tr>
+                            <tr class="collapse" id="@GetDetailTarget(disbursement)">
+                                <td colspan="2"></td>
+                                <td colspan="3">
+                                    <div>
+                                        @* show details *@
+                                        Pay to: <span class="tranDetail">@disbursement.PayToName</span>
+                                        @if (disbursement.Cleared ?? false)
+                                        {
+                                            @:<br />Cleared <span class="tranDetail">@DateText(disbursement.ClearedDate)</span>
+                                            @:by <span class="tranDetail">@UserName(disbursement.ClearedByUser)</span>
+                                        }
+                                        @if (disbursement.Voided ?? false)
+                                        {
+                                            @:<br />Voided <span class="tranDetail">@DateText(disbursement.VoidedDate)</span>
+                                            @:by <span class="tranDetail">@UserName(disbursement.VoidedByUser)</span>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(disbursement.Description))
+                                        {
+                                            @:<br />@disbursement.Description
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+        </div>
+    }
+</div>
+
+<div>
+    @if (invoiceDetails.Count == 0)
+    {
+       <h5>No Invoices</h5>
+    }
+    else {
+        <h5>Invoice Details</h5>
+        <div class="table-responsive">
+             <table class="table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th></th>
+                        <th>Inv#</th>
+                        <th>Date</th>
+                        <th class="text-right">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var invoiceDetail in invoiceDetails)
+                    {
+                        <tr>
+                            <td class="collapsed" data-toggle="collapse" data-target="#@GetInvoiceDetailTarget(invoiceDetail)"><i class="chevron fa fa-fw"></i></td>
+                            <td>
+                                @if (invoiceDetail.Invoice.InvoiceDatePaid.HasValue)
+                                {
+                                    <span class="fa fa-stack">
+                                        <i class="fa fa-solid fa-money fa-stack-1x"></i>
+                                        <i class="fa fa-solid fa-check fa-stack-2x" style="color:green"></i>
+                                    </span>
+                                }
+                            </td>
+                            <td>@invoiceDetail.Invoice.InvoiceNo</td>
+                            <td>@DateText(invoiceDetail.Invoice.InvoiceDate)</td>
+                            <td class="text-right">@CurrencyText(invoiceDetail.TotalDue)</td>
+                        </tr>
+                        <tr class="collapse" id="@GetInvoiceDetailTarget(invoiceDetail)">
+                            <td colspan="2"></td>
+                            <td colspan="3">
+                                <div>
+                                    @if (invoiceDetail.DmvFee.HasValue)
+                                    {
+                                        <div><span class="font-600">DMV:</span><span class="invDetail right">@CurrencyText(invoiceDetail.DmvFee)</span></div>
+                                    }
+                                    @if (invoiceDetail.ServiceFee.HasValue)
+                                    {
+                                        <div><span class="font-600">Service:</span> <span class="invDetail right">@CurrencyText(invoiceDetail.ServiceFee)</span></div>
+                                    }
+                                    @if (invoiceDetail.AbstractFee.HasValue)
+                                    {
+                                        <div><span class="font-600">Abstract:</span> <span class="invDetail right">@CurrencyText(invoiceDetail.AbstractFee)</span></div>
+                                    }
+                                    @if (invoiceDetail.OtherFee.HasValue)
+                                    {
+                                        <div><span class="font-600">Other:</span> <span class="invDetail right">@CurrencyText(invoiceDetail.OtherFee)</span></div>
+                                    }
+                                    @if (invoiceDetail.MailingFee.HasValue)
+                                    {
+                                        <div><span class="font-600">Mailing:</span> <span class="invDetail right">@CurrencyText(invoiceDetail.MailingFee)</span></div>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+</div>
+
+<script>
+    $(document).ready(function () {
+    });
+</script>

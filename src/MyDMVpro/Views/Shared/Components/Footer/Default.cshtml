@@ -1,0 +1,13 @@
+﻿@using MyDMVpro.Services
+
+@inject IAppVersionService AppVersionService
+
+    <footer class="main-footer">
+        <div class="pull-right hidden-xs">
+
+        </div>
+        <strong>Copyright &copy; @DateTime.Now.Year <a href="#">Maggard Information Associates</a>.</strong> All rights reserved.
+        <div class="pull-right hidden-xs">
+            Version: @AppVersionService.Version
+        </div>
+    </footer>

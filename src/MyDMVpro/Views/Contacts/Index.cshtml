@@ -1,0 +1,283 @@
+﻿@{
+    ViewBag.Title = "Contacts";
+}
+
+<h2>Contacts</h2>
+
+<table id="contactsTable" class="display" style="width:100%">
+    <thead>
+        <tr id="headerRow-Contacts">
+            <th class="reqChkbx"></th>
+            <th class="reqBlank"></th>
+            <th>Contact Id</th>
+            <th>Row Version</th>
+            <th>Contact Name</th>
+            <th>Organization</th>
+            <th>Processor</th>
+            <th>Phone</th>
+            <th>Email</th>
+            <th>Address</th>
+            <th>General Notes</th>
+        </tr>
+    </thead>
+</table>
+<div id="customContactForm">
+    @Html.AntiForgeryToken()
+    <fieldset class="name">
+        <legend>Contact</legend>
+        @*<editor-field name="organizationName"></editor-field>*@
+        <div data-editor-template="email" />
+        <div data-editor-template="phone" />
+        <div data-editor-template="contactName" />
+    </fieldset>
+
+    <fieldset class="name">
+        <legend>Organization</legend>
+        <editor-field name="organizationId"></editor-field>
+    </fieldset>
+
+    <fieldset class="">
+        <legend>Mailing Address</legend>
+        <div data-editor-template="mailingZip" />
+        <div data-editor-template="mailingState" />
+        <div data-editor-template="mailingCity" />
+        <div data-editor-template="mailingAddress" />
+        <div data-editor-template="mailingAttn" />
+    </fieldset>
+    <fieldset class="">
+        <legend></legend>
+        <div data-editor-template="isProcessingContact"></div>
+        <div data-editor-template="authorityStates"></div>
+        <div data-editor-template="preferredShipper"></div>
+        <div data-editor-template="generalNotes"></div>
+    </fieldset>
+</div>
+<datalist id="PreferredShipperList">
+  <option value="FedEx"/>
+    <option value="UPS" />
+    <option value="USPS" />
+</datalist>
+<script>
+    var organizationOptions = [];
+    function Editor_HandleEvents(editor) {
+        // editor.on('postSubmit', function (e, json, data) {
+        //     alert('Submit completed');
+        // });
+        editor.on('initCreate', function (e, node, data) {
+            editor.field('organizationId').update(organizationOptions);
+        });
+        editor.on('initEdit', function (e, node, data) {
+            // Get the currently selected value for the 'property' field
+            var selectedValue = data.organizationId;
+
+            // Find the option object matching the current value
+            var selectedOption = organizationOptions.find(function (opt) {
+                return opt.value == selectedValue;
+            });
+
+            // If found, update the field options to just include that one
+            if (selectedOption) {
+                editor.field('organizationId').update([selectedOption]);
+            } 
+        });
+    }
+    function Editor_ConfigureOrganizations(editor) {
+        organizationOptions = [];
+        $.getJSON("/Organizations/GetOrganizations", {
+            term: "-1"
+        },
+            function (o) {
+                var option = {};
+                $.each(o.data, function (i, e) {
+                    option.label = e.organizationName;
+                    option.value = e.organizationId;
+                    organizationOptions.push(option);
+                    option = {};
+                });
+            }
+        ).done(function () {
+            editor.field('organizationId').update(organizationOptions);
+        });
+    }
+    $(document).ready(function () {
+        var editor = new DataTable.Editor({
+            ajax: {
+                create: {
+                    url: '@Url.Action("CreateContact", "Contacts")',
+                    beforeSend: addVerificationToken,
+                    type: 'POST'
+                },
+                edit: {
+                    url: '@Url.Action("UpdateContact", "Contacts")',
+                    beforeSend: addVerificationToken,
+                    type: 'POST'
+                },
+                remove: {
+                    url: '@Url.Action("DeleteContact", "Contacts")',
+                    beforeSend: addVerificationToken,
+                    type: 'POST'
+                }
+            },
+            idSrc: "contactId",
+            table: "#contactsTable",
+            template: "#customContactForm",
+            display: 'lightbox',
+            fields: [
+                { label: "Name", name: "contactName", className: "dt-nowrap" },
+                { label: "Phone", name: "phone", className: "dt-nowrap" },
+                { label: "Email", name: "email", className: "dt-nowrap" },
+                { label: "ATTN", name: "mailingAttn" },
+                { label: "Address", name: "mailingAddress" },
+                { label: "City", name: "mailingCity" },
+                { label: "State", name: "mailingState" },
+                { label: "Zip", name: "mailingZip" },
+                { label: "Processor", 
+                    name: "isProcessingContact", 
+                    type: "checkbox",
+                    options: [
+                        { label: '', value: true } // The checkbox will be checked if the value is 1
+                    ],
+                    unselectedValue: false // Optionally, specify the value when unchecked                
+                },
+                { label: "Preferred Shipper", 
+                    name: "preferredShipper",
+                    type: "text",
+                    attr: {
+                        list: 'PreferredShipperList'  // Reference to the datalist's id
+                    }
+                },
+                { label: "Authority States", name: "authorityStates" },
+                { label: "Notes", name: "generalNotes", type: "textarea" },
+                {
+                    label: 'Organization',
+                    name: 'organizationId',
+                    type: 'select',
+                    options: []
+                }]
+        });
+
+        let table = $('#contactsTable').DataTable({
+            ajax: '@Url.Action("GetContacts", "Contacts")',
+            scrollX: true,
+            rowId: "contactId",
+            columnDefs: [
+                {
+                    targets: "reqChkbx",
+                    orderable: false,
+                    className: "select-checkbox",
+                    "min-width": "40px",
+                    "max-width": "40px",
+                    data: "",
+                    sortable: false,
+                },
+                {
+                    targets:"",
+                    createdCell: function (td, cellData, rowData, row, col) {
+                        $(td).addClass('dt-nowrap');
+                    }
+                }
+            ],
+            columns: [
+                {
+                    data: null,
+                    className: "select-checkbox",
+                    render: function () {
+                        return '';
+                    }
+                },
+                { 
+                    data: null,                    
+                    render: function () {
+                        return '';
+                    }
+                },
+                { data: "contactId", visible: false },
+                { data: "rowVersion", visible: false },
+                { data: "contactName" },
+                { data: "organization.organizationName" },
+                {
+                    data: 'isProcessingContact', className: 'dt-center',
+                    render: function (data, type, row) {
+                        if (type === 'display') {
+                            // Return a disabled checkbox (remove disabled if you want it interactive)
+                            return '<input type="checkbox" ' + (data ? 'checked' : '') + ' disabled />';
+                        }
+                        return data;
+                    }
+                },
+                { data: "phone", className: "dt-nowrap" },
+                { data: "email", className: "dt-nowrap" },
+                {
+                    data: null, sortable: false,
+                    render: function (data, type, row) {
+                        let mailingAddress = data.mailingAddress || "";
+                        // Combine the first and last names into a single table field
+                        let addr = `${data.mailingAddress}\r\n${data.mailingCity}, ${data.mailingState} ${data.mailingZip}`;
+                        if (data.mailingAttn != null && data.mailingAttn != ''){
+                            addr = `${data.mailingAttn}\r\n${addr}`;
+                        }
+                        addr = addr.replace(/(^[,\s]+)|([,\s]+$)/g, '');
+
+                        return addr;
+                    }
+                },
+                // { data: "mailingAddress" },
+                // { data: "mailingCity" },
+                // { data: "mailingState" },
+                // { data: "mailingZip" },
+                { data: "generalNotes", visible: false, sortable: false }
+                // {
+                //     data: null,
+                //     className: 'dt-center editor-edit',
+                //     defaultContent: '<button><i class="fa fa-pencil"/></button>',
+                //     orderable: false
+                // },
+                // {
+                //     data: null,
+                //     className: 'dt-center editor-delete',
+                //     defaultContent: '<button><i class="fa fa-trash"/></button>',
+                //     orderable: false
+                // }
+            ],
+            dom: "lfrtipB",
+            select: {
+                style: "os",
+                selector: 'td:not(.norowselect)',
+                items: "row",
+                info: true
+            },
+            buttons: [
+                { extend: "create", editor: editor },
+                { extend: "edit", editor: editor },
+                { extend: "remove", editor: editor }
+            ]
+            // layout: {
+            //     topStart: {
+            //         buttons: [
+            //             { extend: "create", editor: editor },
+            //             { extend: "edit", editor: editor },
+            //             { extend: "remove", editor: editor }
+            //         ]
+            //     }
+            // }
+        });
+        table.on('click', 'td.editor-edit button', function (e) {
+            editor.edit(e.target.closest('tr'), {
+                title: 'Edit Contact',
+                buttons: 'Update'
+            });
+        });
+
+        // Delete a record
+        table.on('click', 'td.editor-delete button', function (e) {
+            editor.remove(e.target.closest('tr'), {
+                title: 'Delete Contact',
+                message: 'Are you sure you wish to remove this contact?',
+                buttons: 'Delete'
+            });
+        });
+        Editor_HandleEvents(editor);
+        Editor_ConfigureOrganizations(editor);
+
+    });
+</script>

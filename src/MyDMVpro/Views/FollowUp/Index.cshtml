@@ -1,0 +1,58 @@
+﻿@{
+
+    const string PageName = null;
+    ViewData["Title"] = "";
+    UserInfo ui = UserInfo.GetCurrentUser(User, false);
+}
+
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+
+<div class="white_box p_15">
+@{
+    {
+        VendorFollowUpViewModel list = new VendorFollowUpViewModel(VendorViewType.FollowUps, PageName)
+        {
+            DataUrl = "/FollowUp/VendorFollowUpsTagged/",
+            ListId = "DT_FollowUps",
+            TableVarName = "FollowUpsTable",
+            AllowMove = false,
+            AllowDelete = false,
+            PageLength = 10,
+            AllowLengthChange = true,
+            EnableKeyNavigation = false,
+            AllowMultilineVin = false,
+            AllowMultiSelect = true,
+            AddLastModified = true,
+            AddLastModifiedBy = false,
+            AddRequestId = true,
+            EnableAdvancedSearch = true
+        };
+        if (!DataHelpers.UpdateViewColumns("Vendor_FollowUps", list))
+        {
+            list.Columns.Add_Select();
+            list.Columns.Add_Links();
+            list.Columns.Add("Completed Date", "reqCompletedDate drofilterempty");
+            list.Columns.Add("Created", "reqCreated dsearch");
+            list.Columns.Add("Due Date", "reqDueDate drofilterempty");
+            list.Columns.Add_AppState();
+            list.Columns.Add_AppType();
+            list.Columns.Add_VIN();
+            list.Columns.Add_Group();
+            list.Columns.Add("Title", "reqTitle asearch");
+            list.Columns.Add("Contacts", "reqContacts followupcontactfilter");
+            list.Columns.Add("Action", "reqContactAction afilter").SetFilterField("contactAction");
+            list.Columns.Add("Codes", "reqTags followuptagfilter");
+            list.Columns.Add("Notes", "reqFUPNotes asearch");
+            list.Columns.Add_RNo();
+
+            list.SortColumns.Add("reqDueDate");
+            list.SortColumns.Add("reqVIN");
+        }
+
+        await Html.RenderPartialAsync("~/Views/Shared/_followupsupport.cshtml");
+        DataHelpers.AddColumnFilters("Vendor_FollowUp", list.Columns);
+        await Html.RenderPartialAsync("_vendorFollowUpsList", list);
+    }
+}
+</div>

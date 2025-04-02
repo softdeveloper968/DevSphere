@@ -1,0 +1,47 @@
+﻿@{
+    string GetUrl(string name)
+    {
+        return MyDMVpro.Controllers.RequestStatusController.GetEndpointUrl(this.Context, name);
+    }
+}
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+<div>
+    @{
+        RequestViewModel list = new RequestViewModel(MyServicesViewType.SLAReport)
+        {
+            DataUrl = GetUrl("VendorSLA"),
+            ListId = "DT_SLA",
+            TableVarName = "SLA_Table",
+            EnableAdvancedSearch = true,
+            DisplayFullNotesAsChildRow = true,
+            DisableCsvExport = true,
+            ExcelExportSelector = ".xlexport",
+            PdfExportSelector = ".xlexport",
+            CsvExportSelector = ".xlexport",
+            CopyExportSelector = ".xlexport"
+        };
+        list.Columns.Add_Select();
+        list.Columns.Add_Blank();
+        list.Columns.Add_Blank();
+        list.Columns.Add_AppState().AddClass("xlexport");
+        list.Columns.Add_AppType().AddClass("xlexport");
+        list.Columns.Add("Acct#", "reqClientRef xlexport asearch");
+        list.Columns.Add_VIN().AddClass("xlexport");
+        list.Columns.Add("Received By Vendor", "reqDateFromLH dsearch xlexport");
+        list.Columns.Add_SentToDMV().AddClass("xlexport");
+        list.Columns.Add("Received From DMV", "reqDateFromDMV dsearch xlexport");
+        list.Columns.Add_LH_ETA().AddClass("xlexport");
+        list.Columns.Add("Finish Date", "reqFinished dsearch xlexport");
+
+        list.Columns.Add("Notes", "reqFullNotes xlexport");
+        list.Columns.Add_Code().AddClass("xlexport");
+
+        list.SortColumns.Add("reqDateFromLH");
+        list.SortColumns.Add("reqFinished");
+
+        await Html.RenderPartialAsync("_MyServicesRequests", list);
+@*        await Html.RenderPartialAsync("_downloadFile", list);*@
+    }
+</div>
+

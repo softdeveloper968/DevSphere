@@ -1,0 +1,248 @@
+﻿@{
+    string PageName = "ToDoTC";
+    ViewData["Title"] = "To Do - Title Corrections";
+
+    string GetUrl(string name)
+    {
+        return MyDMVpro.Controllers.RequestStatusController.GetEndpointUrl(this.Context, name);
+    }
+    void AddSelectionColumns(VendorRequestViewModel list)
+    {
+        list.Columns.Add_Select();
+        list.Columns.Add_Chat();
+        list.Columns.Add_Attachments();
+        list.Columns.Add_DupeCheck();
+        list.Columns.Add_EditIcon();
+    }
+    void AddCommonColumns(VendorRequestViewModel list)
+    {
+        AddSelectionColumns(list);
+
+        list.Columns.Add_AppType(true);
+        list.Columns.Add_AppState();
+        list.Columns.Add_VIN();
+        list.Columns.Add_Notes();
+        list.Columns.Add_Code();
+        list.Columns.Add_DateToVendor();
+    }
+
+    void AddCommonSort(VendorRequestViewModel list)
+    {
+        list.SortColumns.Add("reqType");
+        list.SortColumns.Add("reqState");
+        list.SortColumns.Add("reqVIN");
+    }
+}
+
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+@*<script src="~/lib/js-xls/xlsx.js" asp-append-version="true"></script>*@
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+
+
+@{
+    await Html.RenderPartialAsync("_Chat", new Chats());
+    await Html.RenderPartialAsync("_AttachmentList");
+    await Html.RenderPartialAsync("_MoveDialog");
+    await Html.RenderPartialAsync("_BulkDialog");
+    await Html.RenderPartialAsync("_BulkDialog");
+    await Html.RenderPartialAsync("_EditDetails");
+    await Html.RenderPartialAsync("_MarkFinished");
+    await Html.RenderPartialAsync("_ExportItems");
+    await Html.RenderPartialAsync("_lc_dialogs");
+
+    // These are required for the bulk print dialogs
+    await Html.RenderPartialAsync("~/Views/Requests/_ApplicationsSelectionForPrinting.cshtml");
+    await Html.RenderPartialAsync("~/Views/Requests/_CheckMergeForPrinting.cshtml");
+    await Html.RenderPartialAsync("~/Views/Requests/_AttachmentsSelectionForPrinting.cshtml");
+}
+<div>
+    <h2 class="sub_heading">Incoming - TC</h2>
+    <div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.TC_Incoming, PageName)
+                {
+                    QueueTitle = "Incoming - TC",
+                    QueueName = "Incoming",
+                    AllowMove = true,
+                    AllowStatusEdit = true
+                };
+            AddCommonColumns(list);
+
+            list.Columns.Add_Group();
+            list.Columns.Add_ClientRef();
+            list.Columns.Add_RNo();
+            list.Columns.Add_SubmittedBy();
+
+            AddCommonSort(list);
+
+            await Html.RenderPartialAsync("_VendorRequestList", list);
+        }
+    }
+    </div>
+    <h2 class="sub_heading">Not Ready for Processing - TC</h2>
+    <div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.TC_NotReadyToProcess, PageName)
+                {
+                    QueueTitle = "Not Ready for Processing - TC",
+                    QueueName = "NotReadyToProcess",
+                    AllowMove = true,
+                    AllowStatusEdit = true
+                };
+            AddCommonColumns(list);
+
+            list.Columns.Add_Group();
+            list.Columns.Add_ClientRef();
+            list.Columns.Add_RNo();
+            list.Columns.Add_SubmittedBy();
+
+            AddCommonSort(list);
+            await Html.RenderPartialAsync("_VendorRequestList", list);
+        }
+    }
+    </div>
+    <h2 class="sub_heading">Ready for Processing - TC</h2>
+    <div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.TC_ReadyToProcess, PageName)
+                {
+                    QueueTitle = "Ready to be Processed - TC",
+                    QueueName = "ReadyToProcess",
+                    AllowMove = true,
+                    AddProcessButton = true,
+                    AllowStatusEdit = true
+                };
+            AddCommonColumns(list);
+
+            list.Columns.Add_Group();
+            list.Columns.Add_ClientRef();
+            list.Columns.Add_RNo();
+            list.Columns.Add_SubmittedBy();
+
+            AddCommonSort(list);
+            await Html.RenderPartialAsync("_VendorRequestList", list);
+        }
+    }
+    </div>
+    <h2 class="sub_heading">In Processing - TC</h2>
+    <div class="white_box p_15 mb_20">
+        @{
+            {
+                VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.TC_InProcessing, PageName)
+                {
+                    QueueTitle = "In Processing - TC",
+                    QueueName = "InProcessing",
+                    AllowMove = true,
+                    AllowStatusEdit = true
+                };
+                AddCommonColumns(list);
+
+                list.Columns.Add_Group();
+                list.Columns.Add_ClientRef();
+                list.Columns.Add_RNo();
+                list.Columns.Add_SubmittedBy();
+
+                AddCommonSort(list);
+                await Html.RenderPartialAsync("_VendorRequestList", list);
+            }
+        }
+    </div>
+    @{
+        await Html.RenderPartialAsync("_vendorReadyForPrinting", PageName);
+        await Html.RenderPartialAsync("_vendorBulkPrintApplications", PageName);
+        await Html.RenderPartialAsync("_vendorBulkPrintChecks", PageName);
+        await Html.RenderPartialAsync("_vendorBulkPrintAttachments", PageName);
+    }
+
+    <h2 class="sub_heading">Ready for Packing - TC</h2>
+    <div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.TC_ReadyForPacking, PageName)
+            {
+                QueueTitle = "Ready for Packing - TC",
+                QueueName = "ReadyForPacking",
+                AllowMove = true,
+                AllowStatusEdit = true
+            };
+            AddCommonColumns(list);
+
+            list.Columns.Add_Group();
+            list.Columns.Add_ClientRef();
+            list.Columns.Add_RNo();
+            list.Columns.Add_SubmittedBy();
+
+            AddCommonSort(list);
+            await Html.RenderPartialAsync("_VendorRequestList", list);
+        }
+    }
+    </div>
+    <h2 class="sub_heading">Pending Title Corrections</h2>
+    <div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.TC_Pending, PageName)
+            {
+                QueueTitle = "Pending - TC",
+                QueueName = "Pending",
+                AllowMove = true,
+                AllowStatusEdit = true
+            };
+            AddCommonColumns(list);
+
+            list.Columns.Add_DateRequested();
+            list.Columns.Add_CheckNumber();
+            list.Columns.Add_TrackingToDMV();
+
+            list.Columns.Add_Group();
+            list.Columns.Add_ClientRef();
+            list.Columns.Add_RNo();
+            list.Columns.Add_SubmittedBy();
+
+            AddCommonSort(list);
+
+            await Html.RenderPartialAsync("_VendorRequestList", list);
+        }
+    }
+    </div>
+    <h2 class="sub_heading">Complete Title Corrections</h2>
+    <div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.TC_Completed, PageName)
+                {
+                    QueueTitle = "Completed - TC",
+                    QueueName = "Completed",
+                    AllowMove = true,
+                    AllowStatusEdit = true
+                };
+
+            AddCommonColumns(list);
+
+            list.Columns.Add_DateRequested();
+            list.Columns.Add_DateReceived();
+            list.Columns.Add_ELT();
+            list.Columns.Add_LienExpiration();
+            list.Columns.Add_FinishDate();
+            list.Columns.Add_CheckNumber();
+            list.Columns.Add_TrackingToDMV();
+            list.Columns.Add_RejectionDate();
+            list.Columns.Add_Group();
+            list.Columns.Add_ClientRef();
+            list.Columns.Add_RNo();
+            list.Columns.Add_SubmittedBy();
+
+            AddCommonSort(list);
+
+            await Html.RenderPartialAsync("_VendorRequestList", list);
+        }
+    }
+    </div>
+</div>
+@{
+    // Shared views
+    await Html.RenderPartialAsync("_moveItemsToStage");
+}

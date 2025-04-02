@@ -1,0 +1,19 @@
+﻿@model ICollection<RequestNotes>
+
+<table class="note-body">
+    @foreach (var note in Model)
+    {
+        if (!string.IsNullOrEmpty(note.ClientRemarks))
+        {
+            <tr>
+                <td class="note-vendor">
+                    <span class="note-by">@Html.Encode(DateTimeHelpers.EasternDateTime(note?.LastUpdated, "f")) by @Html.Encode(note?.ModifiedByNavigation?.DisplayName ?? "System")</span>
+                    <br />
+                    <span class="note-msg">@Html.Raw(Html.Encode(note.ClientRemarks).Replace("&#xD;&#xA;", "<br/>").Replace("&#xA;", "<br />"))</span>
+                </td>
+            </tr>
+        }
+    }
+</table>
+
+

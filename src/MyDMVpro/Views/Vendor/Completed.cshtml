@@ -1,0 +1,63 @@
+﻿@{
+    string PageName = "Completed";
+    ViewData["Title"] = "Master";
+    string GetUrl(string name)
+    {
+        return MyDMVpro.Controllers.RequestStatusController.GetEndpointUrl(this.Context, name);
+    }
+}
+
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+<div class="white_box p_15">
+@{ await Html.RenderPartialAsync("_Chat", new Chats()); }
+@{ await Html.RenderPartialAsync("_AttachmentList"); }
+@{ await Html.RenderPartialAsync("_MoveDialog"); }
+@{ await Html.RenderPartialAsync("_BulkDialog"); }
+@{ await Html.RenderPartialAsync("_EditDetails"); }
+@{ await Html.RenderPartialAsync("_ExportItems"); }
+@{
+    VendorRequestViewModel completedList = new VendorRequestViewModel(VendorViewType.Completed, PageName)
+    {
+        DataUrl = GetUrl("Completed"),
+        ListId = "DT_Completed",
+        TableVarName = "ToDo_Completed_Table"
+    };
+
+    completedList.Columns.Add_Select();
+    completedList.Columns.Add_Chat();
+    completedList.Columns.Add_Attachments();
+    completedList.Columns.Add_Links();
+    completedList.Columns.Add_DupeCheck();
+    //completedList.Columns.Add("", "reqEditStatus");
+    completedList.Columns.Add_AppType(true);
+    completedList.Columns.Add_AppState();
+    completedList.Columns.Add_VIN();
+    completedList.Columns.Add_RNo();
+    completedList.Columns.Add_FinishDate();
+    completedList.Columns.Add_Auction();
+    completedList.Columns.Add_Group();
+    completedList.Columns.Add_SubmittedBy();
+    completedList.Columns.Add_Courier();
+    completedList.Columns.Add_Tracking();
+    completedList.Columns.Add_Make();
+    completedList.Columns.Add_Year();
+    completedList.Columns.Add_ETA();
+    completedList.Columns.Add_ReceivedFromDMV();
+    completedList.Columns.Add_SentToDMV();
+    completedList.Columns.Add_ReceivedFromLH();
+    completedList.Columns.Add_DateToVendor();
+    completedList.Columns.Add_FromLHCourier();
+    completedList.Columns.Add_FromLHTracking();
+    completedList.Columns.Add_PrintDate();
+    completedList.Columns.Add_DateSigned();
+    completedList.Columns.Add_Notes();
+    completedList.Columns.Add_Code();
+
+    completedList.SortColumns.Add("reqType");
+    completedList.SortColumns.Add("reqState");
+    completedList.SortColumns.Add("reqVIN");
+
+    await Html.RenderPartialAsync("_VendorRequestList", completedList);
+}
+</div>

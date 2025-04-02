@@ -1,0 +1,46 @@
+﻿<div id="modal-markPaid" class="modal fade hidden-print" tabindex="-1">
+    <div class="container vertical-alignment-helper">
+        <div class="row vertical-align-center">
+            <div class="col-sm-4"></div>
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="myModal-label">Mark As Paid</h4>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="MarkPaid_InvoiceId" />
+                        <div class="form-group">
+                            <label for="MarkPaid_InvoiceDate" class="control-label">Date Invoiced</label>
+                            <input type="date" width="150" id="MarkPaid_InvoiceDate" class="form-control" readonly />
+                        </div>
+                        <div class="form-group">
+                            <label for="MarkPaid_InvoiceNum" class="control-label">Invoice #</label>
+                            <input type="text" width="150" id="MarkPaid_InvoiceNum" class="form-control" readonly />
+                        </div>
+                        <div class="form-group">
+                            <label for="MarkPaid_InvoiceAmount" class="control-label">Invoice Amount</label>
+                            <input type="number" width="150" id="MarkPaid_InvoiceAmount" class="form-control" readonly />
+                        </div>
+                        <div class="form-group">
+                            <label for="MarkPaid_InvoiceDatePaid" class="control-label">Date Paid</label>
+                            <input type="date" width="150" id="MarkPaid_InvoiceDatePaid" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label for="MarkPaid_InvoiceNote" class="control-label">Note</label>
+                            <input type="text" width="150" id="MarkPaid_InvoiceNote" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label id="selectedCount"></label>
+                        </div>
+                    </div>
+                    <div class="alert alert-danger" style="display:none" role="alert"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-success" id="okButton">OK</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

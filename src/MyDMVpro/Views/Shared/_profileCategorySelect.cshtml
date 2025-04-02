@@ -1,0 +1,26 @@
+﻿@model (Guid? groupId, Guid? sectionId, Guid? categoryId, string categoryName)
+
+@if (Model.categoryId != null)
+{
+    <div class="pull-right" style="display:inline-block">
+        <div class="pull-right" data-categoryid="@Model.categoryId" data-autoapply="true">
+            <select class="group-profile-select">
+                <option value="">Select Profile</option>
+            </select>
+            <button class="" style="display:none">Apply Profile</button>
+            <button class="refreshIcon profile-refresh" title="Refresh"></button>
+        </div>
+    </div>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        let groupId = '@Model.groupId';
+        let categoryName = '@Model.categoryName';
+        let categoryId = '@Model.categoryId';
+        let sectionId = '@Model.sectionId';
+
+        let dataurl = '@Url.Action("GetProfiles", "GroupProfiles")';
+        appform_configure_profileselect(dataurl, groupId, sectionId, categoryId, categoryName);
+    });
+</script>
+}

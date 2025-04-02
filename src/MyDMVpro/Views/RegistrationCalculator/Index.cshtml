@@ -1,0 +1,1883 @@
+﻿@model MyDMVpro.Models.CalculationTables
+
+@{
+    ViewData["Title"] = "Manage State Specific Tables";
+}
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.5.0/math.min.js"></script>
+
+<style> 
+    .modal-dialog-centered {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .changed {
+        background-color: #f0f8ff; 
+        border: 1px solid #007bff;
+    }
+
+    .updated-field {
+        border: 1px solid orange;
+        background-color: #fff3cd;
+    }
+
+    #registrationFeeResult p {
+        font-size: 16px;
+        margin: 5px 0;
+    }
+
+    #registrationFeeResult p:first-child {
+        font-weight: bold;
+        font-size: 18px;
+    }
+
+    .highlighted-row, .highlighted-row > td {
+        background-color: #ffeb3b !important;
+    }
+
+    .row-highlight {
+        background-color: #ffff99 !important; /* Light yellow */
+        transition: background-color 1s ease;
+    }
+
+
+
+
+</style>
+
+@section Scripts {
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script>
+        $(document).ready(function () {
+
+            $('[data-bs-toggle="tooltip"]').tooltip();
+       
+            const relationOptions = [
+                "EQUAL TO",
+                "NOT EQUAL TO",
+                "GREATER THAN OR EQUAL TO",
+                "GREATER THAN",
+                "LESS THAN",
+                "LESS THAN OR EQUAL TO",
+                "BETWEEN"
+            ];
+
+            const operatorsOptions = [
+                "+",
+                "-",
+                "*",
+                "%"
+            ];
+
+            const itemsOptions = [
+                "UNLADENWEIGHT",
+                "MGW",
+                "MPG",
+                "CYLINDERS",
+                "PLATECLASS",
+                "PROPULSION",
+                "LIEN",
+                "TITLE",
+                "JURISDICTION",
+                "YEAR"
+
+            ];
+
+            const showContainer = (showData) => {
+                $('#showNoDataContainer').toggle(!showData);
+                $('#showDataContainer').toggle(showData);
+            };
+
+
+            const createMasterFormulaTable = (StateCode) => {
+                const workflowName = "Master Formula Table"
+                const formData = new FormData();
+                formData.append('excelFile', null); 
+                formData.append('stateCode', StateCode); 
+                formData.append('workflowName', workflowName);
+
+                $.ajax({
+                    url: '/RegistrationCalculator/Import',
+                    type: "POST",
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    dataType: 'html',
+                    cache: false,
+                    headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                    success: function (response) {
+                        reloadMasterFormulaDataTable(StateCode);
+                        loadRegistrationFeeCalculatorTable(StateCode)
+                    },
+                    error: function (xhr) {
+                        alert("An error occurred while importing the file.");
+                        console.error(xhr.responseText);
+                    }
+                });
+
+            }
+
+            const reloadDataTable = (StateCode) => {
+                $.ajax({
+                    url: '/RegistrationCalculator/GetStateSpecificData',
+                    type: 'POST',
+                    dataType: 'html',
+                    cache: false,
+                    data: { StateCode },
+                    headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                    success: function (response) {
+                        const responseData = JSON.parse(response);
+
+                        if (!responseData || !Array.isArray(responseData) || responseData.length === 0) {
+                            showContainer(false);
+                            $('#emptyTablesContainer').html(`
+                                        <div class="table-section white_box p_15 mt_15">
+                                            <h5>No data available for the selected state.</h5>
+                                            <table class="display" style="width:100%"></table>
+                                        </div>
+                                    `);
+                            return;
+                        }
+
+                        showContainer(true);
+
+                        // Clear existing tables
+                        $('.dataTableForCalculationTables').DataTable().destroy();
+
+                        $('#tablesContainer').empty();
+                       
+                        let tables = {};
+                        let originalDataMap = {};
+
+
+                        responseData.forEach((tableData, index) => {
+
+                            console.log("table data", tableData)
+                            const tableId = `dataTableForCalculationTables_${index}`;
+                            const addRowButtonId = `addRowButton_${index}`
+                            const removeSelectedButtonId = `removeSelectedButton_${index}`
+                            const insertExcelButtonId = `insertExcel_${index}`
+                            const clearDataButtonId = `clearData_${index}`
+                            const deleteButtonId = `delete_${index}`
+                            const saveButtonId = `save_${index}`
+                            const exportExcelButtonId = `exportExcel_${index}`
+                            const refreshTableButtonId = `refreshTable_${index}`
+                            let originalData = [...(tableData.data || [])];
+                            originalDataMap[tableId] = JSON.parse(JSON.stringify(tableData.data || []));
+
+
+
+                            $('#tablesContainer').append(`
+                                <div class="table-section white_box p_15 mt_15">
+                                    <div class="row flex_row items-end">
+                                    <div class="col-md-4 col-12">
+                                        <h4>State: <b>${tableData.state || 'Unknown State'}</b></h5>
+                                        <h5>Table Name: <b>${tableData.workflowName || 'Unknown Table Name'}</b></h5>
+                                    </div>
+                                    <div class="col-md-8 text-right col-12">
+                                        <div class="flex_btns">
+                                            <button id="addRowButton_${index}" class="btn btn-primary">Add Row</button>
+                                            <button id="refreshTable_${index}" class="btn btn-primary">Refresh Table</button>
+                                            <button id="removeSelectedButton_${index}" class="btn btn-primary">Remove Selected</button>
+                                            <button id="exportExcel_${index}" class="btn btn-primary">Export Excel</button>
+                                            <button id="insertExcel_${index}" class="btn btn-primary">Import Excel</button>
+                                            <button id="clearData_${index}" class="btn btn-primary">Clear Data</button>
+                                            <button id="delete_${index}" class="btn btn-primary">Delete Table</button>
+                                            <button id="save_${index}" class="btn btn-primary">Save</button>
+                                        </div>
+                                    </div>
+                                    </div>
+                                    <input type="hidden" class="table-data-id" value="${tableData.workFlowId || ''}" />
+                                    <input type="hidden" class="table-state-id" value="${tableData.stateCode || ''}" />
+                                    <table id="${tableId}" class="display dataTableForCalculationTables" style="width:100%"></table>
+                                </div>
+                            `);
+
+                            let selectedIds = [];
+                            const updatedFields = new Set();
+
+
+                            tables[tableId] = $(`#${tableId}`).DataTable({
+                                data: tableData.data || [],
+                                paging: true,
+                                pageLength: 10,
+                                scrollX: true,
+                                scrollCollapse: false,
+                                searching: false,
+                                info: true,
+                                lengthChange: true,
+                                ordering: false,
+                                dom: '<"top"lf>rt<"bottom"ip><"clear">',
+                                columns: [
+                                    {
+                                        data: 'ruleName', title: '', render: function (data, type, row) {
+                                            return `<input type="checkbox" value="${data || ''}" class="row-checkbox selectRow" data-id="${data || ''}">`; // Added data-id attribute
+                                        }
+                                    },
+                                    { data: 'dataPoint1', title: 'Data Point 1', render: createDropdown('dataPoint1', itemsOptions) },
+                                    { data: 'relation1', title: 'Relation 1', render: createDropdown('relation1', relationOptions) },
+                                    { data: 'condition1', title: 'Submitted Value 1', render: createTextInput('condition1') },
+                                    { data: 'dataPoint2', title: 'Data Point 2', render: createDropdown('dataPoint2', itemsOptions) },
+                                    { data: 'relation2', title: 'Relation 2', render: createDropdown('relation2', relationOptions) },
+                                    { data: 'condition2', title: 'Submitted Value 2', render: createTextInput('condition2') },
+                                    { data: 'dataPoint3', title: 'Data Point 3', render: createDropdown('dataPoint3', itemsOptions) },
+                                    { data: 'relation3', title: 'Relation 3', render: createDropdown('relation3', relationOptions) },
+                                    { data: 'condition3', title: 'Submitted Value 3', render: createTextInput('condition3') },
+                                    { data: 'dataPoint4', title: 'Data Point 4', render: createDropdown('dataPoint4', itemsOptions) },
+                                    { data: 'relation4', title: 'Relation 4', render: createDropdown('relation4', relationOptions) },
+                                    { data: 'condition4', title: 'Submitted Value 4', render: createTextInput('condition4') },
+                                    { data: 'dataPoint5', title: 'Data Point 5', render: createDropdown('dataPoint5', itemsOptions) },
+                                    { data: 'relation5', title: 'Relation 5', render: createDropdown('relation5', relationOptions) },
+                                    { data: 'condition5', title: 'Submitted Value 5', render: createTextInput('condition5') },
+                                    { data: 'calculatedValue', title: 'Calculated Value', render: createTextInput('calculatedValue') },
+                                    { data: 'calculatedValueDescription', title: 'Calculated Value Description', render: createTextInput('calculatedValueDescription') },
+                                ],
+                                rowCallback: function (row, data, index) {
+                                    $(row).find('.edit-field').each(function () {
+                                        const fieldId = $(this).attr('id') || `${$(this).data('row-id')}-${$(this).data('field-name')}`;
+                                        if (updatedFields.has(fieldId)) {
+                                            $(this).addClass('updated-field');
+                                        }
+                                    });
+                                },
+                            });
+
+                            $(`#${addRowButtonId}`).click(function () {
+                                const table = $(`#${tableId}`).DataTable();
+                                table.row.add({
+                                    dataPoint1: '',
+                                    relation1: '',
+                                    condition1: '',
+                                    dataPoint2: '',
+                                    relation2: '',
+                                    condition2: '',
+                                    dataPoint3: '',
+                                    relation3: '',
+                                    condition3: '',
+                                    dataPoint4: '',
+                                    relation4: '',
+                                    condition4: '',
+                                    dataPoint5: '',
+                                    relation5: '',
+                                    condition5: '',
+                                    calculatedValue: '',
+                                    calculatedValueDescription: ''
+                                }).draw();
+                            });
+
+                            $(document).on('click', `#${clearDataButtonId}`, function () {
+                                const tableSection = $(this).closest('.table-section');
+                                const state = tableSection.find('h4').text().replace('State: ', '').trim();
+                                const workflowName = tableSection.find('h5').text().replace('Table Name: ', '').trim();
+                                const tableDataId = tableSection.find('.table-data-id').val();
+                                const tableStateCode = tableSection.find('.table-state-id').val();
+
+                                const formData = new FormData();
+                                formData.append('stateCode', tableStateCode);
+                                formData.append('workflowName', workflowName);
+                                formData.append('tableId', tableDataId);
+
+                                $('#confirmClearModal').modal('show');
+
+                                $('#confirmClearButton').off('click').on('click', function () {
+
+                                    $.ajax({
+                                        url: '/RegistrationCalculator/ClearTableData',
+                                        type: 'POST',
+                                        data: formData,
+                                        processData: false,
+                                        contentType: false,
+                                        headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                                        cache: false,
+                                        success: function (response) {
+                                            if (response.success) {
+                                                jqToast.success({ text: 'Table data cleared!' });
+                                                const table = $(`#${tableId}`).DataTable();
+                                                table.clear().draw();
+                                            } else {
+                                                jqToast.error({ text: 'Error occured while clearing data.' });
+                                            }
+                                        },
+                                        error: function (xhr, status, error) {
+                                            jqToast.error({ text: 'An error occurred while clearing the data.' });
+                                        }
+                                    });
+
+                                    $('#confirmClearModal').modal('hide');
+                                });
+                            });
+
+                            $(`#${insertExcelButtonId}`).click(function () {
+                                const fileInput = $('<input type="file" accept=".xlsx, .xls"/>');
+
+                                const tableSection = $(this).closest('.table-section'); // Get the parent table section
+                                const state = tableSection.find('h4').text().replace('State: ', '').trim(); // Extract State
+                                const workflowName = tableSection.find('h5').text().replace('Table Name: ', '').trim(); // Extract Workflow Name
+                                const tableDataId = tableSection.find('.table-data-id').val(); // Extract Table Data ID
+                                const tableStateCode = tableSection.find('.table-state-id').val(); // Extract Table Data ID
+
+                                fileInput.on('change', function (e) {
+                                    const file = e.target.files[0];
+
+                                    if (file) {
+                                        const formData = new FormData();
+                                        formData.append('excelFile', file); 
+                                        formData.append('stateCode', tableStateCode);  
+                                        formData.append('workflowName', workflowName);  
+                                        formData.append('tableId', tableDataId); 
+
+                                        $.ajax({
+                                            url: '/RegistrationCalculator/ImportExcelForSpecificTable',
+                                            type: 'POST',
+                                            data: formData,
+                                            processData: false,  
+                                            contentType: false,  
+                                            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                                            cache: false,
+                                            success: function (response) {
+                                                if (response.success) {
+                                                    jqToast.success({ text: 'File imported successfully!' });
+                                                    reloadDataTable(tableStateCode);
+                                                } else {
+                                                    jqToast.error({ text: 'Error occured while importing file.' });
+                                                }
+                                            },
+                                            error: function (xhr, status, error) {
+                                                jqToast.error({ text: 'An error occurred while uploading the file.' });
+                                            }
+
+                                        });
+
+                                    }
+                                });
+
+                                fileInput.click();
+                            });
+
+                            $(document).on('click', `#${deleteButtonId}`, function () {
+                                const tableSection = $(this).closest('.table-section');
+                                const state = tableSection.find('h4').text().replace('State: ', '').trim();
+                                const workflowName = tableSection.find('h5').text().replace('Table Name: ', '').trim();
+                                const tableDataId = tableSection.find('.table-data-id').val();
+                                const tableStateCode = tableSection.find('.table-state-id').val();
+
+                                const formData = new FormData();
+                                formData.append('stateCode', tableStateCode);
+                                formData.append('workflowName', workflowName);
+                                formData.append('tableId', tableDataId);
+
+                                $('#confirmDeleteModal').modal('show');
+
+                                $('#confirmDeleteButton').off('click').on('click', function () {
+
+                                    $.ajax({
+                                        url: '/RegistrationCalculator/DeleteDataTable',
+                                        type: 'POST',
+                                        data: formData,
+                                        processData: false,  
+                                        contentType: false, 
+                                        headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                                        cache: false,
+                                        success: function (response) {
+                                            if (response.success) {
+                                                jqToast.success({ text: 'Table deleted successfully!' });
+                                                reloadDataTable(tableStateCode);
+                                            } else {
+                                                jqToast.error({ text: 'Error occured while deleting table.' });
+                                            }
+                                        },
+                                        error: function (xhr, status, error) {
+                                            jqToast.error({ text: 'An error occurred while deleting the table.' });
+                                        }
+
+                                    });
+
+                                    $('#confirmDeleteModal').modal('hide');
+                                });
+
+                            });
+
+                            $(`#${tableId}`).on('change', 'select.edit-field', function () {
+                                const table = $(`#${tableId}`).DataTable();
+                                const $input = $(this);
+                                const rowIndex = $input.closest('tr').index();
+                                const column = $input.data('column');
+                                const value = $input.val();
+
+                                const rowData = table.row(rowIndex).data();
+                                rowData[column] = value;
+                                table.row(rowIndex).data(rowData).draw();
+                            });
+
+                            $(`#${tableId}`).on('change', 'input.edit-field', function () {
+                                const table = $(`#${tableId}`).DataTable();
+                                const $input = $(this);
+                                const rowIndex = $input.closest('tr').index();
+                                const column = $input.data('column');
+                                const value = $input.val();
+
+                                const rowData = table.row(rowIndex).data();
+                                rowData[column] = value;
+                                table.row(rowIndex).data(rowData).draw();
+                            });
+
+                            $(`#${saveButtonId}`).click(function () {
+                                const tableSection = $(this).closest('.table-section');
+                                const tableDataId = tableSection.find('.table-data-id').val();
+                                const tableStateCode = tableSection.find('.table-state-id').val();
+
+                                const table = $(`#${tableId}`).DataTable();
+
+                                const tableData = table.rows().data();
+
+                                if (!tableData || !tableData.length) {
+                                    return;
+                                }
+
+                                const payload = {
+                                    tableDataId: tableDataId,
+                                    tableStateCode: tableStateCode,
+                                    rows: tableData.toArray().map(row => ({
+                                        dataPoint1: row.dataPoint1,
+                                        relation1: row.relation1,
+                                        condition1: row.condition1,
+                                        dataPoint2: row.dataPoint2,
+                                        relation2: row.relation2,
+                                        condition2: row.condition2,
+                                        dataPoint3: row.dataPoint3,
+                                        relation3: row.relation3,
+                                        condition3: row.condition3,
+                                        dataPoint4: row.dataPoint4,
+                                        relation4: row.relation4,
+                                        condition4: row.condition4,
+                                        dataPoint5: row.dataPoint5,
+                                        relation5: row.relation5,
+                                        condition5: row.condition5,
+                                        calculatedValue: row.calculatedValue,
+                                        calculatedValueDescription: row.calculatedValueDescription
+                                    }))
+                                };
+
+
+                                $('#confirmSaveModal').modal('show');
+
+                                $('#confirmSaveButton').off('click').on('click', function () {
+
+                                    $.ajax({
+                                        url: '/RegistrationCalculator/SaveTableData',
+                                        type: 'POST',
+                                        contentType: 'application/json',
+                                        data: JSON.stringify(payload),
+                                        headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                                        success: function (response) {
+                                            if (response.success) {
+                                                jqToast.success({ text: 'Data saved successfully!' });
+                                                $('.edit-field.updated-field').removeClass('updated-field');
+                                                updatedFields.clear();
+                                            } else {
+                                                jqToast.error({ text: 'Error saving data.' });
+                                            }
+                                        },
+                                        error: function (xhr, status, error) {
+
+                                            jqToast.error({ text: 'An error occurred while saving the data.' });
+                                        }
+                                    });
+
+                                    $('#confirmSaveModal').modal('hide');
+                                });
+                            });
+
+                            $(`#${tableId}`).on('click', '.selectRow', function () {
+                                var isChecked = $(this).prop('checked');
+                                var id = $(this).data("id");
+
+                                if (isChecked) {
+                                    if (!selectedIds.includes(id)) {
+                                        selectedIds.push(id);
+                                    }
+                                }
+                                else {
+                                    var index = selectedIds.indexOf(id);
+                                    if (index !== -1) {
+                                        selectedIds.splice(index, 1);
+                                    }
+                                }
+
+                                if (isChecked) {
+                                    $(this).closest('tr').addClass('selected');
+                                }
+                                else {
+                                    $(this).closest('tr').removeClass('selected');
+                                }
+                            });
+
+                            $(`#${tableId}`).on('change', '.select-all', function () {
+                                var isChecked = $(this).prop('checked');
+                                $('.selectRow').prop('checked', isChecked).trigger('click');
+                                if (isChecked) {
+                                    $(this).closest('tr').addClass('selected');
+                                } else {
+                                    $(this).closest('tr').removeClass('selected');
+                                }
+                            });
+
+                            $(`#${removeSelectedButtonId}`).click(function () {
+                                if (selectedIds.length <= 0) {
+                                    alert("Please select the row to be removed first!")
+                                }
+                                else {
+                                    const tableSection = $(this).closest('.table-section');
+                                    const tableDataId = tableSection.find('.table-data-id').val();
+                                    const tableStateCode = tableSection.find('.table-state-id').val();
+
+                                    const table = $(`#${tableId}`).DataTable();
+
+                                    const tableData = table.rows().data();
+
+                                    if (!tableData || !tableData.length) {
+                                        return;
+                                    }
+
+                                    const payload = {
+                                        WorkflowId: tableDataId,
+                                        StateCode: tableStateCode,
+                                        RuleNamesToRemove: selectedIds
+
+                                    };
+
+                                    $('#confirmRemoveRowModal').modal('show');
+
+                                    $('#confirmRemoveRowButton').off('click').on('click', function () {
+                                        $.ajax({
+                                            url: '/RegistrationCalculator/RemoveRules',
+                                            type: 'POST',
+                                            contentType: 'application/json',
+                                            data: JSON.stringify(payload),
+                                            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                                            success: function (response) {
+                                                if (response.success) {
+                                                    jqToast.success({ text: 'Data removed successfully!' });
+                                                    reloadDataTable(tableStateCode);
+                                                }
+                                                else {
+                                                    jqToast.error({ text: 'Error saving data.' });
+                                                }
+                                            },
+                                            error: function (xhr, status, error) {
+                                                jqToast.error({ text: 'An error occurred while saving the data.' });
+                                            }
+                                        });
+
+                                        $('#confirmRemoveRowModal').modal('hide');
+                                    });
+                                }
+                            });
+
+                            $(`#${tableId}`).on('change', '.edit-field', function () {
+                                const fieldId = $(this).attr('id') || `${$(this).data('row-id')}-${$(this).data('field-name')}`;
+                                $(this).addClass('updated-field');
+                                updatedFields.add(fieldId);
+
+                                const table = $(`#${tableId}`).DataTable();
+                                table.draw(false);
+                            });
+
+                            $(`#${refreshTableButtonId}`).click(function () {
+                                const table = $(`#${tableId}`).DataTable();
+                                updatedFields.clear();
+                                
+                                $(`#${tableId}`).find('.updated-field').removeClass('updated-field');
+                                const origData = originalDataMap[tableId];
+                                if (origData && origData.length) {
+                                    // tables[tableId].clear().rows.add(origData).draw();
+                                    tables[tableId].clear().rows.add(JSON.parse(JSON.stringify(origData))).draw();
+                                } else {
+                                    console.warn(`No original data found for table ${tableId}`);
+                                }
+
+                            });
+
+                            $(`#${exportExcelButtonId}`).on('click', function () {
+                                const tableSection = $(this).closest('.table-section');
+                                const tableDataId = tableSection.find('.table-data-id').val();
+                                const tableStateCode = tableSection.find('.table-state-id').val();
+                                const tableInstance = $(`#${tableId}`).DataTable();
+                                const state = tableSection.find('h4').text().replace('State: ', '').trim();
+                                const workflowName = tableSection.find('h5').text().replace('Table Name: ', '').trim();
+                                const tableData = tableInstance.rows().data().toArray();
+
+                                const worksheetData = tableData.map(row => {
+                                    return {
+                                        "Rule Name": row.ruleName || '',
+                                        "Data Point 1": row.dataPoint1 || '',
+                                        "Relation 1": row.relation1 || '',
+                                        "Submitted Value 1": row.condition1 || '',
+                                        "Data Point 2": row.dataPoint2 || '',
+                                        "Relation 2": row.relation2 || '',
+                                        "Submitted Value 2": row.condition2 || '',
+                                        "Data Point 3": row.dataPoint3 || '',
+                                        "Relation 3": row.relation3 || '',
+                                        "Submitted Value 3": row.condition3 || '',
+                                        "Data Point 4": row.dataPoint4 || '',
+                                        "Relation 4": row.relation4 || '',
+                                        "Submitted Value 4": row.condition4 || '',
+                                        "Data Point 5": row.dataPoint5 || '',
+                                        "Relation 5": row.relation5 || '',
+                                        "Submitted Value 5": row.condition5 || '',
+                                        "Calculated Value": row.calculatedValue || '',
+                                        "Calculated Value Description": row.calculatedValueDescription || '',
+                                    };
+                                });
+
+                                const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+                                const workbook = XLSX.utils.book_new();
+                                XLSX.utils.book_append_sheet(workbook, worksheet, `Table_${index}`);
+
+                                const fileName = `${workflowName}.xlsx`;
+                                XLSX.writeFile(workbook, fileName);
+                            });
+
+                        });
+
+                    },
+                    error: function (xhr) {
+                        alert("An error occurred while loading data.");
+                    }
+                
+                });
+            };
+
+            const reloadMasterFormulaDataTable = (StateCode) => {
+                $.ajax({
+                    url: '/RegistrationCalculator/GetMasterFormulaByState',
+                    type: 'POST',
+                    dataType: 'html',
+                    cache: false,
+                    data: { StateCode },
+                    headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                    success: function (response) {
+                        const responseData = JSON.parse(response);
+                        console.log(responseData);
+
+                        if (!responseData || !Array.isArray(responseData)) {
+                            showContainer(false);
+                            $('#emptyTablesContainer').html(`
+                                                <div class="mfTable-section white_box p_15 mt_15">
+                                                    <h5>No data available for the selected state.</h5>
+                                                    <table class="display" style="width:100%"></table>
+                                                </div>
+                                            `);
+                            return;
+                        }
+
+                        showContainer(true);
+
+                        $('.dataTableForMasterFormula').DataTable().destroy();
+
+                        $('#masterFormulaTablesContainer').empty();
+
+                        responseData.forEach((tableData, index) => {
+
+                            const mfTableId = `dataTableForMasterFormula`;
+                            const mfAddRowButtonId = `addRowButton_MasterFormula`
+                            const mfRemoveSelectedButtonId = `removeSelectedButton_MasterFormula`
+                            const mfInsertExcelButtonId = `insertExcel_MasterFormula`
+                            const mfClearDataButtonId = `clearData_MasterFormula`
+                            const mfDeleteButtonId = `delete_MasterFormula}`
+                            const mfSaveButtonId = `save_MasterFormula`
+                            const mfExportExcelButtonId = `export_MasterFormulaExcel_${index}`
+                            const mfRefreshTableButtonId = `refresh_MasterFormulaTable_${index}`
+
+                            $('#masterFormulaTablesContainer').append(`
+                                        <div class="mfTable-section white_box p_15 mt_15">
+                                        <div class="row flex_row items-end">
+                                        <div class="col-md-4 col-12">
+                                            <h4>State: <b>${tableData.state || 'Unknown State'}</b></h5>
+                                            <h5>Table Name: <b>${tableData.workflowName || 'Unknown Table Name'}</b></h5>
+                                        </div>
+                                        <div class="col-md-8 text-right col-12">
+                                            <div class="flex_btns">
+                                                <button id="addRowButton_MasterFormula" class="btn btn-primary">Add Row</button>
+                                                <button id="export_MasterFormulaExcel_${index}" class="btn btn-primary">Export Excel</button>
+                                                <button id="refresh_MasterFormulaTable_${index}" class="btn btn-primary">Refresh Table</button>
+                                                <button id="removeSelectedButton_MasterFormula" class="btn btn-primary">Remove Selected</button>
+                                                <button id="insertExcel_MasterFormula" class="btn btn-primary">Insert Excel</button>
+                                                <button id="clearData_MasterFormula" class="btn btn-primary">Clear Data</button>
+                                                <button id="save_MasterFormula" class="btn btn-primary">Save</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                            <input type="hidden" class="table-data-id MasterTable-table-id" value="${tableData.workFlowId || ''}" />
+                                            <input type="hidden" class="table-state-id MasterTable-state-id" value="${tableData.stateCode || ''}" />
+                                            <table id="${mfTableId}" class="display dataTableForMasterFormula" style="width:100%"></table>
+
+                                    </div>
+                                `);
+
+                            window.openModal = function (inputId, ruleName) {
+                                var StateCode = $('#state').val();
+                                const tableStateCode = $(".MasterTable-state-id").val();
+                                const tableDataId = $(".MasterTable-table-id").val();
+
+
+                                const modalContent = `
+                                <div class="modal fade" id="calculatedValueModal" tabindex="-1" role="dialog" aria-labelledby="calculatedValueModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                            <span aria-hidden="true">&times;</span>
+                                                        </button>
+                                                <h5 class="modal-title" id="calculatedValueModalLabel">Edit Calculated Value</h5>
+                                        
+                                            </div>
+                                            <div class="modal-body">
+                                                <h6>Dynamic Table Buttons</h6>
+                                                <div id="dynamicTableRows" style="display: flex;"></div>
+                                                <div id="dynamicOperatorRows" style="display: flex;"></div>
+                                                <label for="calculatedValueInputModal" class="mt-3">Calculated Value for Rule: ${ruleName}</label>
+                                                <div class="d-flex gap-2">
+                                                <input type="text" id="calculatedValueInputModal" class="form-control" value="${$(`#${inputId}`).val()}">
+                                                <button type="button" class="btn btn-primary" id="clearInputValue">Clear</button>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                <button type="button" class="btn btn-primary" id="saveCalculatedValue">Save</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+
+                                $('body').append(modalContent);
+
+                                $('#calculatedValueModal').modal('show');
+
+                                $.ajax({
+                                    url: '/RegistrationCalculator/GetTablesNameByState',
+                                    type: 'POST',
+                                    dataType: 'html',
+                                    cache: false,
+                                    data: { StateCode },
+                                    headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                                    success: function (response) {
+                                        var dataResponse = JSON.parse(response);
+                                        if (dataResponse.success) {
+                                            const tableNamesList = dataResponse.data;
+
+                                            const tableButtons = tableNamesList.map((item, index) => {
+                                                return `
+                                                <div style="margin: 2px; ">
+                                            <button id="tableNameButton_${index}" class="btn btn-primary btn-sm">${item}</button>
+                                        </div>
+                                    `;
+                                            }).join('');
+
+                                            const operatorButtons = operatorsOptions.map((item, index) => {
+                                                return `
+                                                <div style="margin:2px">
+                                                    <button id="operatorButton_${index}" class="btn btn-default btn-sm">${item}</button>
+                                                </div>
+                                            `;
+                                            }).join('');
+
+                                            $('#dynamicTableRows').html(tableButtons);
+                                            $('#dynamicOperatorRows').html(operatorButtons);
+
+                                            tableNamesList.forEach((item, index) => {
+                                                $(`#tableNameButton_${index}`).on('click', function () {
+                                                    let currentValue = $('#calculatedValueInputModal').val();
+                                                    $('#calculatedValueInputModal').val(currentValue + ' ' + item);
+                                                });
+                                            });
+
+                                            operatorsOptions.forEach((item, index) => {
+                                                $(`#operatorButton_${index}`).on('click', function () {
+                                                    let currentValue = $('#calculatedValueInputModal').val();
+                                                    $('#calculatedValueInputModal').val(currentValue + ' ' + item);
+                                                });
+                                            });
+
+                                        } else {
+                                            $('#dynamicTableRows').html('<p class="text-danger">Error occurred while loading table names.</p>');
+                                            jqToast.error({ text: 'Error occurred while loading table names.' });
+                                        }
+                                    },
+                                    error: function () {
+                                        $('#dynamicTableRows').html('<p class="text-danger">An error occurred while loading the table.</p>');
+                                        jqToast.error({ text: 'An error occurred while loading the table.' });
+                                    }
+                                });
+
+                                $('#saveCalculatedValue').on('click', function () {
+                                    const newValue = $('#calculatedValueInputModal').val();
+                                    const dataTable = $(`#${mfTableId}`).DataTable();
+
+                                    const rowSelector = $(`#${inputId}`).closest('tr');
+                                    const rowIndex = dataTable.row(rowSelector).index();
+
+                                    const rowData = dataTable.row(rowIndex).data();
+                                    rowData.calculatedValue = `${newValue}`;
+
+                                    SaveMasterFormulaData(tableStateCode, tableDataId)
+                                    dataTable.row(rowIndex).data(rowData).draw();
+
+
+                                    $('#calculatedValueModal').modal('hide');
+
+                                });
+
+                                $('#clearInputValue').on('click', function () {
+                                    $("#calculatedValueInputModal").val("");
+                                });
+
+                                $('#calculatedValueModal').on('hidden.bs.modal', function () {
+                                    $(this).remove(); 
+                                });
+
+                            };
+
+                            function SaveMasterFormulaData(tableStateCode, tableDataId) {
+                                const tableSection = $(this).closest('.mfTable-section');
+                                const table = $(`#${mfTableId}`).DataTable();
+
+                                const tableData = table.rows().data();
+
+                                if (!tableData || !tableData.length) {
+                                    console.error('No data found in the table.');
+                                    return;
+                                }
+
+                                const payload = {
+                                    tableDataId: tableDataId,
+                                    tableStateCode: tableStateCode,
+                                    rows: tableData.toArray().map(row => ({
+                                        dataPoint1: row.dataPoint1,
+                                        relation1: row.relation1,
+                                        condition1: row.condition1,
+                                        dataPoint2: row.dataPoint2,
+                                        relation2: row.relation2,
+                                        condition2: row.condition2,
+                                        dataPoint3: row.dataPoint3,
+                                        relation3: row.relation3,
+                                        condition3: row.condition3,
+                                        dataPoint4: row.dataPoint4,
+                                        relation4: row.relation4,
+                                        condition4: row.condition4,
+                                        dataPoint5: row.dataPoint5,
+                                        relation5: row.relation5,
+                                        condition5: row.condition5,
+                                        calculatedValue: row.calculatedValue,
+                                        calculatedValueDescription: row.calculatedValueDescription
+                                    }))
+                                };
+
+                                $.ajax({
+                                    url: '/RegistrationCalculator/saveTableData',
+                                    type: 'POST',
+                                    contentType: 'application/json',
+                                    data: JSON.stringify(payload),
+                                    headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                                    success: function (response) {
+                                        if (response.success) {
+                                            jqToast.success({ text: 'Data saved successfully!' });
+                                            $('.edit-field.updated-field').removeClass('updated-field');
+                                            updatedMasterFormulaFields.clear();
+                                        } else {
+                                            jqToast.error({ text: 'Error saving data.' });
+                                        }
+                                    },
+                                    error: function (xhr, status, error) {
+
+                                        jqToast.error({ text: 'An error occurred while saving the data.' });
+                                    }
+                                });
+                            }
+
+                            let selectedIds = [];
+                            const updatedMasterFormulaFields = new Set();
+
+                            $(`#${mfTableId}`).DataTable({
+                                data: tableData.data || [],
+                                paging: true,
+                                pageLength: 10,
+                                scrollX: true,
+                                scrollCollapse: true,
+                                searching: false,
+                                info: true,
+                                lengthChange: true,
+                                ordering: false,
+                                dom: '<"top"lf>rt<"bottom"ip><"clear">',
+                                columns: [
+                                    {
+                                        data: null, title: '', render: function (data, type, row) {
+                                            return `<input type="checkbox" value="${data || ''}" class="row-checkbox selectRow" data-id="${data || ''}">`; 
+                                        }
+                                    },
+                                    { data: 'dataPoint1', title: 'Data Point 1', render: createDropdown('dataPoint1', itemsOptions) },
+                                    { data: 'relation1', title: 'Relation 1', render: createDropdown('relation1', relationOptions) },
+                                    { data: 'condition1', title: 'Submitted Value 1', render: createTextInput('condition1') },
+                                    { data: 'dataPoint2', title: 'Data Point 2', render: createDropdown('dataPoint2', itemsOptions) },
+                                    { data: 'relation2', title: 'Relation 2', render: createDropdown('relation2', relationOptions) },
+                                    { data: 'condition2', title: 'Submitted Value 2', render: createTextInput('condition2') },
+                                    { data: 'dataPoint3', title: 'Data Point 3', render: createDropdown('dataPoint3', itemsOptions) },
+                                    { data: 'relation3', title: 'Relation 3', render: createDropdown('relation3', relationOptions) },
+                                    { data: 'condition3', title: 'Submitted Value 3', render: createTextInput('condition3') },
+                                    { data: 'dataPoint4', title: 'Data Point 4', render: createDropdown('dataPoint4', itemsOptions) },
+                                    { data: 'relation4', title: 'Relation 4', render: createDropdown('relation4', relationOptions) },
+                                    { data: 'condition4', title: 'Submitted Value 4', render: createTextInput('condition4') },
+                                    { data: 'dataPoint5', title: 'Data Point 5', render: createDropdown('dataPoint5', itemsOptions) },
+                                    { data: 'relation5', title: 'Relation 5', render: createDropdown('relation5', relationOptions) },
+                                    { data: 'condition5', title: 'Submitted Value 5', render: createTextInput('condition5') },
+                                    {
+                                        data: 'calculatedValue', title: 'Calculated Value',
+                                        render: function (data, type, row) {
+                                            const id = `calculatedValue_${row.id || Math.random().toString(36).substr(2, 9)}`;
+                                            return `
+                                            <input type="text"
+                                                   class="form-control edit-field editable-input calculated-value-input"
+                                                   id="${id}"
+                                                   value="${data || ''}"
+                                                   readonly
+                                                   data-field-name="calculatedValue"
+                                                   data-column="calculatedValue"
+                                                   data-bs-toggle="tooltip"
+                                                   data-bs-placement="top"
+                                                   title="${data || 'No value'}"
+                                                   onclick="openModal('${id}', '${row.ruleName || ''}')">
+                                            `;
+                                        }
+                                    },
+                                    { data: 'calculatedValueDescription', title: 'Calculated Value Description', render: createTextInput('calculatedValueDescription') },
+
+                                ],
+                                rowCallback: function (row, data, index) {
+                                    const $row = $(row);
+                                    $row.find('.calculated-value-input').on('change', function () {
+                                        const newValue = $(this).val();
+                                        const table = $(`#${mfTableId}`).DataTable();
+                                        const rowIndex = table.row(row).index();
+                                        table.cell(rowIndex, 'calculatedValue:name').data(newValue).draw();
+                                        $(this).addClass('updated-field');
+
+                                    });
+
+                                    $(row).find('.edit-field').each(function () {
+                                        const fieldId = $(this).attr('id') || `${$(this).data('row-id')}-${$(this).data('field-name')}`;
+                                        if (updatedMasterFormulaFields.has(fieldId)) {
+                                            $(this).addClass('updated-field');
+                                        }
+                                    });
+                                    
+                                },
+
+                            });
+
+                            $(`#${mfTableId}`).on('change', 'select.edit-field', function () {
+                                const table = $(`#${mfTableId}`).DataTable();
+                                const $input = $(this);
+                                const rowIndex = $input.closest('tr').index();
+                                const column = $input.data('column');
+                                const value = $input.val();
+
+                                const rowData = table.row(rowIndex).data();
+                                rowData[column] = value;
+                                table.row(rowIndex).data(rowData).draw();
+                            });
+
+                            $(`#${mfTableId}`).on('change', 'input.edit-field', function () {
+                                const table = $(`#${mfTableId}`).DataTable();
+                                const $input = $(this);
+                                const rowIndex = $input.closest('tr').index();
+                                const column = $input.data('column');
+                                const value = $input.val();
+
+                                const rowData = table.row(rowIndex).data();
+                                rowData[column] = value;
+                                table.row(rowIndex).data(rowData).draw();
+                            });
+
+                            $(`#${mfTableId}`).on('click', '.selectRow', function () {
+                                var isChecked = $(this).prop('checked');
+                                var id = $(this).data("id");
+
+                                if (isChecked) {
+                                    if (!selectedIds.includes(id)) {
+                                        selectedIds.push(id);
+                                    }
+                                }
+                                else {
+                                    var index = selectedIds.indexOf(id);
+                                    if (index !== -1) {
+                                        selectedIds.splice(index, 1);
+                                    }
+                                }
+
+                                if (isChecked) {
+                                    $(this).closest('tr').addClass('selected');
+                                }
+                                else {
+                                    $(this).closest('tr').removeClass('selected');
+                                }
+                            });
+
+                            $(`#${mfTableId}`).on('change', '.select-all', function () {
+                                var isChecked = $(this).prop('checked');
+
+                                $('.selectRow').prop('checked', isChecked).trigger('click');
+                                if (isChecked) {
+                                    $(this).closest('tr').addClass('selected');
+                                } else {
+                                    $(this).closest('tr').removeClass('selected');
+                                }
+                            });
+
+                            $(`#${mfAddRowButtonId}`).click(function () {
+                                
+                                const table = $(`#${mfTableId}`).DataTable();
+
+                                table.row.add({
+                                    dataPoint1: '',
+                                    relation1: '',
+                                    condition1: '',
+                                    dataPoint2: '',
+                                    relation2: '',
+                                    condition2: '',
+                                    dataPoint3: '',
+                                    relation3: '',
+                                    condition3: '',
+                                    dataPoint4: '',
+                                    relation4: '',
+                                    condition4: '',
+                                    dataPoint5: '',
+                                    relation5: '',
+                                    condition5: '',
+                                    calculatedValue: '',
+                                    calculatedValueDescription: ''
+                                }).draw();
+                            });
+
+                            $(`#${mfClearDataButtonId}`).click(function () {
+                                const tableSection = $(this).closest('.mfTable-section');
+                                const state = tableSection.find('h4').text().replace('State: ', '').trim();
+                                const workflowName = tableSection.find('h5').text().replace('Table Name: ', '').trim();
+                                const tableDataId = tableSection.find('.table-data-id').val();
+                                const tableStateCode = tableSection.find('.table-state-id').val();
+
+                                const formData = new FormData();
+                                formData.append('stateCode', tableStateCode);
+                                formData.append('workflowName', workflowName);
+                                formData.append('tableId', tableDataId);
+
+                                $('#confirmClearModal').modal('show');
+
+                                $('#confirmClearButton').off('click').on('click', function () {
+                                    $.ajax({
+                                        url: '/RegistrationCalculator/clearTableData',
+                                        type: 'POST',
+                                        data: formData,
+                                        processData: false,
+                                        contentType: false,
+                                        headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                                        cache: false,
+                                        success: function (response) {
+                                            if (response.success) {
+                                                jqToast.success({ text: 'Table data cleared!' });
+                                                const table = $(`#${mfTableId}`).DataTable();
+                                                table.clear().draw();
+                                            } else {
+                                                jqToast.error({ text: 'Error occured while clearing data.' });
+                                            }
+                                        },
+                                        error: function (xhr, status, error) {
+                                            jqToast.error({ text: 'An error occurred while clearing the data.' });
+                                        }
+                                    });
+
+                                    $('#confirmClearModal').modal('hide');
+                                });
+                            });
+
+                            $(`#${mfInsertExcelButtonId}`).click(function () {
+                                const fileInput = $('<input type="file" accept=".xlsx, .xls"/>');
+
+                                const tableSection = $(this).closest('.mfTable-section'); 
+                                const state = tableSection.find('h4').text().replace('State: ', '').trim(); 
+                                const workflowName = tableSection.find('h5').text().replace('Table Name: ', '').trim(); 
+                                const tableDataId = tableSection.find('.table-data-id').val(); 
+                                const tableStateCode = tableSection.find('.table-state-id').val();
+
+                                fileInput.on('change', function (e) {
+                                    const file = e.target.files[0];
+
+                                    if (file) {
+                                        const formData = new FormData();
+                                        formData.append('excelFile', file); 
+                                        formData.append('stateCode', tableStateCode);  
+                                        formData.append('workflowName', workflowName);  
+                                        formData.append('tableId', tableDataId);  
+
+                                        $.ajax({
+                                            url: '/RegistrationCalculator/ImportExcelForSpecificTable',
+                                            type: 'POST',
+                                            data: formData,
+                                            processData: false, 
+                                            contentType: false,
+                                            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                                            cache: false,
+                                            success: function (response) {
+                                                if (response.success) {
+                                                    jqToast.success({ text: 'File imported successfully!' });
+                                                    reloadMasterFormulaDataTable(tableStateCode);
+                                                } else {
+                                                    jqToast.error({ text: 'Error occured while importing file.' });
+                                                }
+                                            },
+                                            error: function (xhr, status, error) {
+                                                jqToast.error({ text: 'An error occurred while uploading the file.' });
+                                            }
+
+                                        });
+
+                                    }
+                                });
+
+                                fileInput.click();
+                            });
+
+                            $(`#${mfSaveButtonId}`).click(function () {
+                                const tableSection = $(this).closest('.mfTable-section');
+                                const tableDataId = tableSection.find('.table-data-id').val();
+                                const tableStateCode = tableSection.find('.table-state-id').val();
+
+                                const table = $(`#${mfTableId}`).DataTable();
+
+                                const tableData = table.rows().data();
+
+                                if (!tableData || !tableData.length) {
+                                    console.error('No data found in the table.');
+                                    return;
+                                }
+
+                                const payload = {
+                                    tableDataId: tableDataId,
+                                    tableStateCode: tableStateCode,
+                                    rows: tableData.toArray().map(row => ({
+                                        dataPoint1: row.dataPoint1,
+                                        relation1: row.relation1,
+                                        condition1: row.condition1,
+                                        dataPoint2: row.dataPoint2,
+                                        relation2: row.relation2,
+                                        condition2: row.condition2,
+                                        dataPoint3: row.dataPoint3,
+                                        relation3: row.relation3,
+                                        condition3: row.condition3,
+                                        dataPoint4: row.dataPoint4,
+                                        relation4: row.relation4,
+                                        condition4: row.condition4,
+                                        dataPoint5: row.dataPoint5,
+                                        relation5: row.relation5,
+                                        condition5: row.condition5,
+                                        calculatedValue: row.calculatedValue,
+                                        calculatedValueDescription: row.calculatedValueDescription
+                                    }))
+                                };
+
+
+                                $('#confirmSaveModal').modal('show');
+
+                                $('#confirmSaveButton').off('click').on('click', function () {
+
+                                    $.ajax({
+                                        url: '/RegistrationCalculator/saveTableData',
+                                        type: 'POST',
+                                        contentType: 'application/json',
+                                        data: JSON.stringify(payload),
+                                        headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                                        success: function (response) {
+                                            if (response.success) {
+                                                jqToast.success({ text: 'Data saved successfully!' });
+                                                $('.edit-field.updated-field').removeClass('updated-field');
+                                                updatedMasterFormulaFields.clear();
+                                            } else {
+                                                jqToast.error({ text: 'Error saving data.' });
+                                            }
+                                        },
+                                        error: function (xhr, status, error) {
+
+                                            jqToast.error({ text: 'An error occurred while saving the data.' });
+                                        }
+                                    });
+
+                                    $('#confirmSaveModal').modal('hide');
+                                });
+                            });
+
+                            $(`#${mfRemoveSelectedButtonId}`).click(function () {
+                                if (selectedIds.length <= 0) {
+                                    alert("Please select the row to be removed first!")
+                                }
+                                else {
+                                    const tableSection = $(this).closest('.mfTable-section');
+                                    const tableDataId = tableSection.find('.table-data-id').val();
+                                    const tableStateCode = tableSection.find('.table-state-id').val();
+
+                                    const table = $(`#${mfTableId}`).DataTable();
+
+                                    const tableData = table.rows().data();
+
+                                    if (!tableData || !tableData.length) {
+                                        return;
+                                    }
+
+                                    const payload = {
+                                        WorkflowId: tableDataId,
+                                        StateCode: tableStateCode,
+                                        RuleNamesToRemove: selectedIds
+
+                                    };
+
+                                    $('#confirmRemoveRowModal').modal('show');
+
+                                    $('#confirmRemoveRowButton').off('click').on('click', function () {
+                                        $.ajax({
+                                            url: '/RegistrationCalculator/RemoveRules',
+                                            type: 'POST',
+                                            contentType: 'application/json',
+                                            data: JSON.stringify(payload),
+                                            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                                            success: function (response) {
+                                                if (response.success) {
+                                                    jqToast.success({ text: 'Data removed successfully!' });
+                                                    reloadMasterFormulaDataTable(tableStateCode);
+                                                }
+                                                else {
+                                                    jqToast.error({ text: 'Error saving data.' });
+                                                }
+                                            },
+                                            error: function (xhr, status, error) {
+                                                jqToast.error({ text: 'An error occurred while saving the data.' });
+                                            }
+                                        });
+
+                                        $('#confirmRemoveRowModal').modal('hide');
+                                    });
+                                }
+                            });
+
+                            $(`#${mfTableId}`).on('change', '.edit-field', function () {
+                                const fieldId = $(this).attr('id') || `${$(this).data('row-id')}-${$(this).data('field-name')}`;
+                                $(this).addClass('updated-field');
+
+                                updatedMasterFormulaFields.add(fieldId);
+                                const table = $(`#${mfTableId}`).DataTable();
+                                table.draw(false);
+                            });
+
+                            $(`#${mfRefreshTableButtonId}`).click(function () {
+                                const tableSection = $(this).closest('.mfTable-section');
+                                const tableDataId = tableSection.find('.table-data-id').val();
+                                const tableStateCode = tableSection.find('.table-state-id').val();
+                                var StateCode = $('#state').val();
+
+                                reloadMasterFormulaDataTable(tableStateCode);
+                            });
+
+                            $(`#${mfExportExcelButtonId}`).on('click', function () {
+                                const tableSection = $(this).closest('.mfTable-section');
+                                const tableDataId = tableSection.find('.table-data-id').val();
+                                const tableStateCode = tableSection.find('.table-state-id').val();
+                                const tableInstance = $(`#${mfTableId}`).DataTable();
+                                const state = tableSection.find('h4').text().replace('State: ', '').trim();
+                                const workflowName = tableSection.find('h5').text().replace('Table Name: ', '').trim();
+                                const tableData = tableInstance.rows().data().toArray();
+
+                                const worksheetData = tableData.map(row => {
+                                    return {
+                                        "Rule Name": row.ruleName || '',
+                                        "Data Point 1": row.dataPoint1 || '',
+                                        "Relation 1": row.relation1 || '',
+                                        "Submitted Value 1": row.condition1 || '',
+                                        "Data Point 2": row.dataPoint2 || '',
+                                        "Relation 2": row.relation2 || '',
+                                        "Submitted Value 2": row.condition2 || '',
+                                        "Data Point 3": row.dataPoint3 || '',
+                                        "Relation 3": row.relation3 || '',
+                                        "Submitted Value 3": row.condition3 || '',
+                                        "Data Point 4": row.dataPoint4 || '',
+                                        "Relation 4": row.relation4 || '',
+                                        "Submitted Value 4": row.condition4 || '',
+                                        "Data Point 5": row.dataPoint5 || '',
+                                        "Relation 5": row.relation5 || '',
+                                        "Submitted Value 5": row.condition5 || '',
+                                        "Calculated Value": row.calculatedValue || '',
+                                        "Calculated Value Description": row.calculatedValueDescription || '',
+                                    };
+                                });
+
+                                const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+                                const workbook = XLSX.utils.book_new();
+                                XLSX.utils.book_append_sheet(workbook, worksheet, `Table_${index}`);
+
+                                const fileName = `${workflowName}.xlsx`;
+                                XLSX.writeFile(workbook, fileName);
+                            });
+                           
+                        });
+                            
+                    },
+                    error: function (xhr) {
+                        alert("An error occurred while loading data.");
+                    }
+
+                });
+           
+            };
+
+            const loadRegistrationFeeCalculatorTable = (StateCode) => {
+                $.ajax({
+                    url: '/RegistrationCalculator/GetMasterFormulaByState',
+                    type: 'POST',
+                    dataType: 'html',
+                    cache: false,
+                    data: { StateCode },
+                    headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                    success: function (response) {
+                        const responseData = JSON.parse(response);
+                        $('#registrationFeeContainer').empty();
+
+                        responseData.forEach((tableData, index) => {
+
+                            const rfTableId = `dataTableForRegistrationFeeCalculation`;
+
+                            var htmlContent = `
+                                <div class="Table-section white_box p_15 mt_15">
+                                    <div class="mb_10">
+                                        <h5 class="mt-0">Registration Fee Calculator</h5>
+                                    </div>
+
+                                    <div class="calculator_container pr_40">
+                                            <div class="grid-container row gap_15">
+                                            <div class="form-group col-md-6">
+                                            <label for="DataPoint1">Data Point</label>
+                                            <input type="text" class="form-control" id="DataPoint1" value="PLATE CLASS" readonly>
+                                            </div>
+
+                                            <div class="form-group col-md-6">
+                                                <label for="PlateClass">Submitted Value</label>
+                                                <input type="text" class="form-control" id="PlateClass" data-field-name="PlateClass">
+                                            </div>
+                                    </div>
+
+                                    <div class="grid-container row gap_15">
+                                        <div class="form-group col-md-6">
+                                        <label for="dataPoint2">Data Point</label>
+                                        <input type="text" class="form-control" id="dataPoint2" value="UNLADEN WEIGHT" readonly>
+                                        </div>
+                                        <div class="form-group col-md-6">
+                                        <label for="UnladenWeight">Submitted Value</label>
+                                        <input type="number" class="form-control" value="0" id="UnladenWeight" data-field-name="UnladenWeight">
+                                        </div>
+                                    </div>
+
+                                    <div class="grid-container row gap_15">
+                                        <div class="form-group col-md-6">
+                                        <label for="dataPoint3">Data Point</label>
+                                        <input type="text" class="form-control" id="dataPoint3" value="CYLINDERS" readonly>
+                                        </div>
+
+                                        <div class="form-group col-md-6">
+                                            <label for="Cylinders">Submitted Value</label>
+                                            <input type="text" class="form-control" id="Cylinders" data-field-name="Cylinders">
+                                        </div>
+                                    </div>
+
+                                        <div class="grid-container row gap_15">
+                                                <div class="form-group col-md-6">
+                                                <label for="dataPoint4">Data Point</label>
+                                                <input type="text" class="form-control" id="dataPoint4" value="LIEN" readonly>
+                                                </div>
+
+                                                <div class="form-group col-md-6">
+                                                    <label for="Lien">Submitted Value</label>
+                                                    <input type="text" class="form-control" id="Lien" data-field-name="Lien">
+                                                </div>
+                                            </div>
+
+                                        <div class="grid-container row gap_15">
+                                                <div class="form-group col-md-6">
+                                                <label for="dataPoint5">Data Point</label>
+                                                <input type="text" class="form-control" id="dataPoint5" value="JURISDICTION" readonly>
+                                                </div>
+
+                                                <div class="form-group col-md-6">
+                                                    <label for="Jurisdiction">Submitted Value</label>
+                                                    <input type="text" class="form-control" id="Jurisdiction" data-field-name="Jurisdiction">
+                                                </div>
+                                            </div>
+
+                                        <div class="grid-container row gap_15">
+                                                <div class="form-group col-md-6">
+                                                <label for="dataPoint6">Data Point</label>
+                                                <input type="text" class="form-control" id="dataPoint6" value="TITLE" readonly>
+                                                </div>
+
+                                                <div class="form-group col-md-6">
+                                                    <label for="Title">Submitted Value</label>
+                                                    <input type="text" class="form-control" id="Title" data-field-name="Title">
+                                                </div>
+                                            </div>
+
+                                        <div class="grid-container row gap_15">
+                                        <div class="form-group col-md-6">
+                                            <label for="dataPoint7">Data Point</label>
+                                            <input type="text" class="form-control" id="dataPoint7" value="PROPULSION" readonly>
+                                        </div>
+
+                                        <div class="form-group col-md-6">
+                                            <label for="Propulsion">Submitted Value</label>
+                                            <input type="text" class="form-control" id="Propulsion" data-field-name="Propulsion">
+                                        </div>
+                                    </div>
+
+                                    <div class="grid-container row gap_15">
+                                        <div class="form-group col-md-6">
+                                            <label for="dataPoint8">Data Point</label>
+                                            <input type="text" class="form-control" id="dataPoint8" value="MGW" readonly>
+                                        </div>
+
+                                        <div class="form-group col-md-6">
+                                            <label for="Mgw">Submitted Value</label>
+                                            <input type="number" class="form-control" id="Mgw" data-field-name="Mgw" value="0">
+                                        </div>
+                                    </div>
+
+                                    <div class="grid-container row gap_15">
+                                        <div class="form-group col-md-6">
+                                            <label for="dataPoint9">Data Point</label>
+                                            <input type="text" class="form-control" id="dataPoint9" value="MPG" readonly>
+                                        </div>
+
+                                        <div class="form-group col-md-6">
+                                            <label for="Mpg">Submitted Value</label>
+                                            <input type="number" class="form-control" id="Mpg" data-field-name="Mpg" value="0">
+                                        </div>
+                                    </div>
+
+                                    <div class="grid-container row gap_15">
+                                        <div class="form-group col-md-6">
+                                        <label for="dataPoint10">Data Point</label>
+                                        <input type="text" class="form-control" id="year" value="YEAR" readonly >
+                                        </div>
+
+                                        <div class="form-group col-md-6">
+                                            <label for="Year">Submitted Value</label>
+                                            <input type="text" class="form-control" id="Year" data-field-name="Year" >
+                                        </div>
+                                    </div>
+
+                                    </div>
+
+                                    <div class="text-right pr_40">
+                                        <button id="Calculate_RegistrationFee" class="btn btn-primary custom_btn">Calculate</button>
+                                    </div>
+
+                                    <div>
+                                        <h3 id="calculatorHeader"></h3>
+                                        <div>
+                                          <h4 id="calculatedValue" style=""></h4>
+                                        </div>
+                                        <div id="registrationFeeResult">
+                                        </div>
+                                    </div>
+                                </div>
+                        `;
+
+                            $('#registrationFeeContainer').html(htmlContent);
+                          
+                            function highlightRowById(rowIds) {
+                                if (!Array.isArray(rowIds)) {
+                                    rowIds = [rowIds];
+                                }
+
+                                $('.row-checkbox').each(function () {
+                                    const rowId = $(this).data('id'); 
+
+                             
+                                    if (rowIds.includes(rowId)) {
+                                        const row = $(this).closest('tr'); 
+                                        row.addClass('highlighted-row');
+                                    }
+                                    else {
+                                        const row = $(this).closest('tr');
+                                        row.removeClass('highlighted-row'); 
+                                    }
+                                });
+                            }
+
+                            $('#Calculate_RegistrationFee').on('click', function () {
+                                var PlateClass = $('#PlateClass').val();  
+                                var UnladenWeight = $('#UnladenWeight').val();   
+                                var Cylinders = $('#Cylinders').val();  
+                                var Lien = $('#Lien').val();  
+                                var Jurisdiction = $('#Jurisdiction').val(); 
+                                var Title = $('#Title').val();
+                                var Propulsion = $('#Propulsion').val();
+                                var Mpg = $('#Mpg').val();
+                                var Mgw = $('#Mgw').val();
+                                var Year = $('#Year').val();
+                                var StateCode = $('#state').val();
+
+                                var registrationData = {
+                                    stateCode: StateCode,
+                                    plateClass: PlateClass.toLowerCase(),
+                                    unladenWeight: UnladenWeight,
+                                    cylinders: Cylinders,
+                                    lien: Lien.toLowerCase(),
+                                    jurisdiction: Jurisdiction.toLowerCase(),
+                                    title: Title.toLowerCase(),
+                                    Mpg: Mpg,
+                                    Mgw: Mgw,
+                                    Propulsion: Propulsion.toLowerCase(),
+                                    Year: Year.toLowerCase()
+                                };
+
+                                $('#registrationFeeResult').empty();
+
+                                const highlightCalculatedFields = [];
+
+                                $.ajax({
+                                    url: '/RegistrationCalculator/CalculateRegistrationFee',
+                                    type: 'POST',
+                                    contentType: 'application/json',
+                                    data: JSON.stringify(registrationData),
+                                    headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                                    success: function (response) {
+                                        if (response.success) {
+                                            let totalShippingCost = 0;
+                                            const registrationFeeResultDiv = document.getElementById("registrationFeeResult");
+                                            const registrationHeaderDiv = document.getElementById("registrationHeader");
+                                            const calculatedValueResultDiv = document.getElementById("calculatedValue");
+                                            const calculatorHeader = document.getElementById("calculatorHeader");
+
+                                            if (!registrationFeeResultDiv || !calculatedValueResultDiv) {
+                                                console.error("Missing required elements in the DOM.");
+                                                return;
+                                            }
+                                            registrationFeeResultDiv.innerHTML = "";
+                                            calculatedValueResultDiv.innerHTML = "";
+                                            calculatorHeader.innerHTML = "Result of the Calculation";
+
+                                            const parameters = {};
+                                            let formula = "";
+                                            const highlightCalculatedFields = [];
+
+                                            response.data.forEach(result => {
+                                                const shippingCost = parseFloat(result.shippingCost) || 0;
+                                                totalShippingCost += shippingCost;
+                                                const normalizedKey = result.tableName.replace(/\s+/g, '');
+                                                parameters[normalizedKey] = shippingCost;
+                                                const costElement = document.createElement("p");
+                                                costElement.style.fontWeight = "normal";
+                                                costElement.classList.add("normal-text");
+                                                costElement.textContent = `${result.tableName}: $${shippingCost.toFixed(2)}`;
+                                                registrationFeeResultDiv.appendChild(costElement);
+                                                highlightCalculatedFields.push(result.ruleName);
+                                            });
+
+                                            if (response.data.length > 0) {
+                                                let originalFormula = response.data[0]?.formula || "";
+
+                                                response.data.forEach(result => {
+                                                    const normalizedKey = result.tableName.replace(/\s+/g, '');
+                                                    originalFormula = originalFormula.replace(new RegExp(result.tableName, 'g'), normalizedKey);
+                                                });
+
+                                                formula = originalFormula.trim();
+
+                                                try {
+                                                    if (formula) {
+                                                        const expression = math.compile(formula);
+                                                        const evaluatedResult = expression.evaluate(parameters);
+
+                                                        if (!isNaN(evaluatedResult)) {
+                                                            console.log("Evaluated Result:", evaluatedResult);
+                                                            calculatedValueResultDiv.innerHTML = `Total Registration Fee: $${evaluatedResult.toFixed(2)}`;
+                                                        } else {
+                                                            throw new Error("Invalid calculation result (NaN).");
+                                                        }
+                                                    } else {
+                                                        calculatedValueResultDiv.innerHTML = "No valid formula provided.";
+                                                    }
+                                                } catch (error) {
+                                                    calculatedValueResultDiv.innerHTML = "Error calculating registration fee.";
+                                                }
+                                            } else {
+                                                calculatedValueResultDiv.innerHTML = "No data available.";
+                                            }
+                                            highlightRowById(highlightCalculatedFields);
+                                        } else {
+                                            jqToast.error({ text: response.message });
+                                        }
+                                    },
+                                    error: function (xhr, status, error) {
+                                        jqToast.error({ text: 'An error occurred while clearing the data.' });
+                                    }
+                                });
+                            });
+                        });
+                    },
+                    error: function (xhr) {
+                        alert("An error occurred while loading data.");
+                        console.error(xhr.responseText);
+                    }
+                });
+            }
+
+            const createTextInput = (column) => (data, type, row, meta) => {
+                const cleanedData = data && typeof data === 'string' ? data.replace(/^"+|"+$/g, '') : '';
+                return `<input type="text" class="form-control edit-field editable-input" value="${cleanedData || ''}" data-row="${meta.row}" data-row-id="${meta.row}" data-field-name="${column}" data-column="${column}">`;
+            }
+
+            const createDropdown = (column, options) => (data, type, row, meta) => {
+               
+                const placeholder = data || " ";
+
+                const normalizedData = data ? data.toLowerCase().replace(/\s+/g, '') : ''; 
+                const normalizedOptions = options.map(opt => opt.toLowerCase().replace(/\s+/g, ''));
+
+                const emptyOption = `<option value="null" ${!data ? 'selected' : ''}></option>`;
+
+                const optionTags = options.map((opt, index) => {
+                    const normalizedOption = normalizedOptions[index];
+                    return `<option value="${opt}" ${normalizedData === normalizedOption ? 'selected' : ''}>${opt}</option>`;
+                }).join('');
+
+                return `
+                    <select class="form-control edit-field editable-input" data-row="${meta.row}" data-row-id="${meta.row}" data-field-name="${column}" data-column="${column}">
+                    ${emptyOption}
+                    ${optionTags}
+                </select>`;
+            };
+
+            $('#importModal').on('show.bs.modal', function () {
+                $('#modalState').val($('#state').val());
+            });
+
+            $("#importForm").submit(function (e) {
+                e.preventDefault();
+                var StateCode = $('#state').val();
+
+                const formData = new FormData(this);
+                formData.append('stateCode', StateCode);
+
+
+                $.ajax({
+                    url: $(this).attr("action"),
+                    type: "POST",
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
+                        if (response.success) {
+                            jqToast.success({ text: 'File imported successfully!' });
+                            $("#importModal").modal("hide");
+                            reloadDataTable($('#state').val());
+                        } else {
+                            jqToast.error({ text: response.message || "An error occurred!" });
+                        }
+                    },
+                    error: function (xhr) {
+                        jqToast.error({ text: "An error occurred!" });
+                        console.error(xhr.responseText);
+                    }
+                });
+            });
+
+            $('#state').on('change', function (e) {
+                e.preventDefault(); 
+                var StateCode = $('#state').val();
+                const createNewTableButtonId = document.getElementById('createNewTableButtonId');
+                createNewTableButtonId.style.display = 'block'; // Show the div
+                reloadDataTable(StateCode);
+                createMasterFormulaTable(StateCode)
+
+            });
+        });
+    </script>
+}
+
+<h4 class="sub_heading">Manage State Specific Tables</h4>
+<div class="row gap_15 flex_row items-end">
+    <div class="col-sm-6 col-md-4 form-group m-0">
+    <form id="stateForm" >
+        <label for="state" class="control-label">Select State</label>
+        <select name="StateCode" id="state" class="form-control">
+            <option value="" disabled selected>Select State</option> 
+            @foreach (var state in ViewBag.States)
+            {
+               <option value="@state.StateAbbreviation">@state.StateName</option>
+            }
+        </select>
+    </form>
+    </div>
+    <div class="col-sm-5 col-md-8" style="display:none" id="createNewTableButtonId">
+        <button type="button" class="btn btn-primary custom_btn" data-toggle="modal" data-target="#importModal">
+            Create New Table
+        </button>
+    </div>
+</div>
+
+<div id="registrationFeeCalculatorContainer">
+    <div id="registrationFeeContainer">
+    </div>    
+</div>
+
+<div id="masterFormulaContainer">
+    <div id="masterFormulaTablesContainer">
+    </div>
+</div>
+
+<div style="display:none" id="showNoDataContainer">
+    <div id="emptyTablesContainer">
+    </div>
+</div>
+
+<div style="display:none" id="showDataContainer">
+    <div id="tablesContainer">
+    </div>
+</div>
+
+<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h5 class="modal-title" id="importModalLabel">Create New Table</h5>
+            </div>
+            <div class="modal-body">
+                <form id="importForm" asp-action="Import" method="post" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label>State</label>
+                        <select id="modalState" asp-for="State" class="form-control" asp-items="@(new SelectList(ViewBag?.States, "StateAbbreviation", "StateName"))" disabled>
+                            <option value="">Select State</option>
+                        </select>
+                        <span asp-validation-for="State" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Table Name</label>
+                        <input asp-for="WorkflowName" class="form-control" />
+                        <span asp-validation-for="WorkflowName" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Excel File</label>
+                        <input type="file" name="excelFile" class="form-control form-control-file" />
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Import</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="confirmClearModal" tabindex="-1" role="dialog" aria-labelledby="confirmClearModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white" style="    height: 60px;">
+                <h5 class="modal-title" id="confirmClearModalLabel" style="    color: black;">
+                    Confirm Clear
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to clear the data?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmClearButton">Clear</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white" style="    height: 60px;">
+                <h5 class="modal-title" id="confirmDeleteModalLabel" style="    color: black;">
+                    Confirm Delete
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the table?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmDeleteButton">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="confirmSaveModal" tabindex="-1" role="dialog" aria-labelledby="confirmSaveModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white" style="    height: 60px;">
+                <h5 class="modal-title" id="confirmSaveModalLabel" style="    color: black;">
+                    Confirm Save
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to save the data?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmSaveButton">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="confirmRemoveRowModal" tabindex="-1" role="dialog" aria-labelledby="confirmRemoveRowModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white" style="    height: 60px;">
+                <h5 class="modal-title" id="confirmRemoveRowModalLabel" style="    color: black;">
+                    Confirm Remove Row
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the rows?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmRemoveRowButton">Remove</button>
+            </div>
+        </div>
+    </div>
+</div>
+

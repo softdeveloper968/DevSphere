@@ -1,0 +1,23 @@
+﻿@{
+    Layout = "~/Views/Shared/_UploadLinkLayout.cshtml";
+    ViewData["Title"] = "Payment Failed";
+}
+
+<div class="container text-center mt-5">
+    <div class="white_box success_sec">
+
+    <h2 class="text-danger">❌ Payment Failed</h2>
+    <p class="lead">Unfortunately, your payment could not be processed.</p>
+    <p>Please try again or contact support if the issue persists.</p>
+
+        <div class="mt-4">
+            <button onclick="closeTab()" class="btn btn-primary">Close Tab</button>
+        </div>
+</div>
+</div>
+
+<script>
+    function closeTab() {
+        window.close();
+    }
+</script>

@@ -1,0 +1,198 @@
+﻿@model MyDMVpro.Models.PaymentsAndDisbursement
+
+@{
+    ViewData["Title"] = "Create Payment / Disbursement";
+}
+
+<h2>Create Payment/Disbursement</h2>
+
+<div class="payment_disbursement_section" id="payment_disbursement_section">
+    <form id="savePaymentForm">
+
+        <input type="hidden" name="id" id="pay-RequestId" />
+        <input type="hidden" name="vin" id="pay-vin" />
+
+        <div class="form-group" id="PaymentTypeDiv">
+            <label for="">Transaction Type</label>
+            <select class="form-control" name="PaymentTypeID" id="PaymentTypeID">
+                <option value="">Select Type</option>
+                <option value="credit">Credit</option>
+                <option value="debit">Debit</option>
+            </select>
+        </div>
+
+        <div class="form-group" id="creditPaymentDiv">
+            <label for="CreditPaymentTypeID">Credit Payment Type</label>
+                <select class="form-control" name="CreditPaymentTypeID" id="CreditPaymentTypeID">
+                @foreach (var type in ViewBag.CreditPaymentTypes)
+                {
+                    <option value="@type.PaymentTypeID">@type.PaymentTypeName</option>
+                }
+            </select>
+        </div>
+
+        <div class="form-group" id="debitDiv">
+            <label for="DebitPaymentTypeID">DebitPayment Type</label>
+            <select  class="form-control" name="DebitPaymentTypeID" id="DebitPaymentTypeID">
+                @foreach (var type in ViewBag.DebitPaymentTypes)
+                {
+                    <option value="@type.PaymentTypeID">@type.PaymentTypeName</option>
+                }
+            </select>
+            <span for="DebitPaymentTypeID" class="text-danger"></span>
+        </div>
+
+    <div class="form-group" id="amountDiv">
+        <label for="Amount">Amount($)</label>
+            <input type="number" class="form-control" name="Amount" id="Amount" />
+        <span for="Amount" class="text-danger"></span>
+
+    </div>
+
+    <div class="form-group" id="refNumberDiv">
+        <label for="ReferenceNumber">Reference Number(#)</label>
+            <input type="text" class="form-control" name="ReferenceNumber" id="ReferenceNumber" />
+    </div>
+
+    <div class="form-group" id="paymentDateDiv">
+            <label for="paymentDate">Payment Date</label>
+            <input type="date" class="form-control" name="paymentDate" id="paymentDate" />
+        </div>
+
+    <div class="form-group" id="processingFeeDiv">
+        <label for="ProcessingFee">Processing Fee</label>
+            <input type="number" class="form-control" name="ProcessingFee" id="ProcessingFee" />
+    </div>
+
+    <div class="form-group" id="totalChargeDiv">
+        <label for="TotalCharge">Total Charge</label>
+            <input type="number" class="form-control" readonly name="TotalCharge" id="TotalCharge" />
+    </div>
+
+        <button type="submit" id="submitPaymentButton" class="btn btn-primary">Save</button>
+</form>
+
+</div>
+
+<script>
+    const PaymentType = {
+        Check: 1,
+        CreditCard: 2,
+        ACH: 3,
+        ElectronicDisbursement: 4,
+        DisbursementCheck: 5,
+        MaggardServiceFee : 6
+    };
+
+    $(document).ready(function () {
+       
+        let selectedPaymentType = 0
+        let isCredit = false
+        var $form = $("#payment_disbursement_section");
+
+        $form.find("#processingFeeDiv").hide();
+        $form.find("#totalChargeDiv").hide();
+        $form.find("#creditPaymentDiv").hide();
+        $form.find("#debitDiv").hide();
+        $form.find("#paymentDateDiv").hide();
+
+        $('#Amount, #ProcessingFee').on('input', function () {
+            var amount = parseFloat($('#Amount').val()) || 0;
+            var fee = parseFloat($('#ProcessingFee').val()) || 0;
+            $('#TotalCharge').val(amount + fee);
+        });
+
+        $("#PaymentTypeID").change(function () {
+            var selectedType = ($(this).val());
+            let selectedValueOfDebit = $("#DebitPaymentTypeID").val();
+            let selectedValueOfCredit = $("#CreditPaymentTypeID").val();
+            $(this).find("option[value='']").remove();
+
+            if (selectedType === "credit") {
+                selectedPaymentType = selectedValueOfCredit
+                isCredit = true;
+                $form.find("#creditPaymentDiv").show();
+                $form.find("#debitDiv").hide();
+                $form.find("#paymentDateDiv").show();
+            } else {
+                isCredit = false;
+                selectedPaymentType = selectedValueOfDebit
+                $form.find("#debitDiv").show();
+                $form.find("#creditPaymentDiv").hide();
+                $form.find("#paymentDateDiv").hide();
+            }
+        });
+
+        $("#DebitPaymentTypeID").change(function () {
+            var selectedType = parseInt($(this).val());
+            selectedPaymentType = selectedType
+            if (selectedType === PaymentType.ElectronicDisbursement || selectedType === PaymentType.DisbursementCheck) {
+                $form.find("#processingFeeDiv").hide();
+                $form.find("#totalChargeDiv").hide();
+                $form.find("#paymentDateDiv").hide();
+                $form.find("#refNumberDiv").show();
+            } else {
+                $form.find("#processingFeeDiv").hide();
+                $form.find("#totalChargeDiv").hide();
+                $form.find("#paymentDateDiv").hide();
+                $form.find("#refNumberDiv").hide();
+            }
+        });
+
+        $("#CreditPaymentTypeID").change(function () {
+            var selectedType = parseInt($(this).val());
+            selectedPaymentType = selectedType
+
+            if (selectedType === PaymentType.CreditCard || selectedType === PaymentType.ACH) {
+                $form.find("#processingFeeDiv").show();
+                $form.find("#totalChargeDiv").show();
+                $form.find("#paymentDateDiv").show();
+                $form.find("#refNumberDiv").show();
+            } else {
+                $form.find("#processingFeeDiv").hide();
+                $form.find("#totalChargeDiv").hide();
+                $form.find("#paymentDateDiv").show();
+
+            }
+        });
+
+        $("#savePaymentForm").submit(function (event) {
+            event.preventDefault();
+
+            var reqId = $("#pay-RequestId").val();
+
+            let payload = {
+                paymentTypeID: parseInt(selectedPaymentType) || 0,
+                amount: parseFloat($("#Amount").val()) || 0,
+                referenceNumber: $("#ReferenceNumber").val() || " ",
+                processingFee: parseFloat($("#ProcessingFee").val()) || 0,
+                totalCharge: parseFloat($("#TotalCharge").val()) || 0,
+                isCredit: isCredit || false,
+                requestId: $("#pay-RequestId").val(),
+                vin: $("#pay-vin").val() || null,
+                paymentDate: $("#paymentDate").val() || new Date().toISOString().split('T')[0] + "T00:00:00.000Z",
+            };
+
+            $.ajax({
+                url: '/Requests/CreatePaymentAndDisbursement',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(payload),
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                success: function (response) {
+                    if (response.success) {
+                        jqToast.success({ text: "Data saved successfully!" });
+                        loadPaymentAndDisbursement(isCredit, reqId)
+                    }
+                    else {
+                        jqToast.error({ text: "Data saved successfully!" });
+                    }
+                },
+                error: function (xhr) {
+                    jqToast.error({ text: "Error occured during proccessing" });
+                }
+            });
+        });
+    });
+
+</script>

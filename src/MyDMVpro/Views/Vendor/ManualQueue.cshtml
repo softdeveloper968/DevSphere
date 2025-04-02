@@ -1,0 +1,642 @@
+﻿@model MyDMVpro.Common.ViewHelpers.ViewDefinitionCollection
+
+@{
+    string PageName = "ManualQueue";
+    string GetUrl(string name)
+    {
+        return MyDMVpro.Controllers.RequestStatusController.GetEndpointUrl(this.Context, name);
+    }
+}
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+@{
+    await Html.RenderPartialAsync("_Chat", new Chats());
+    await Html.RenderPartialAsync("_AttachmentList");
+    await Html.RenderPartialAsync("_MoveDialog");
+    await Html.RenderPartialAsync("_BulkDialog");
+    await Html.RenderPartialAsync("_EditDetails");
+    await Html.RenderPartialAsync("_ExportItems");
+    await Html.RenderPartialAsync("_DeleteRequest");
+    await Html.RenderPartialAsync("_downloadStatements");
+    // These are required for the bulk print dialogs
+    await Html.RenderPartialAsync("~/Views/Requests/_ApplicationsSelectionForPrinting.cshtml");
+    await Html.RenderPartialAsync("~/Views/Requests/_CheckMergeForPrinting.cshtml");
+    await Html.RenderPartialAsync("~/Views/Requests/_AttachmentsSelectionForPrinting.cshtml");
+}
+<h2 class="sub_heading">New Deals Review</h2>
+<div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel MQ_Review_list = new VendorRequestViewModel(VendorViewType.MQ_Review, PageName)
+                {
+                    QueueTitle = "Review",
+
+                    ListId = "DT_MQ_Review",
+
+                    AllowMove = false,
+
+                    AllowDelete = false,
+                    AllowCancel = false,
+                    AllowAddToInvoice = false,
+                    AllowRefresh = true,
+                    AllowStatusEdit = false,
+                    AllowMultiSelect = true,
+                    AllowDirectToBilling = false,
+                    AllowSort = true,
+                    EnableFilter = true,
+                    ColorizeStatus = false,
+                    EnableSortButton = false,
+                    AddLastModified = false,
+                    AddLastModifiedBy = false,
+                    EnableExport = true,
+                    EnablePresets = false,
+                    EnableReportBuilder = true,
+                    AddExpandNotesOption = true,
+                    AddIncludeArchivedOption = true,
+                    UpdateAuditsButton = false,
+                    EnableBulkEdit = false,
+                    AddOCRReviewButton = true,
+                };
+
+            MQ_Review_list.Columns.Add_Select();
+            MQ_Review_list.Columns.Add_CodeCount();
+            MQ_Review_list.Columns.Add_Chat();
+            MQ_Review_list.Columns.Add_Attachments();
+            MQ_Review_list.Columns.Add_DateToVendor();         
+            MQ_Review_list.Columns.Add_Group();
+            MQ_Review_list.Columns.Add_RNo();
+            MQ_Review_list.Columns.Add_Notes();
+            MQ_Review_list.Columns.Add_AppType();
+
+            await Html.RenderPartialAsync("_VendorRequestList", MQ_Review_list);
+        }
+    }
+</div>
+
+<h2 class="sub_heading">New Deal - Not Ready To Accept</h2>
+<div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel MQ_NotReadyToAccept_list = new VendorRequestViewModel(VendorViewType.MQ_NotReadyToAccept, PageName)
+                {
+                    QueueTitle = "NotReadyToAccept",
+
+                    ListId = "DT_MQ_NotReadyToAccept",
+
+                    AllowMove = true,
+
+                    AllowDelete = false,
+                    AllowCancel = false,
+                    AllowAddToInvoice = false,
+                    AllowRefresh = true,
+                    AllowStatusEdit = false,
+                    AllowMultiSelect = true,
+                    AllowDirectToBilling = false,
+                    AllowSort = true,
+                    EnableFilter = true,
+                    ColorizeStatus = false,
+                    EnableSortButton = false,
+                    AddLastModified = false,
+                    AddLastModifiedBy = false,
+                    EnableExport = true,
+                    EnablePresets = false,
+                    EnableReportBuilder = true,
+                    AddExpandNotesOption = true,
+                    AddIncludeArchivedOption = true,
+                    UpdateAuditsButton = false,
+                    EnableBulkEdit = false,
+
+                };
+
+            MQ_NotReadyToAccept_list.Columns.Add_Select();
+            MQ_NotReadyToAccept_list.Columns.Add_CodeCount();
+            MQ_NotReadyToAccept_list.Columns.Add_Chat();
+            MQ_NotReadyToAccept_list.Columns.Add_Attachments();
+            MQ_NotReadyToAccept_list.Columns.Add_Links();
+            MQ_NotReadyToAccept_list.Columns.Add_DupeCheck();
+            MQ_NotReadyToAccept_list.Columns.Add_HelpLink();
+            MQ_NotReadyToAccept_list.Columns.Add_DateToVendor();
+            MQ_NotReadyToAccept_list.Columns.Add_NotReadyToAccept();
+            MQ_NotReadyToAccept_list.Columns.Add_Group();
+            MQ_NotReadyToAccept_list.Columns.Add_RNo();
+            MQ_NotReadyToAccept_list.Columns.Add_VIN();
+            MQ_NotReadyToAccept_list.Columns.Add_Notes();
+            MQ_NotReadyToAccept_list.Columns.Add_AppType();
+            await Html.RenderPartialAsync("_VendorRequestList", MQ_NotReadyToAccept_list);
+        }
+    }
+</div>
+<h2 class="sub_heading">New Deal Follow Up Review</h2>
+<div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel MQ_FollowUpReview_list = new VendorRequestViewModel(VendorViewType.MQ_FollowUpReview, PageName)
+                {
+                    QueueTitle = "FollowUpReview",
+
+                    ListId = "DT_MQ_FollowUpReview",
+
+                    AllowMove = true,
+
+                    AllowDelete = false,
+                    AllowCancel = false,
+                    AllowAddToInvoice = false,
+                    AllowRefresh = true,
+                    AllowStatusEdit = false,
+                    AllowMultiSelect = true,
+                    AllowDirectToBilling = false,
+                    AllowSort = true,
+                    EnableFilter = true,
+                    ColorizeStatus = false,
+                    EnableSortButton = false,
+                    AddLastModified = false,
+                    AddLastModifiedBy = false,
+                    EnableExport = true,
+                    EnablePresets = false,
+                    EnableReportBuilder = true,
+                    AddExpandNotesOption = true,
+                    AddIncludeArchivedOption = true,
+                    UpdateAuditsButton = false,
+                    EnableBulkEdit = false,
+
+                };
+
+            MQ_FollowUpReview_list.Columns.Add_Select();
+            MQ_FollowUpReview_list.Columns.Add_CodeCount();
+            MQ_FollowUpReview_list.Columns.Add_Chat();
+            MQ_FollowUpReview_list.Columns.Add_Attachments();
+            MQ_FollowUpReview_list.Columns.Add_Links();
+            MQ_FollowUpReview_list.Columns.Add_DupeCheck();
+            MQ_FollowUpReview_list.Columns.Add_HelpLink();
+            MQ_FollowUpReview_list.Columns.Add_DateToVendor();
+            MQ_FollowUpReview_list.Columns.Add_Group();
+            MQ_FollowUpReview_list.Columns.Add_RNo();
+            MQ_FollowUpReview_list.Columns.Add_VIN();
+            MQ_FollowUpReview_list.Columns.Add_Notes();
+            await Html.RenderPartialAsync("_VendorRequestList", MQ_FollowUpReview_list);
+        }
+    }
+</div>
+<h2 class="sub_heading">Accepted - Incoming</h2>
+<div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel MQ_AcceptedIncoming_list = new VendorRequestViewModel(VendorViewType.MQ_AcceptedIncoming, PageName)
+                {
+                    QueueTitle = "AcceptedIncoming",
+
+                    ListId = "DT_MQ_AcceptedIncoming",
+
+                    AllowMove = true,
+
+                    AllowDelete = false,
+                    AllowCancel = false,
+                    AllowAddToInvoice = false,
+                    AllowRefresh = true,
+                    AllowStatusEdit = false,
+                    AllowMultiSelect = true,
+                    AllowDirectToBilling = false,
+                    AllowSort = true,
+                    EnableFilter = true,
+                    ColorizeStatus = false,
+                    EnableSortButton = false,
+                    AddLastModified = false,
+                    AddLastModifiedBy = false,
+                    EnableExport = true,
+                    EnablePresets = false,
+                    EnableReportBuilder = true,
+                    AddExpandNotesOption = true,
+                    AddIncludeArchivedOption = true,
+                    UpdateAuditsButton = false,
+                    EnableBulkEdit = false,
+
+                };
+
+            MQ_AcceptedIncoming_list.Columns.Add_Select();
+            MQ_AcceptedIncoming_list.Columns.Add_CodeCount();
+            MQ_AcceptedIncoming_list.Columns.Add_Chat();
+            MQ_AcceptedIncoming_list.Columns.Add_Attachments();
+            MQ_AcceptedIncoming_list.Columns.Add_Links();
+            MQ_AcceptedIncoming_list.Columns.Add_DupeCheck();
+            MQ_AcceptedIncoming_list.Columns.Add_HelpLink();
+            MQ_AcceptedIncoming_list.Columns.Add_DateToVendor();
+            MQ_AcceptedIncoming_list.Columns.Add_AcceptedDate();
+            MQ_AcceptedIncoming_list.Columns.Add_Group();
+            MQ_AcceptedIncoming_list.Columns.Add_RNo();
+            MQ_AcceptedIncoming_list.Columns.Add_AppType();
+            MQ_AcceptedIncoming_list.Columns.Add_VIN();
+            MQ_AcceptedIncoming_list.Columns.Add_Notes();
+            MQ_AcceptedIncoming_list.Columns.Add_Odometer();
+            MQ_AcceptedIncoming_list.Columns.Add_REG_LH_Name();
+            MQ_AcceptedIncoming_list.Columns.Add_REG_Reg_Name();
+
+            await Html.RenderPartialAsync("_VendorRequestList", MQ_AcceptedIncoming_list);
+        }
+    }
+</div>
+
+
+<h2 class="sub_heading">Accepted - Not Ready To Process</h2>
+<div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel MQ_AcceptedNotReadyToProcess_list = new VendorRequestViewModel(VendorViewType.MQ_AcceptedNotReadyToProcess, PageName)
+                {
+                    QueueTitle = "AcceptedNotReadyToProcess",
+
+                    ListId = "DT_MQ_AcceptedNotReadyToProcess",
+
+                    AllowMove = true,
+
+                    AllowDelete = false,
+                    AllowCancel = false,
+                    AllowAddToInvoice = false,
+                    AllowRefresh = true,
+                    AllowStatusEdit = false,
+                    AllowMultiSelect = true,
+                    AllowDirectToBilling = false,
+                    AllowSort = true,
+                    EnableFilter = true,
+                    ColorizeStatus = false,
+                    EnableSortButton = false,
+                    AddLastModified = false,
+                    AddLastModifiedBy = false,
+                    EnableExport = true,
+                    EnablePresets = false,
+                    EnableReportBuilder = true,
+                    AddExpandNotesOption = true,
+                    AddIncludeArchivedOption = true,
+                    UpdateAuditsButton = false,
+                    EnableBulkEdit = false,
+
+                };
+
+            MQ_AcceptedNotReadyToProcess_list.Columns.Add_Select();
+            MQ_AcceptedNotReadyToProcess_list.Columns.Add_CodeCount();
+            MQ_AcceptedNotReadyToProcess_list.Columns.Add_Chat();
+            MQ_AcceptedNotReadyToProcess_list.Columns.Add_Attachments();
+            MQ_AcceptedNotReadyToProcess_list.Columns.Add_Links();
+            MQ_AcceptedNotReadyToProcess_list.Columns.Add_DupeCheck();
+            MQ_AcceptedNotReadyToProcess_list.Columns.Add_HelpLink();
+            MQ_AcceptedNotReadyToProcess_list.Columns.Add_DateToVendor();
+            MQ_AcceptedNotReadyToProcess_list.Columns.Add_AcceptedDate();
+            MQ_AcceptedNotReadyToProcess_list.Columns.Add_NotReadyToProcess();
+            MQ_AcceptedNotReadyToProcess_list.Columns.Add_Group();
+            MQ_AcceptedNotReadyToProcess_list.Columns.Add_RNo();
+            MQ_AcceptedNotReadyToProcess_list.Columns.Add_AppType();
+            MQ_AcceptedNotReadyToProcess_list.Columns.Add_VIN();
+            MQ_AcceptedNotReadyToProcess_list.Columns.Add_Notes();
+            MQ_AcceptedNotReadyToProcess_list.Columns.Add_Odometer();
+            MQ_AcceptedNotReadyToProcess_list.Columns.Add_REG_LH_Name();
+            MQ_AcceptedNotReadyToProcess_list.Columns.Add_REG_Reg_Name();
+
+            await Html.RenderPartialAsync("_VendorRequestList", MQ_AcceptedNotReadyToProcess_list);
+        }
+    }
+</div>
+<h2 class="sub_heading">Accepted - Follow Up Review</h2>
+<div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel MQ_Accepted_FollowUpReview_list = new VendorRequestViewModel(VendorViewType.MQ_Accepted_FollowUpReview, PageName)
+                {
+                    QueueTitle = "Accepted_FollowUpReview",
+
+                    ListId = "DT_MQ_Accepted_FollowUpReview",
+
+                    AllowMove = true,
+
+                    AllowDelete = false,
+                    AllowCancel = false,
+                    AllowAddToInvoice = false,
+                    AllowRefresh = true,
+                    AllowStatusEdit = false,
+                    AllowMultiSelect = true,
+                    AllowDirectToBilling = false,
+                    AllowSort = true,
+                    EnableFilter = true,
+                    ColorizeStatus = false,
+                    EnableSortButton = false,
+                    AddLastModified = false,
+                    AddLastModifiedBy = false,
+                    EnableExport = true,
+                    EnablePresets = false,
+                    EnableReportBuilder = true,
+                    AddExpandNotesOption = true,
+                    AddIncludeArchivedOption = true,
+                    UpdateAuditsButton = false,
+                    EnableBulkEdit = false,
+
+                };
+
+            MQ_Accepted_FollowUpReview_list.Columns.Add_Select();
+            MQ_Accepted_FollowUpReview_list.Columns.Add_CodeCount();
+            MQ_Accepted_FollowUpReview_list.Columns.Add_Chat();
+            MQ_Accepted_FollowUpReview_list.Columns.Add_Attachments();
+            MQ_Accepted_FollowUpReview_list.Columns.Add_Links();
+            MQ_Accepted_FollowUpReview_list.Columns.Add_DupeCheck();
+            MQ_Accepted_FollowUpReview_list.Columns.Add_HelpLink();
+            MQ_Accepted_FollowUpReview_list.Columns.Add_DateToVendor();
+            MQ_Accepted_FollowUpReview_list.Columns.Add_AcceptedDate();
+            MQ_Accepted_FollowUpReview_list.Columns.Add_NotReadyToProcess();
+            MQ_Accepted_FollowUpReview_list.Columns.Add_Group();
+            MQ_Accepted_FollowUpReview_list.Columns.Add_RNo();
+            MQ_Accepted_FollowUpReview_list.Columns.Add_AppType();
+            MQ_Accepted_FollowUpReview_list.Columns.Add_VIN();
+            MQ_Accepted_FollowUpReview_list.Columns.Add_Notes();
+            MQ_Accepted_FollowUpReview_list.Columns.Add_Odometer();
+            MQ_Accepted_FollowUpReview_list.Columns.Add_REG_LH_Name();
+            MQ_Accepted_FollowUpReview_list.Columns.Add_REG_Reg_Name();
+
+            await Html.RenderPartialAsync("_VendorRequestList", MQ_Accepted_FollowUpReview_list);
+        }
+    }
+</div>
+<h2 class="sub_heading">Ready To Process</h2>
+<div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel MQ_ReadyToProcess_list = new VendorRequestViewModel(VendorViewType.MQ_ReadyToProcess, PageName)
+                {
+                    QueueTitle = "ReadyToProcess",
+
+                    ListId = "DT_MQ_ReadyToProcess",
+
+                    AllowMove = true,
+
+                    AllowDelete = false,
+                    AllowCancel = false,
+                    AllowAddToInvoice = false,
+                    AllowRefresh = true,
+                    AllowStatusEdit = false,
+                    AllowMultiSelect = true,
+                    AllowDirectToBilling = false,
+                    AllowSort = true,
+                    EnableFilter = true,
+                    ColorizeStatus = false,
+                    EnableSortButton = false,
+                    AddLastModified = false,
+                    AddLastModifiedBy = false,
+                    EnableExport = true,
+                    EnablePresets = false,
+                    EnableReportBuilder = true,
+                    AddExpandNotesOption = true,
+                    AddIncludeArchivedOption = true,
+                    UpdateAuditsButton = false,
+                    EnableBulkEdit = false,
+
+                };
+
+            MQ_ReadyToProcess_list.Columns.Add_Select();
+            MQ_ReadyToProcess_list.Columns.Add_CodeCount();
+            MQ_ReadyToProcess_list.Columns.Add_Chat();
+            MQ_ReadyToProcess_list.Columns.Add_Attachments();
+            MQ_ReadyToProcess_list.Columns.Add_Links();
+            MQ_ReadyToProcess_list.Columns.Add_DupeCheck();
+            MQ_ReadyToProcess_list.Columns.Add_HelpLink();
+            MQ_ReadyToProcess_list.Columns.Add_DateToVendor();
+            MQ_ReadyToProcess_list.Columns.Add_AcceptedDate();
+            MQ_ReadyToProcess_list.Columns.Add_DateReceived();
+            MQ_ReadyToProcess_list.Columns.Add_Group();
+            MQ_ReadyToProcess_list.Columns.Add_RNo();
+            MQ_ReadyToProcess_list.Columns.Add_AppType();
+            MQ_ReadyToProcess_list.Columns.Add_VIN();
+            MQ_ReadyToProcess_list.Columns.Add_Notes();
+            MQ_ReadyToProcess_list.Columns.Add_Odometer();
+            MQ_ReadyToProcess_list.Columns.Add_REG_LH_Name();
+            MQ_ReadyToProcess_list.Columns.Add_REG_Reg_Name();
+
+            await Html.RenderPartialAsync("_VendorRequestList", MQ_ReadyToProcess_list);
+        }
+    }
+</div>
+<h2 class="sub_heading">Could Not Process</h2>
+<div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel MQ_CouldNotProcess_list = new VendorRequestViewModel(VendorViewType.MQ_CouldNotProcess, PageName)
+                {
+                    QueueTitle = "CouldNotProcess",
+
+                    ListId = "DT_MQ_CouldNotProcess",
+
+                    AllowMove = true,
+
+                    AllowDelete = false,
+                    AllowCancel = false,
+                    AllowAddToInvoice = false,
+                    AllowRefresh = true,
+                    AllowStatusEdit = false,
+                    AllowMultiSelect = true,
+                    AllowDirectToBilling = false,
+                    AllowSort = true,
+                    EnableFilter = true,
+                    ColorizeStatus = false,
+                    EnableSortButton = false,
+                    AddLastModified = false,
+                    AddLastModifiedBy = false,
+                    EnableExport = true,
+                    EnablePresets = false,
+                    EnableReportBuilder = true,
+                    AddExpandNotesOption = true,
+                    AddIncludeArchivedOption = true,
+                    UpdateAuditsButton = false,
+                    EnableBulkEdit = false,
+
+                };
+
+            MQ_CouldNotProcess_list.Columns.Add_Select();
+            MQ_CouldNotProcess_list.Columns.Add_CodeCount();
+            MQ_CouldNotProcess_list.Columns.Add_Chat();
+            MQ_CouldNotProcess_list.Columns.Add_Attachments();
+            MQ_CouldNotProcess_list.Columns.Add_Links();
+            MQ_CouldNotProcess_list.Columns.Add_DupeCheck();
+            MQ_CouldNotProcess_list.Columns.Add_HelpLink();
+            MQ_CouldNotProcess_list.Columns.Add_DateToVendor();
+            MQ_CouldNotProcess_list.Columns.Add_AcceptedDate();
+            MQ_CouldNotProcess_list.Columns.Add_RejectionDate();
+            MQ_CouldNotProcess_list.Columns.Add_Group();
+            MQ_CouldNotProcess_list.Columns.Add_RNo();
+            MQ_CouldNotProcess_list.Columns.Add_AppType();
+            MQ_CouldNotProcess_list.Columns.Add_VIN();
+            MQ_CouldNotProcess_list.Columns.Add_Notes();
+            MQ_CouldNotProcess_list.Columns.Add_Odometer();
+            MQ_CouldNotProcess_list.Columns.Add_REG_LH_Name();
+            MQ_CouldNotProcess_list.Columns.Add_REG_Reg_Name();
+
+            await Html.RenderPartialAsync("_VendorRequestList", MQ_CouldNotProcess_list);
+        }
+    }
+</div>
+<h2 class="sub_heading">Processed - Reconcile</h2>
+<div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel MQ_ProcessedReconcile_list = new VendorRequestViewModel(VendorViewType.MQ_ProcessedReconcile, PageName)
+                {
+                    QueueTitle = "ProcessedReconcile",
+
+                    ListId = "DT_MQ_ProcessedReconcile",
+
+                    AllowMove = true,
+
+                    AllowDelete = false,
+                    AllowCancel = false,
+                    AllowAddToInvoice = false,
+                    AllowRefresh = true,
+                    AllowStatusEdit = false,
+                    AllowMultiSelect = true,
+                    AllowDirectToBilling = false,
+                    AllowSort = true,
+                    EnableFilter = true,
+                    ColorizeStatus = false,
+                    EnableSortButton = false,
+                    AddLastModified = false,
+                    AddLastModifiedBy = false,
+                    EnableExport = true,
+                    EnablePresets = false,
+                    EnableReportBuilder = true,
+                    AddExpandNotesOption = true,
+                    AddIncludeArchivedOption = true,
+                    UpdateAuditsButton = false,
+                    EnableBulkEdit = false,
+
+                };
+
+            MQ_ProcessedReconcile_list.Columns.Add_Select();
+            MQ_ProcessedReconcile_list.Columns.Add_CodeCount();
+            MQ_ProcessedReconcile_list.Columns.Add_Chat();
+            MQ_ProcessedReconcile_list.Columns.Add_Attachments();
+            MQ_ProcessedReconcile_list.Columns.Add_Links();
+            MQ_ProcessedReconcile_list.Columns.Add_DupeCheck();
+            MQ_ProcessedReconcile_list.Columns.Add_HelpLink();
+            MQ_ProcessedReconcile_list.Columns.Add_DateToVendor();
+            MQ_ProcessedReconcile_list.Columns.Add_DateToDMV();
+            MQ_ProcessedReconcile_list.Columns.Add_Group();
+            MQ_ProcessedReconcile_list.Columns.Add_RNo();
+            MQ_ProcessedReconcile_list.Columns.Add_AppType();
+            MQ_ProcessedReconcile_list.Columns.Add_VIN();
+            MQ_ProcessedReconcile_list.Columns.Add_Notes();
+            MQ_ProcessedReconcile_list.Columns.Add_Odometer();
+            MQ_ProcessedReconcile_list.Columns.Add_REG_LH_Name();
+            MQ_ProcessedReconcile_list.Columns.Add_REG_Reg_Name();
+
+            await Html.RenderPartialAsync("_VendorRequestList", MQ_ProcessedReconcile_list);
+        }
+    }
+</div>
+<h2 class="sub_heading">Completed</h2>
+<div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel MQ_Completed_list = new VendorRequestViewModel(VendorViewType.MQ_Completed, PageName)
+                {
+                    QueueTitle = "Completed",
+
+                    ListId = "DT_MQ_Completed",
+
+                    AllowMove = true,
+
+                    AllowDelete = false,
+                    AllowCancel = false,
+                    AllowAddToInvoice = false,
+                    AllowRefresh = true,
+                    AllowStatusEdit = false,
+                    AllowMultiSelect = true,
+                    AllowDirectToBilling = false,
+                    AllowSort = true,
+                    EnableFilter = true,
+                    ColorizeStatus = false,
+                    EnableSortButton = false,
+                    AddLastModified = false,
+                    AddLastModifiedBy = false,
+                    EnableExport = true,
+                    EnablePresets = false,
+                    EnableReportBuilder = true,
+                    AddExpandNotesOption = true,
+                    AddIncludeArchivedOption = true,
+                    UpdateAuditsButton = false,
+                    EnableBulkEdit = false,
+
+                };
+
+            MQ_Completed_list.Columns.Add_Select();
+            MQ_Completed_list.Columns.Add_CodeCount();
+            MQ_Completed_list.Columns.Add_Chat();
+            MQ_Completed_list.Columns.Add_Attachments();
+            MQ_Completed_list.Columns.Add_Links();
+            MQ_Completed_list.Columns.Add_DupeCheck();
+            MQ_Completed_list.Columns.Add_HelpLink();
+            MQ_Completed_list.Columns.Add_DateToVendor();
+            MQ_Completed_list.Columns.Add_LH_Shipped_to_Vendor();
+            MQ_Completed_list.Columns.Add_Group();
+            MQ_Completed_list.Columns.Add_RNo();
+            MQ_Completed_list.Columns.Add_AppType();
+            MQ_Completed_list.Columns.Add_VIN();
+            MQ_Completed_list.Columns.Add_Notes();
+            MQ_Completed_list.Columns.Add_Odometer();
+            MQ_Completed_list.Columns.Add_REG_LH_Name();
+            MQ_Completed_list.Columns.Add_REG_Reg_Name();
+
+            await Html.RenderPartialAsync("_VendorRequestList", MQ_Completed_list);
+        }
+    }
+</div>
+<h2 class="sub_heading">Returned Temporarily</h2>
+<div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel MQ_ReturnedTemporarily_list = new VendorRequestViewModel(VendorViewType.MQ_ReturnedTemporarily, PageName)
+                {
+                    QueueTitle = "ReturnedTemporarily",
+
+                    ListId = "DT_MQ_ReturnedTemporarily",
+
+                    AllowMove = true,
+
+                    AllowDelete = false,
+                    AllowCancel = false,
+                    AllowAddToInvoice = false,
+                    AllowRefresh = true,
+                    AllowStatusEdit = false,
+                    AllowMultiSelect = true,
+                    AllowDirectToBilling = false,
+                    AllowSort = true,
+                    EnableFilter = true,
+                    ColorizeStatus = false,
+                    EnableSortButton = false,
+                    AddLastModified = false,
+                    AddLastModifiedBy = false,
+                    EnableExport = true,
+                    EnablePresets = false,
+                    EnableReportBuilder = true,
+                    AddExpandNotesOption = true,
+                    AddIncludeArchivedOption = true,
+                    UpdateAuditsButton = false,
+                    EnableBulkEdit = false,
+
+                };
+
+            MQ_ReturnedTemporarily_list.Columns.Add_Select();
+            MQ_ReturnedTemporarily_list.Columns.Add_CodeCount();
+            MQ_ReturnedTemporarily_list.Columns.Add_Chat();
+            MQ_ReturnedTemporarily_list.Columns.Add_Attachments();
+            MQ_ReturnedTemporarily_list.Columns.Add_Links();
+            MQ_ReturnedTemporarily_list.Columns.Add_DupeCheck();
+            MQ_ReturnedTemporarily_list.Columns.Add_HelpLink();
+            MQ_ReturnedTemporarily_list.Columns.Add_DateToVendor();
+            MQ_ReturnedTemporarily_list.Columns.Add_ReturnedDate();
+            MQ_ReturnedTemporarily_list.Columns.Add_Group();
+            MQ_ReturnedTemporarily_list.Columns.Add_RNo();
+            MQ_ReturnedTemporarily_list.Columns.Add_AppType();
+            MQ_ReturnedTemporarily_list.Columns.Add_VIN();
+            MQ_ReturnedTemporarily_list.Columns.Add_Notes();
+            MQ_ReturnedTemporarily_list.Columns.Add_Odometer();
+            MQ_ReturnedTemporarily_list.Columns.Add_REG_LH_Name();
+            MQ_ReturnedTemporarily_list.Columns.Add_REG_Reg_Name();
+
+            await Html.RenderPartialAsync("_VendorRequestList", MQ_ReturnedTemporarily_list);
+        }
+    }
+</div>

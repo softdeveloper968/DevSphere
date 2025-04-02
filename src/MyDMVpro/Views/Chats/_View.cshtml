@@ -1,0 +1,40 @@
+﻿@model MyDMVpro.Models.ChatsViewModels.ChatViewModel
+
+@{
+    ViewData["Title"] = "View";
+    var lastCreated = Model.Chats.Select(c => c.Created).DefaultIfEmpty(DateTime.MinValue).Max();
+}
+<table class="table">
+    <thead>
+        <tr>
+            <th>@Html.DisplayFor(m => m.VehicleYear)
+                @Html.DisplayFor(m => m.VehicleMake)</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.Chats)
+        {
+            <tr>
+                @if (item.User.IsVendorAgent == null || !item.User.IsVendorAgent.Value)
+                {
+                    <td class="chat-user" data-created="@item.Created">
+                        <span class="chat-by">@Html.DisplayFor(modelItem => item.User.DisplayName) @Html.DisplayFor(modelItem => item.Created)</span><br />
+                        <span class="chat-msg">@Html.DisplayFor(modelItem => item.Message)</span>
+                    </td>
+                }
+                else
+                {
+                    <td class="chat-vendor">
+                        <span class="chat-by">@Html.DisplayFor(modelItem => item.User.DisplayName) @Html.DisplayFor(modelItem => item.Created)</span><br />
+                        <span class="chat-msg">@Html.DisplayFor(modelItem => item.Message)</span>
+                    </td>
+                }
+            </tr>
+        }
+    </tbody>
+    <tfoot><div style="display:none" data-lastcreated="@lastCreated"></div></tfoot>
+</table>
+<script asp-add-nonce="true">
+    $(document).ready(function () {
+    });
+</script>

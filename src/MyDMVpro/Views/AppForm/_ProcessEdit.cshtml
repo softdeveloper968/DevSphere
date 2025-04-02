@@ -1,0 +1,275 @@
+﻿@model MyDMVpro.Models.AppFormModels.ProcessStatus
+@{
+    int count = 0;
+    string ALTFORMDIV()
+    {
+        return ((count++) % 2) == 0 ? "evenrow" : "oddrow";
+    }
+    Dictionary<string, string> excludeFields = new Dictionary<string, string>();
+    List<string> fields = new List<string>();
+
+    bool FieldInList(string fieldName)
+    {
+        if (Model.EnabledFields.Count == 0)
+            return true;
+        return Model.EnabledFields.Any(f => f.FieldName == fieldName);
+    }
+}
+
+<style>
+
+    .action-buttons {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-left: 4px;
+    }
+
+    .highlight-input {
+        background-color: #e5fae4 !important;
+    }
+</style>
+
+<div class="scrollable">
+
+    <form id="dynamicProcessEditForm" asp-action="VendorEditStatus" method="post" class="w-100">
+        <input type="hidden" asp-for="RequestId" />
+        <div class="row flex_row gap_15">
+            @if (FieldInList("DateToVendor"))
+            {
+                <div class="form-group col-md-6" @ALTFORMDIV()>
+                    <label asp-for="DateToVendor" class="control-label"></label>
+                    <div class="input-group d-flex">
+                        <input type="date" asp-for="DateToVendor" class="form-control field-input" data-original-value="" />
+                        <div class="action-buttons hidden">
+                            <button type="button" class="btn btn-primary save-btn">✔</button>
+                            <button type="button" class="btn btn-danger cancel-btn">✖</button>
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (FieldInList("DateReceived"))
+            {
+                <div class="form-group col-md-6">
+                <label asp-for="DateReceived" class="control-label"></label>
+                    <div class="input-group d-flex">
+                        <input type="date" asp-for="DateReceived" class="form-control field-input" data-original-value="" />
+                        <div class="action-buttons hidden">
+                            <button type="button" class="btn btn-primary save-btn ">✔</button>
+                            <button type="button" class="btn btn-danger cancel-btn">✖</button>
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (FieldInList("DateSigned"))
+            {
+                <div class="form-group col-md-6">
+                <label asp-for="DateSigned" class="control-label"></label>
+                    <div class="input-group d-flex">
+                        <input type="date" asp-for="DateSigned" class="form-control field-input" data-original-value="" />
+                        <div class="action-buttons hidden">
+                            <button type="button" class="btn btn-primary save-btn">✔</button>
+                            <button type="button" class="btn btn-danger cancel-btn">✖</button>
+                        </div>
+                    </div>
+               </div>
+            }
+            @if (FieldInList("DatePrinted"))
+            {
+                <div class="form-group col-md-6">
+                <label asp-for="DatePrinted" class="control-label"></label>
+                    <div class="input-group d-flex">
+                        <input type="date" asp-for="DatePrinted" class="form-control field-input" data-original-value="" />
+                        <div class="action-buttons hidden">
+                            <button type="button" class="btn btn-primary save-btn">✔</button>
+                            <button type="button" class="btn btn-danger cancel-btn">✖</button>
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (FieldInList("ETA"))
+            {
+                <div class="form-group col-md-6">
+                <label asp-for="ETA" class="control-label"></label>
+                    <div class="input-group d-flex">
+                        <input type="date" asp-for="ETA" class="form-control field-input" data-original-value="" />
+                        <div class="action-buttons hidden">
+                            <button type="button" class="btn btn-primary save-btn">✔</button>
+                            <button type="button" class="btn btn-danger cancel-btn">✖</button>
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (FieldInList("DateToDmv"))
+            {
+                <div class="form-group col-md-6">
+                <label asp-for="DateToDmv" class="control-label"></label>
+                    <div class="input-group d-flex">
+                        <input type="date" asp-for="DateToDmv" class="form-control field-input" data-original-value="" />
+                        <div class="action-buttons hidden">
+                            <button type="button" class="btn btn-primary save-btn">✔</button>
+                            <button type="button" class="btn btn-danger cancel-btn">✖</button>
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (FieldInList("DateTitleIssued"))
+            {
+                <div class="form-group col-md-6">
+                <label asp-for="DateTitleIssued" class="control-label"></label>
+                    <div class="input-group d-flex">
+                        <input type="date" asp-for="DateTitleIssued" class="form-control field-input" data-original-value="" />
+                        <div class="action-buttons hidden">
+                            <button type="button" class="btn btn-primary save-btn">✔</button>
+                            <button type="button" class="btn btn-danger cancel-btn">✖</button>
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (FieldInList("Courier"))
+            {
+                <div class="form-group col-md-6">
+                <label asp-for="Courier" class="control-label"></label>
+                    <div class="input-group d-flex">
+                        <input type="text" asp-for="Courier" class="form-control field-input" data-original-value="" />
+                        <div class="action-buttons hidden" >
+                            <button type="button" class="btn btn-primary save-btn">✔</button>
+                            <button type="button" class="btn btn-danger cancel-btn">✖</button>
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (FieldInList("TrackingNumber"))
+            {
+                <div class="form-group col-md-6">
+                <label asp-for="TrackingNumber" class="control-label"></label>
+                    <div class="input-group d-flex">
+                        <input type="text" asp-for="TrackingNumber" class="form-control field-input" data-original-value="" />
+                        <div class="action-buttons hidden" >
+                            <button type="button" class="btn btn-primary save-btn">✔</button>
+                            <button type="button" class="btn btn-danger cancel-btn">✖</button>
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (FieldInList("Code"))
+            {
+                <div class="form-group col-md-6">
+                <label asp-for="Code" class="control-label"></label>
+                    <div class="input-group d-flex">
+                        <input type="text" asp-for="Code" class="form-control field-input" data-original-value="" />
+                        <div class="action-buttons hidden">
+                            <button type="button" class="btn btn-primary save-btn">✔</button>
+                            <button type="button" class="btn btn-danger cancel-btn">✖</button>
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (FieldInList("RejectionDate"))
+            {
+                <div class="form-group col-md-6">
+                <label asp-for="RejectionDate" class="control-label"></label>
+                    <div class="input-group d-flex">
+                        <input type="date" asp-for="RejectionDate" class="form-control field-input" data-original-value="" />
+                        <div class="action-buttons hidden" >
+                            <button type="button" class="btn btn-primary save-btn">✔</button>
+                            <button type="button" class="btn btn-danger cancel-btn">✖</button>
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (FieldInList("CheckNumber"))
+            {
+                <div class="form-group col-md-6">
+                <label asp-for="CheckNumber" class="control-label"></label>
+                    <div class="input-group d-flex">
+                        <input type="number" asp-for="CheckNumber" class="form-control field-input" data-original-value="" />
+                        <div class="action-buttons hidden" >
+                            <button type="button" class="btn btn-primary save-btn">✔</button>
+                            <button type="button" class="btn btn-danger cancel-btn">✖</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </form>
+
+</div>
+
+<script>
+
+    $(document).ready(function () {
+        $("#dynamicProcessEditForm .field-input").each(function () {
+            $(this).attr("data-original-value", $(this).val());
+        });
+
+        $("#dynamicProcessEditForm").on("input", ".field-input", function () {
+            let fieldName = $(this).attr("name");
+            let fieldValue = $(this).val();
+            let originalValue = $(this).data("original-value");
+            let actionButtons = $(this).siblings(".action-buttons");
+            let parent = $(this).closest(".input-group");
+            let inputField = parent.find(".field-input");
+
+            console.log("Field Changed:", fieldName, "Value:", fieldValue);
+
+            if (fieldValue !== originalValue) {
+                actionButtons.removeClass("hidden");
+                inputField.addClass("highlight-input")
+
+            } else {
+                actionButtons.addClass("hidden");
+                inputField.removeClass("highlight-input")
+
+
+            }
+        });
+
+        $("#dynamicProcessEditForm").on("click", ".save-btn", function () {
+            let parent = $(this).closest(".input-group");
+            let inputField = parent.find(".field-input");
+            let fieldName = inputField.attr("name"); // Get field name
+            let fieldValue = inputField.val(); // Get new value
+            let requestId = $("input[name='RequestId']").val(); // Get request ID
+            let actionButtons = $(this).closest(".action-buttons");
+
+            const formData = new FormData();
+            formData.append('RequestId', requestId);
+            formData.append('FieldName', fieldName);
+            formData.append('FieldValue', fieldValue);
+
+            $.ajax({
+                url: "/AppForm/VendorEditStatusIndividual",
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                cache: false,
+                success: function () {
+                    inputField.data("original-value", fieldValue); // Update original value
+                    actionButtons.addClass("hidden");
+                    inputField.removeClass("highlight-input")
+                    var updatedFieldName = fieldName.replace(/([A-Z])/g, ' $1').trim()
+                    var sucessMessage = `${updatedFieldName} updated successfully!`;
+                    jqToast.success({ text: sucessMessage });
+                },
+                error: function () {
+                    alert("Error saving field.");
+                }
+            });
+        });
+
+        $("#dynamicProcessEditForm").on("click", ".cancel-btn", function () {
+            let inputField = $(this).closest(".input-group").find(".field-input");
+            let actionButtons = $(this).closest(".action-buttons");
+
+            inputField.val(inputField.data("original-value"));
+            actionButtons.addClass("hidden");
+            inputField.removeClass("highlight-input")
+
+        });
+    });
+
+
+</script>

@@ -1,0 +1,19 @@
+﻿@model ViewSignedBatchViewModel
+<div>
+    @if (string.IsNullOrWhiteSpace(Model.Signature))
+    {
+        <div>Prepared for manual signing.  Please print, sign and send to vendor for processing.</div>
+    }
+    else
+    {
+        <div>Please review the signed document and optionally download for your records.</div>
+    }
+</div>
+
+<object data="/Forms/ViewSignedForms/@Model.BatchId" type="application/pdf" style="width: 100%; height:1000px;">
+    <p>
+        <b>Error</b>:
+        This browser does not support PDFs. Please download the PDF to view it: <a href="/Forms/ViewSignedForms/@Model.BatchId">Download PDF</a>.
+    </p>
+</object>
+

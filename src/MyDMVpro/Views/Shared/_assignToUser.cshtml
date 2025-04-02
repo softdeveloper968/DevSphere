@@ -1,0 +1,58 @@
+﻿<div id="modal-assignToUser" class="modal fade hidden-print" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Assign to User</h4>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="assignToUser_groupId" value="" />
+                <div class="form-group">
+                    <div class="form-group">
+                        <label for="userId" class="control-label text-left required">Assign selected requests to:</label>
+                        <select id="assignToUser_userId" name="assignToUser_userId" class="form-control" data-val="true" data-required="required">
+                            <option value=""></option>
+                        </select>
+                        <span class="field-validation-valid text-danger" data-valmsg-for="assignToUser_userId" data-valmsg-replace="true"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script asp-add-nonce="true">
+    function populateUsersList() {
+        var groupId = $('#assignToUser_groupId').val();
+        var formData = new FormData();
+        formData.append("groupId", groupId);
+        $.ajax({
+            url: "@Url.Action("GetUsers","MyServices")",
+            type: 'POST',
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            async: true,
+            cache: false,
+            data: formData,
+            dataType: 'json',
+            processData: false,
+            contentType: false,
+        }).done(function (data) {
+            // populate users list
+            $('#assignToUserId').empty();
+            $('#assignToUser_userId').empty();
+            $.each(data, function (i, obj) {
+                var elt = document.createElement('span');
+                elt.textContent = obj.displayName;
+                var div_data = "<option value='" + obj.userId + "'>" + elt.innerHTML + "</option>";
+                $(div_data).appendTo('#assignToUser_userId');
+            });
+        }).fail(function (jqXHR, textStatus) {
+            // do nothing
+            succeeded = false;
+        });
+    }
+</script>

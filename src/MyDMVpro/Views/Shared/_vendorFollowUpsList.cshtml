@@ -1,0 +1,884 @@
+﻿@model VendorFollowUpViewModel
+@using MyDMVpro.Common.ViewHelpers;
+@{
+    string SortableIconColumnWidth()
+    {
+        return "36px";
+    }
+    string IconColumnWidth()
+    {
+        return "30px";
+    }
+    var columnCount = 0;
+    string filterList()
+    {
+        List<string> filterFields = new List<string>();
+        foreach (DatatableColumnInfo col in Model.Columns)
+        {
+            if (!string.IsNullOrEmpty(col.FilterField))
+            {
+                filterFields.Add(col.FilterField);
+            }
+        }
+        return string.Join(",", filterFields);
+    }
+    string SortableOption(bool f)
+    {
+        if (Model.AllowSort && f)
+        {
+            return "true";
+        }
+        return "false";
+    }
+    string OrderSequenceOption()
+    {
+        if (Model.AllowSort)
+        {
+            return ",\"orderSequence\": [\"desc\",\"asc\"]";
+        }
+        return "";
+    }
+    string SearchableOption(bool f)
+    {
+        if (Model.EnableFilter && f)
+        {
+            return "true";
+        }
+        return "false";
+    }
+
+    if (Model.AddLastModified)
+    {
+        Model.Columns.Add_Modified();
+    }
+    if (Model.AddLastModifiedBy)
+    {
+        bool hasFilter = false;
+        foreach (var c in Model.Columns)
+        {
+            if (!string.IsNullOrEmpty(c.FilterField))
+            {
+                hasFilter = true;
+                break;
+            }
+        }
+        Model.Columns.Add_ModifiedBy(hasFilter);
+    }
+    Model.Columns.Add_RequestId();
+
+   string OrderableOption(bool f)
+    {
+        if (Model.AllowSort && f)
+        {
+            return "true";
+        }
+        return "false";
+    }
+string getbool(bool f)
+{
+    if (f) return "true";
+    return "false";
+}
+}
+<script asp-add-nonce="true">
+    function attachmentDropdown() {
+        document.getElementById("myDropdown").classList.toggle("show");
+    }
+    var GetUniqueID = function () {
+        // Math.random should be unique because of its seeding algorithm.
+        // Convert it to base 36 (numbers + letters), and grab the first 9 characters
+        // after the decimal.
+        return '_' + Math.random().toString(36).substr(2, 9);
+    };
+    // Close the dropdown menu if the user clicks outside of it
+    window.onclick = function (event) {
+        if (!event.target.matches('.dropbtn')) {
+            var dropdowns = document.getElementsByClassName("dropdown-content");
+            var i;
+            for (i = 0; i < dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.classList.contains('show')) {
+                    openDropdown.classList.remove('show');
+                }
+            }
+        }
+    }
+</script>
+<style asp-add-nonce="true">
+    td.numericCol {
+        text-align: right !important;
+        padding-right: 30px;
+    }
+    .filterToggle .advanced {
+            display: none;
+        }
+    .filterToggle .simple {
+            display: inline-block;
+        }
+    .filterToggle.advancedOn
+        .advanced {
+            display: inline-block;
+        }
+    .filterToggle.advancedOn
+        .simple {
+            display: none;
+        }
+
+    td.sum {
+        border-top: 4px double black;
+    }
+
+    #@(Model.ListId)_wrapper tfoot {
+        display: table-footer-group;
+        font-weight: bold;
+    }
+    #@(Model.ListId)_wrapper thead {
+        display: table-header-group;
+    }
+</style>
+
+
+<table class="display stripe" id="@Model.ListId" cellspacing="0" align="left">
+    <thead>
+        <tr id="headerRow-@Model.ListId">
+            @if (Model.Columns.Count > 0)
+            {
+                foreach (var c in Model.Columns)
+                {
+                    <th class="@c.Class dt-center">@c.Title</th>
+                }
+                columnCount = Model.Columns.Count;
+            }
+        </tr>
+        @if (Model.EnableFilter)
+        {<text>
+            <tr id="filterRow-@Model.ListId">
+                @for (var i = 0; i < Model.Columns.Count; i++)
+                {
+                    DatatableColumnInfo c = Model.Columns[i];
+                    string cls = c.Class;//.Split(" ")[0];
+
+                    if (i == 0)
+                    {
+                        <th class="clearFilter @cls" data-toggle="tooltip" title="Clear filter"></th>
+                    }
+                    else if (i == 1 && Model.EnableAdvancedSearch)
+                    {
+                        <th class="advancedFilter @cls" data-toggle="tooltip" title="Advanced filter"></th>
+                    }
+                    else
+                    {
+                        if (cls == "")
+                        {
+                            <th></th>
+                        }
+                        else
+                        {
+                            <th class="@cls"></th>
+                        }
+                    }
+                }
+            </tr>
+        </text>}
+    </thead>
+    <tbody></tbody>
+    <tfoot>
+        @*                <tr>
+                @if (Model.Columns.Count > 0)
+                {
+                    foreach (var c in Model.Columns)
+                    {
+                        <td class="@c.Class"></td>
+                    }
+                    columnCount = Model.Columns.Count;
+                }
+            </tr>
+        *@
+    </tfoot>
+</table>
+
+
+<script asp-add-nonce="true">
+
+
+    var allOutcomeOptions = {};
+    $.ajax({
+        url: '/Vendor/GetAllAuditOutcomeComboboxData',
+        type: 'GET',
+        success: function (data) {
+            data.forEach(function (item) {
+                if (!allOutcomeOptions[item.auditType]) {
+                    allOutcomeOptions[item.auditType] = [];
+                }
+                allOutcomeOptions[item.auditType].push('<option value="' + item.name + '">' + item.name + '</option>');
+            });
+        },
+        error: function (error) {
+            console.log('Error fetching outcome options:', error);
+        }
+    });
+
+var assignedUserOptions = [];
+  $.ajax({
+                url: '/Vendor/GetAssignedUsersDataForCombobox',
+                type: 'GET',
+                success: function(data) {
+                    assignedUserOptions = data.map(function(user) {                     
+                        return `<option value="${user.userId}">${user.displayName}</option>`;                 
+                    });
+                      },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching data: ', error);
+                }
+});
+
+
+    $(document).ready(function () {
+        $.fn.dataTable.render.shortDate = datatable_render_shortdate;
+
+        var tblid = '@Model.ListId';
+        var table = $('#@Model.ListId')
+            .on('preXhr.dt', function (e, settings, data) {
+                data.dropdownFilters = '@filterList()';
+            })
+            .DataTable(
+                {
+                @if  (Model.EnableKeyNavigation)
+                {
+                    @:@Model?.KeyNavigation
+                }
+                @if (Model.ViewType == VendorViewType.LinkedRequests || Model.ViewType == VendorViewType.LinkSearch)
+                {
+                    <text>
+                    scrollX: true,
+                    </text>
+                }
+                else {
+                    <text>
+                    colReorder: true,
+                    scrollX: true,
+                    bSortCellsTop: true,
+                    </text>
+                }
+                    scrollY: false,
+                    "select": true,
+                    "searching": true,
+                    "language": {
+                        emptyTable: "No follow-ups found",
+                        select: {
+                            rows: "<span class='info_xrowsselected'>%d rows selected</span>"
+                            ,selector: 'td:not(.norowselect)'
+                        }
+                    },
+                    "pageLength": @Model.PageLength,
+                @if (Model.AllowLengthChange)
+                {
+                    @:"lengthMenu": @Model.LengthMenu,
+                }
+                else
+                {
+                    @:"lengthChange": false,
+                }
+                @*fixedColumns: { leftColumns: 2 },*@
+                @if (Model.SortColumns.Count > 0)
+                {
+                    @:order: [
+                    for(var i = 0; i<Model.SortColumns.Count; i++)
+                    {
+                        if (i > 0) { @:,
+                        } @:[$('#@Model.ListId .@Model.SortColumns[i].Name').index(), '@(Model.SortColumns[i].Descending?"desc":"asc")']
+                    }
+                    @:],
+                }
+                    searchDelay: 500,
+                    "searchCols": [
+                        @if (Model.Columns.Count > 0)
+                        {
+                            foreach (var c in Model.Columns)
+                            {
+                                if (!string.IsNullOrEmpty(c.DefaultFilterValue))
+                                {
+                                    @:{ "search": "@c.DefaultFilterValue" },
+                                }
+                                else
+                                {
+                                    @:null,
+                                }
+                            }
+                            columnCount = Model.Columns.Count;
+                        }
+                    ],
+                    "columnDefs": [
+                                             {
+    "targets": "outcomecomboboxColumn",
+    "width": "@IconColumnWidth()",
+    "min-width": "@IconColumnWidth()",
+    "max-width": "@IconColumnWidth()",
+    "className": "dt-center norowselect",
+    "searchable": false,
+    "orderable": false,
+    "data": "outcome",
+    "render": function (data, type, row, meta) {
+        var selectHtml = '<select class="comboboxColumn getoutcomedata form-control">';
+        var normalizedData = data ? data.trim().toLowerCase() : '';
+        var matchFound = false;
+        if (!normalizedData) {
+            selectHtml += '<option value="" disabled selected>Select an outcome ...</option>';
+        }
+        var outComeOptions = getOutcomeOptionsByTblid(tblid);
+        var renderedOptions = {}; 
+        for (var i = 0; i < outComeOptions.length; i++) {
+            var optionValue = outComeOptions[i].match(/value="([^"]*)"/)[1];
+            var optionText = outComeOptions[i].match(/>([^<]*)</)[1];
+            var normalizedOptionValue = optionValue.trim().toLowerCase();
+            if (!renderedOptions[normalizedOptionValue]) {
+                renderedOptions[normalizedOptionValue] = true;
+                var selected = (normalizedOptionValue === normalizedData) ? ' selected' : '';
+                selectHtml += '<option value="' + optionValue + '"' + selected + '>' + optionText + '</option>';
+                if (selected) {
+                    matchFound = true;
+                }
+            }
+        }
+        if (!matchFound && normalizedData) {
+            selectHtml += '<option value="' + normalizedData + '" selected>' + data + '</option>';
+        }
+
+        selectHtml += '</select>';
+        return selectHtml;
+        }
+},
+ {
+    "data": "assignedUser",
+    "targets": "assignedusercomboboxColumn",
+    "width": "@IconColumnWidth()",
+    "min-width": "@IconColumnWidth()",
+    "max-width": "@IconColumnWidth()",
+    "className": "dt-center norowselect",
+    "searchable": @Html.Raw(SearchableOption(true)),
+    "orderable": false,
+    "render": function (data, type, row, meta) {
+    var selectHtml = '<select class="comboboxColumn getassigneduserdata form-control">';
+    var found = false;
+    selectHtml += '<option value="" disabled ' + (data === null || data === "" ? 'selected' : '') + '>Select a user ...</option>';
+    
+    for (var i = 0; i < assignedUserOptions.length; i++) {
+        var optionValue = $(assignedUserOptions[i]).val();
+        if (optionValue === data) {
+            selectHtml += '<option value="' + optionValue + '" selected>' + $(assignedUserOptions[i]).text() + '</option>';
+            found = true;
+        } else {
+            selectHtml += '<option value="' + optionValue + '">' + $(assignedUserOptions[i]).text() + '</option>';
+        }
+    }
+    
+    if (!found && data !== null && data !== "") {
+        selectHtml += '<option value="' + data + '" selected>' + data + '</option>';
+    }
+
+    selectHtml += '</select>';
+    return selectHtml;
+}
+},
+{
+    "targets": "InternalInputbox",
+    "width": "@IconColumnWidth()",
+    "min-width": "@IconColumnWidth()",
+    "max-width": "@IconColumnWidth()",
+    "className": "inputColumn dt-center norowselect",
+    "searchable": false,
+    "orderable": false,
+    "data": "internal",
+    "render": function (data, type, row, meta) {
+        var value = (data !== undefined && data !== null) ? data : '';
+        var placeholder = (data === undefined || data === null || data === '') ? ' placeholder="Add an internal note ..."' : '';
+        return '<textarea class="inputboxColumn getinputdata form-control"' + placeholder + '>' + value + '</textarea>';
+    }
+},
+{
+    "targets": "AuditNotesInputbox",
+    "width": "@IconColumnWidth()",
+    "min-width": "@IconColumnWidth()",
+    "max-width": "@IconColumnWidth()",
+    "className": "inputColumn dt-center norowselect",
+    "searchable": false,
+    "orderable": false,
+    "data": "auditNotes",
+    "render": function (data, type, row, meta) {
+        var value = (data !== undefined && data !== null) ? data : '';
+        var placeholder = (data === undefined || data === null || data === '') ? ' placeholder="Add a note ..."' : '';
+        var required = (data === undefined || data === null || data === '') ? ' required' : '';
+        var requiredSpan = (data === undefined || data === null || data === '') ? '<span class="requiredAudit">*</span>' : '';
+        return '<div style="position: relative;"><textarea class="inputboxColumn getnotesdata form-control"' + placeholder + required + '>' + value + '</textarea>' + requiredSpan + '</div>';
+    }
+},
+                        {
+                            "targets": "reqChkbx",
+                            "orderable": false,
+                            "className": "select-checkbox",
+                            "min-width": "40px",
+                            "sortable": false,
+                            "data": null
+                        },
+                        { "targets": "reqBlank", "data": null },
+                        {
+                            "targets": "reqNo", "visible": true, "sortable": @Html.Raw(SortableOption(true)), "data": "requestNo",
+                            "width": "80px", "min-width": "100px",
+                            "render": function (data, type, full, meta) {
+                                if (type == 'display') return leftPad(data, 6);
+                                return data;
+                            }
+                            @Html.Raw(OrderSequenceOption())
+                        },
+                        {
+                            "targets": "reqCreated", "data": "createdDate", "min-width": "100px", "width": "100px",
+                            "render": datatable_render_date
+                        },
+                        { "targets": "reqCode", "data": "code", "width": "120px" },
+                        {
+                            "targets": ["reqFUPNotes"], "sortable": false, "className": "fup-details-control",
+                            "orderable": false, "data": "notes", "defaultContent": '',
+                            "searchable": @Html.Raw(SearchableOption(true)),
+                            "autowidth": true, "max-width": "300px", "width": "200px",
+
+                            "render": function (data, type, full, meta) {
+                                let maxchars = 40;
+                                if (type == 'display') {
+                                    data = data || "";
+                                    if (data.length < maxchars) {
+                                        return data;
+                                    }
+                                    return '<div class="fupnoteabbrev fupnotecollapsed">' + htmlEncode(data.substr(0, maxchars)) + '...</div>';
+                                }
+                            }
+                        },
+                        {
+                            "targets": ["reqFullFUPNotes"], "sortable": false,
+                            "orderable": false, "data": "notes", "defaultContent": '',
+                            "searchable": false, "autowidth": true, "visible": false
+                        },
+                        { "targets": "reqTags", "data": "tags", "width": "100px" },
+                        { "targets": "reqContacts", "data": "contacts", "width": "100px" },
+                        { "targets": "reqContactAction", "data": "contactAction" },
+                        { "targets": "reqDesc", "data": "tagDesc", "width": "100px" },
+                        { "targets": "reqTitle", "data": "title", "min-width": "100px", "width": "100px" },
+                        { "targets": "reqDueDate", "data": "dueDate", "render": datatable_render_date },
+                        { "targets": "reqCompletedDate", "data": "completedDate", "render": datatable_render_date },
+                        { "targets": "reqState", "data": "state", "className": "nohide dt-center", "searchable": @Html.Raw(SearchableOption(true)), "orderable": @Html.Raw(OrderableOption(true)), "sortable": @Html.Raw(SortableOption(true))  },
+                        { "targets": "reqType", "data": "appType", "width": "80px", "min-width": "80px", "className": "nohide dt-center", "searchable": @Html.Raw(SearchableOption(true)), "orderable": @Html.Raw(OrderableOption(true)), "sortable": @Html.Raw(SortableOption(true)) },
+                        { "targets": "reqVIN", "sortable": true, "width": "120px", "searchable": true, "type": "text-vin", "orderable": @Html.Raw(SearchableOption(true)), "data": "vin", "render": datatable_render_vin },
+
+                        { "targets": "reqId", "visible": false, "sortable": false, "className": "hidcol", "data": "requestId", "searchable": false },
+                        { "targets": "reqFollowUpId", "visible": false, "sortable": false, "data": "followUpId", "searchable": false },
+                        { "targets": "reqVendorId", "data": "vendorId" },
+                        {
+                            "targets": "reqGroupId", "data": "groupId"
+                        },
+                        { "targets": "reqGroup", "data": "groupName" },
+                        {
+                            "targets": ["currency", "currencyFmt"], className: "numericCol", width: "130px",
+                            "render": $.fn.dataTable.render.number(',', '.', 2, '$ ')
+                        },
+                        {
+                            "targets": ["dfilter", "drfilter", "dsearch"],
+                            "sortable": true,
+                            "width": "100px",
+                            "defaultContent": "",
+                            "render": datatable_render_date
+                        },
+                        {
+                            "targets": ["followupContactsfilter"],
+                            "sortable": false,
+                            "width": "120px"
+                        },
+                        {
+                            "targets": ["followuptagfilter"],
+                            "sortable": false,
+                            "width": "120px"
+                        },
+                        {
+                            "targets": ["reqHasLink"], "data": "hasLink", "className": "iconColumn dt-center noexport norowselect",
+                            "autowidth": false,
+                            "width": "@IconColumnWidth()",
+                            "min-width": "@IconColumnWidth()",
+                            "max-width": "@IconColumnWidth()",
+                            "searchable": false, "orderable": false, sortable: false,
+                            "render": datatable_render_linkedicon
+                        },
+                         {
+                            "targets": "reqChat",
+                            "autowidth": false,
+                            "width": "@SortableIconColumnWidth()",
+                            "min-width": "@SortableIconColumnWidth()",
+                            "max-width": "@SortableIconColumnWidth()",
+                            "orderable": @Html.Raw(OrderableOption(true)),
+                            "data": "chatSort",
+                            "className": "chatcol @((Model.ViewType == VendorViewType.LinkedRequests || Model.ViewType == VendorViewType.LinkSearch) ? "" : "iconSortableColumn") dt-center noexport norowselect",
+                            "render": datatable_render_chat
+                        @Html.Raw(OrderSequenceOption())
+                        },
+                        {
+                            "targets": ["reqLinks", "reqEditRequest"],
+                            "autowidth": false,
+                            "width": "@IconColumnWidth()",
+                            "min-width": "@IconColumnWidth()",
+                            "max-width": "@IconColumnWidth()",
+                            "className": "iconColumn dt-center noexport norowselect",
+                            "searchable": false, "orderable": false, sortable: false,
+                            "render": datatable_render_editrequest_link
+                        },
+                        { "targets": "reqLastModBy", "sortable": @Html.Raw(SortableOption(true)), "data": "lastModifiedBy", "className": "dt-nowrap dt-center modinfo" },
+                        { "targets": "reqLastMod", "sortable": @Html.Raw(SortableOption(true)), "data": "lastModified", "className": "dt-nowrap dt-center modinfo", "render": getfn_datatable_render_datetime_short() @Html.Raw(OrderSequenceOption()) },
+                        {
+                            "targets": "_all", "searchable": true, "className": "dt-center", "autowidth": true, "defaultContent": "", "sortable": true,
+                            render: $.fn.dataTable.render.text()
+                        }, 
+                    ],
+                    "processing": true,
+                    "serverSide": true,
+                    "ajax":
+                    {
+                        "url": "@Model.DataUrl",
+                        "type": "POST",
+                        "dataType": "JSON",
+                        headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() }
+                    },
+                    "createdRow": function (row, data, dataIndex) {
+                        if (data.attachmentCount && data.attachmentCount > 0)
+                            $(row).addClass('hasAttachments');
+                        @if (Model.DisplayFullNotesAsChildRow)
+                        {
+                            <text>
+                            if (typeof data.notes !== 'undefined' && data.notes != null && data.notes.length > 0) {
+                                var api = this.api();
+                                var div = $("<div class='notesview'></div>");
+                                div.text(data.notes);
+                                api.row(row).child(div[0].outerHTML).show();
+                            }
+                            </text>
+                        }
+                        @if (Model.ViewType == VendorViewType.FollowupAudit)
+{
+    <text>
+     if (data.auditstatus == "In Progress") {
+        $(row).addClass('row-Frozen red');
+        }
+        HandleAuditData(data, "FollowupAudit", enableDisableInProgressForFollowup, enableDisableNotInProgressForFollowup);
+    </text>
+}
+                    },
+                    "buttons": [
+                        {
+                            extend: 'selectAll',
+                            className: 'selectall',
+                            action: function (e) {
+                                e.preventDefault();
+                                table.rows({ search: 'applied' }).deselect();
+                                table.rows({ search: 'applied' }).select();
+                            }
+                        },
+                        'selectNone',
+                    @if (Model.ViewType == VendorViewType.RequestFollowUps)
+                    {
+                        @:{ text: "New", action: function (e) { e.preventDefault(); vendor_show_FollowUp_Create(table); } },
+                    }
+
+                    { text: "", titleAttr: "Refresh", className: "listRefresh", action: function (e) { e.preventDefault(); table.ajax.reload(); }},
+
+                    @if (Model.UpdateAuditsButton) {<text>
+                        {
+                            extend: 'collection',
+                            text: 'Audit',
+                            className:"selectOnOff",
+                            "dropup": true,
+                            autoClose: true,
+                            background: false, 
+                            buttons: [
+                                {
+                                    text: "Single Audit",
+                                    className: "UpdateAuditNote",
+                                    action: function (e) {
+                                        e.preventDefault();
+                                        vendor_UpdateAudit(table,tblid);
+                                    },
+                                },
+                                  {
+                                    text: "Bulk Audit",
+                                    className: "BulkUpdateAuditNote",
+                                    action: function (e) {
+                                        e.preventDefault();
+                                        vendor_BulkUpdateAudit(table,tblid);
+                                    },
+                                }  
+                            ]
+                        }, 
+
+                    </text> }      
+
+                    @if (Model.UpdateAuditsButton) { <text>
+                        [
+                           {
+    "text": 'Start',
+   "className": function (e) {
+    return `start_${tblid} btn btn-primary`;
+},
+    "action": function (e) {
+        e.preventDefault();
+        table.page.len(1000).draw();
+
+        table.one('draw', function() {
+            audit_startbutton(table,tblid);
+            table.page.len(10).draw();
+        });
+    }
+},
+                            {
+                                "text": 'Complete', 
+                                "className": function (e) {
+                    return `complete_${tblid} btn btn-success`;
+                },
+                                "action": function (e) {
+                                    e.preventDefault();
+        table.page.len(1000).draw();
+        table.one('draw', function() {
+            audit_completebutton(table,tblid);   
+            
+        });
+                           
+                                }
+                            },
+                            {
+                                "text": 'Previous Audits', "className": "Prior_Audits",
+                                "action": function (e) {
+                                    e.preventDefault();
+                                    return Prior_Auditbutton(table,tblid);
+                                }
+                            }
+                        ],
+                    </text> }
+
+
+    @if (Model.AllowEdit)
+    {
+          @:{ text: "Edit", className: "selectOnOff selectOne", action: function (e) { e.preventDefault(); vendor_show_FollowUp_Edit(table); } },
+    }
+    @if (Model.AllowComplete)
+    {
+           @:{ text: "Complete", className: "selectOnOff", action: function (e) { e.preventDefault(); vendor_show_FollowUp_Complete(table); } },
+    }
+                 
+                    @if (Model.AllowDelete)
+                    {
+                        @:{ text: "Delete", className: "selectOnOff", action: function (e) { e.preventDefault(); vendor_show_FollowUp_Delete(table); } },
+                    }
+                        @if (Model.EnableExport) { <text>
+                        {
+                            extend: 'collection',
+                            text: 'Export',
+                            dropup: true,
+                            background: false,
+                            buttons: [
+                                {
+                                    extend: 'copy',
+                                    exportOptions: {
+                                        columns: ':visible'
+                                    }
+                                },
+                                {
+                                    extend: 'excelHtml5',
+                                    exportOptions: {
+                                        columns: ':visible'
+                                    }
+                                },
+                                {
+                                    extend: 'pdfHtml5',
+                                    orientation: 'landscape',
+                                    pageSize: 'LETTER',
+                                    exportOptions: {
+                                        columns: ':visible',
+                                    },
+                                    footer: true
+                                },
+                                {
+                                    extend: "print",
+                                    exportOptions: {
+                                        columns: ':visible'
+                                    }
+                                },
+                                {
+                                    name: 'ExportCsvData',
+                                    className: 'exportCsvData selectOnOff',
+                                    text: 'Data as CSV',
+                                    action: function (e) {
+                                        e.preventDefault();
+                                        exportInvoicesToCsv(table);
+                                    }
+                                },
+                            ]
+                        },
+                        </text>}         
+                ],
+                "initComplete": function (settings, json ) {
+                     var tblid = '@Model.ListId';
+                      if(json?.data.length == 0){
+                        SetStartCompleteButton(tblid);
+                        }
+                      @if (Model.ViewType == VendorViewType.FollowupAudit)
+{
+    <text>
+        SetheaderForPreviousCompleteButton(table, tblid);
+    </text>
+}
+                    var colFilters = json.columnFilters;
+                    var api = this.api();               
+                    @if (Model.EnableFilter) { <text>
+                            api.columns(['.reqNo']).every(getfn_datatable_reqno_search(tblid)); // Make all reqNo fields searchable
+                            api.columns(['.drfilter', '.dfilter']).every(getfn_datatable_drfilter(tblid, true, colFilters));
+                            api.columns(['.drofilterempty']).every(getfn_datatable_drofilter(tblid, true));
+                            api.columns(['.drofilter']).every(getfn_datatable_drofilter(tblid, false));
+                            api.columns(['.usersearch']).every(getfn_datatable_usersearch(tblid));
+                            api.columns(['.outcomesearch']).every(getfn_datatable_outcomesearch(tblid));
+                            api.columns(['.dtfilter']).every(getfn_datatable_dtfilter(tblid, false, colFilters));
+                            api.columns(['.dsearch']).every(getfn_datatable_dsearch(tblid));
+                            api.columns(['.asearch']).every(getfn_datatable_asearch(tblid));
+                            api.columns(['.afilter']).every(getfn_datatable_afilter(tblid, true, colFilters));
+                            api.columns(['.stageFilter']).every(getfn_datatable_stagefilter(tblid, colFilters));
+                            api.columns(['.reqVIN']).every(getfn_datatable_vin(tblid, @getbool(Model.AllowMultilineVin)));
+                            api.columns(['.emptyornot']).every(getfn_datatable_emptyornotfilter(tblid, true));
+                            api.columns(['.followuptagfilter']).every(getfn_datatable_followuptagfilter(tblid, true));
+                            api.columns(['.followupcontactfilter']).every(getfn_datatable_followupcontactfilter(tblid, true));
+                            api.columns(['.processingDaysearch']).every(getfn_datatable_processingDaysearch(tblid));
+                    </text>}
+                    fixupColumnWidths(this);
+                },
+                "footerCallback": function (row, data, start, end, display) {
+                    var api = this.api();
+                    var fmtCurrency = $.fn.dataTable.render.number(',', '.', 2, '$ ');
+
+                    api.columns('.sum', {
+                        page: 'current'
+                    }).every(function () {
+                        var sum = this
+                            .data()
+                            .reduce(function (a, b) {
+                                var x = parseFloat(a) || 0;
+                                var y = parseFloat(b) || 0;
+                                return x + y;
+                            }, 0);
+                        let text = fmtCurrency.display(sum);
+                        $(this.footer()).html(text);
+                    });
+                },
+                "dom": "<'row'<'col-sm-6'l><'col-sm-6'<'#buttonContainer.site-datatable-button-container'>>>" + "<'row'<'col-sm-12'tr>>" + "<'row'<'col-sm-5'i><'col-sm-7'p>><'alert row'>B",
+            });
+
+        @if (Model.EnableKeyNavigation)
+        {
+        <text>
+        $('#@Model.ListId').on('key-focus.dt', function (e, datatable, cell) {
+            //table.row(cell.index().row).select();
+        });
+
+        $('#@Model.ListId').on('key-blur.dt', function (e, datatable, cell) {
+            //table.row(cell.index().row).deselect();
+        });
+
+        $('#@Model.ListId').on('key.dt', function (e, datatable, key, cell, originalEvent) {
+            if (key === 32) {
+                // Toggle selection
+                var row = table.row(cell.index().row);
+                if ($(row.node()).hasClass('selected'))
+                    row.deselect();
+                else
+                    row.select();
+            }
+            else if (key === 65) { // 'a'
+                var data = table.row(cell.index().row).data();
+                showAttachments(data.requestId, data.vin);
+            }
+            else if (key === 67) { // 'c'
+                var data = table.row(cell.index().row).data();
+                showChat(data.requestId, data.vin);
+            }
+            else if (key === 69) { // 'e'
+                var data = table.row(cell.index().row).data();
+                vendorEditRequest(data.requestId);
+            }
+        });
+        </text>
+        }
+        @Model.TableVarName = table;
+
+        // Add event listener for opening and closing details
+        $('#@Model.ListId tbody').on('click', 'td.fup-details-control', function (e) {
+            e.preventDefault();
+            var tr = $(this).closest('tr');
+            var row = table.row(tr);
+            var td = tr.find('div.fupnoteabbrev');
+
+            if (td.length == 1) {
+                if (row.child.isShown()) {
+                    // This row is already open - close it
+                    row.child.hide();
+                    tr.removeClass('shown');
+                    td.addClass('fupnotecollapsed');
+                    td.removeClass('fupnoteshown');
+                }
+                else {
+                    td.addClass('fupnoteshown');
+                    td.removeClass('fupnotecollapsed');
+                    // Open this row
+                    vendorShowFupNotes(row.data(), tr, row);
+                }
+            }
+        });
+
+         @if (Model.ViewType == VendorViewType.FollowupAudit)
+    {   <text>
+          table.on('select deselect', function (e, dt, type, indexes) {
+       if (type === 'row') {
+        var allRowsHaveClass = true;
+        
+        table.rows().every(function () {
+            if (!$(this.node()).hasClass('row-Frozen')) {
+                allRowsHaveClass = false;
+                return false; 
+            }
+        });
+
+        if (!allRowsHaveClass || table.rows({ selected: true }).indexes().length === 0) {
+            table.buttons('.selectOnOff').disable();
+        } else if (table.rows({ selected: true }).indexes().length === 1) {
+            table.buttons('.selectOnOff').enable();
+        } else {
+            table.buttons('.selectOnOff').enable();
+            table.buttons('.selectOnOff.selectOne').disable();
+        }
+    }
+});          
+    </text>
+    }
+    else
+    {
+        <text>
+         table.on('select deselect', function (e, dt, type, indexes) {
+            if (type === 'row') {
+                if (table.rows({ selected: true }).indexes().length === 0) {
+                    table.buttons('.selectOnOff').disable();
+                }
+                else if (table.rows({ selected: true }).indexes().length === 1) {
+                    table.buttons('.selectOnOff').enable();
+                }
+                else {
+                    table.buttons('.selectOnOff').enable();
+                    table.buttons('.selectOnOff.selectOne').disable();
+                }
+            }
+        });
+         </text>
+    }
+        table.buttons('.selectOnOff').disable();
+
+        datatable_filter_setup(table, '@Model.ListId', true);
+    });
+</script>

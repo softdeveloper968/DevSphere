@@ -1,0 +1,143 @@
+﻿@model MyDMVpro.Models.VendorViewModels.TitlesShippedViewModel
+@{
+    Layout = "_layoutShipmentReport";
+    string FormatOdometer(string odometer)
+    {
+        int odoReading;
+        if (Int32.TryParse(odometer, out odoReading))
+        {
+            return odoReading.ToString("#,##0");
+        }
+        return odometer;
+    }
+    string getStyleAttribute(int pageno)
+    {
+        if (pageno == 0)
+        {
+            return "style=\"page-break-before: always\"";
+        }
+        return "";
+    }
+}
+<link rel="stylesheet" type="text/css" href="~/css/shipment.css" asp-append-version="true" />
+
+@{
+    var pageno = 0;
+    foreach (var shipment in Model.Shipments)
+    {
+    <div @Html.Raw(getStyleAttribute(pageno++))>
+
+    <div class="upperLeft">
+        <div class="vendorName aligntop">Maggard Information Associates, LLC</div>
+        <div class="dateShipped alignbottom">@shipment.DateShipped.ToString("M/d/yyyy")</div>
+    </div>
+    <div class="topCenter">
+        @*
+            <div class="qrsizer">
+                @if (!string.IsNullOrWhiteSpace(shipment.QRSVG))
+                {
+                    @Html.Raw(shipment.QRSVG)
+                }
+                else
+                {
+                    <img class="qrcode" src="/Vendor/ShipmentQR/@shipment.ShipmentId.ToString()" height="100" width="100" />
+                }
+            </div>
+        *@
+    </div>
+    <div class="upperRight">
+@*
+// Removed as part of MDP-35
+        <div class="auctionName">@shipment.AuctionName</div>
+*@
+@*
+// Removed as part of MDP-35
+        @if (string.IsNullOrWhiteSpace(shipment.GroupName))
+        {
+            <div class="groupName">&nbsp;</div>
+        }
+        else
+        {
+            <div class="groupName">@shipment.GroupName</div>
+        }
+*@
+        <div class="trackingNumber">
+            <form asp-action="EditShipment" method="post">
+                <input type="hidden" name="shipmentId" value="@shipment.ShipmentId" />
+                <input type="text" id="trackingNumber" name="trackingNumber" value="@shipment.TrackingNumber" />
+                <input type="submit" value="Update" />
+            </form>
+        </div>
+        <div class="numberShipped">Number shipped: @shipment.NumberShipped</div>
+    </div>
+    <div>
+        <table class="shippingReport">
+            <caption>Titles Shipped Report</caption>
+            <thead>
+                <tr>
+                    <th></th>
+                    <th class="colCheck"></th>
+                    <th></th>
+                    <th class="colState"></th>
+                    <th class="colVin"></th>
+                    <th class="colODO"></th>
+                    <th class="colYear"></th>
+                    <th class="colMake"></th>
+                    <th class="colClientRef"></th>
+                    <th class="colLH"></th>
+                    <th class="colAuction"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var detail in shipment.ShipmentDetails)
+                {
+                    var request = detail.RequestStatus;
+                    <tr>
+                        <td class="leftspacer"></td>
+                        <td class="colCheck formfillline"></td>
+                        <td class="leftspacer"></td>
+                        <td>@request.State</td>
+                        <td class="colVin">@request.Vin</td>
+                        <td class="colODO">@FormatOdometer(request.Odometer)</td>
+                        <td>@request.VehicleYear</td>
+                        <td>@request.VehicleMake</td>
+                        <td>@request.ClientRef</td>
+                        <td>@request.LienholderName</td>
+                        <td class="colAuction">@request.Auction</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+            </tfoot>
+        </table>
+
+        <table class="signature">
+            <thead>
+                <tr>
+                    <th width="100"></th>
+                    <th width="150"></th>
+                    <th width="100"></th>
+                    <th width="150"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="text-align:right;">
+                        Reviewed by:
+                    </td>
+                    <td class="formfillline">
+                        &nbsp;
+                    </td>
+                    <td style="text-align:right;">
+                        Date:
+                    </td>
+                    <td class="formfillline">
+                        &nbsp;
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+    }
+}

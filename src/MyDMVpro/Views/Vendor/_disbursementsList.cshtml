@@ -1,0 +1,478 @@
+﻿@model DisbursementViewModel
+@using MyDMVpro.Common.ViewHelpers;
+@{
+    var columnCount = 0;
+    string SortableOption(bool f)
+    {
+        return "false";
+    }
+}
+<style asp-add-nonce="true">
+    td.numericCol {
+        text-align: right !important;
+        padding-right: 30px;
+    }
+    .advancedFilter {
+    }
+    .filterToggle .advanced {
+            display: none;
+        }
+    .filterToggle .simple {
+            display: inline-block;
+        }
+    .filterToggle.advancedOn
+        .advanced {
+            display: inline-block;
+        }
+    .filterToggle.advancedOn
+        .simple {
+            display: none;
+        }
+
+    td.sum {
+        border-top: 4px double black;
+    }
+
+    #@(Model.ListId)_wrapper tfoot {
+        display: table-footer-group;
+        font-weight: bold;
+    }
+    #@(Model.ListId)_wrapper thead {
+        display: table-header-group;
+    }
+</style>
+
+<div class="box">
+    <div class="box-body table-responsive" height="80%">
+        <table class="display stripe" id="@Model.ListId" cellspacing="0" align="left">
+            <thead>
+                <tr id="headerRow-@Model.ListId">
+                    @if (Model.Columns.Count > 0)
+                    {
+                        foreach (var c in Model.Columns)
+                        {
+                    <th class="@c.Class dt-center">@c.Title</th>
+                        }
+                        columnCount = Model.Columns.Count;
+                    }
+                </tr>
+                <tr id="filterRow-@Model.ListId">
+                    @for (var i = 0; i < Model.Columns.Count; i++)
+                    {
+                        DatatableColumnInfo c = Model.Columns[i];
+                        string cls = c.Class;//.Split(" ")[0];
+
+                        if (i == 0)
+                        {
+                    <th class="clearFilter @cls" data-toggle="tooltip" title="Clear filter"></th>
+                        }
+                        else if (i == 1 && Model.EnableAdvancedSearch)
+                        {
+                    <th class="advancedFilter @cls" data-toggle="tooltip" title="Advanced filter"></th>
+                        }
+                        else
+                        {
+                            if (cls == "")
+                            {
+                    <th></th>
+                            }
+                            else
+                            {
+                    <th class="@cls"></th>
+                            }
+                        }
+                    }
+                </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+                @*                <tr>
+                        @if (Model.Columns.Count > 0)
+                        {
+                            foreach (var c in Model.Columns)
+                            {
+                                <td class="@c.Class"></td>
+                            }
+                            columnCount = Model.Columns.Count;
+                        }
+                    </tr>
+                *@
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+<script asp-add-nonce="true">
+    $(document).ready(function () {
+        $.fn.dataTable.render.shortDate = datatable_render_shortdate;
+        var table = $('#@Model.ListId').DataTable(
+            {
+                @if  (Model.EnableKeyNavigation)
+                {
+                    @:@Model?.KeyNavigation
+                }
+                "colReorder": true,
+                "scrollX": true,
+                scrollY: false,
+                "select": true,
+                "searching": true,
+                "pageLength": @Model.PageLength,
+                "language": {
+                    select: {
+                        rows: "<span class='info_xrowsselected'>%d rows selected</span>"
+                    }
+                },
+                bSortCellsTop: true,
+                "lengthMenu": @Model.LengthMenu,
+                @*fixedColumns: { leftColumns: 2 },*@
+                @if (Model.SortColumns.Count > 0)
+                {
+                    @:order: [
+                    for(var i = 0; i<Model.SortColumns.Count; i++)
+                    {
+                        if (i > 0) { @:,
+                        } @:[$('#@Model.ListId .@Model.SortColumns[i].Name').index(), '@(Model.SortColumns[i].Descending?"desc":"asc")']
+                    }
+                    @:],
+                }
+                searchDelay: 500,
+                "columnDefs": [
+                    {
+                        "targets": "reqChkbx",
+                        "orderable": false,
+                        "className": "select-checkbox",
+                        "min-width": "40px",
+                        "sortable": false,
+                    },
+                    { "targets": "rdRequestId", "data": "requestId" },
+                    { "targets": "rdAmount", "data": "amount", render: $.fn.dataTable.render.number( ',', '.', 2, '$' ) },
+                    { "targets": "rdDate", "data": "date", render: datatable_render_date },
+                    { "targets": "rdDescription", "data": "description" },
+                    { "targets": "rdCheckNumber", "data": "checkNumber" },
+                    { "targets": "rdPayToName", "data": "payToName" },
+                    { "targets": "rdCreatedDate", "data": "createdDate", "render": datatable_render_date },
+                    { "targets": "rdClearedDate", "data": "clearedDate", "render": getfn_datatable_render_datetime_short() },
+                    { "targets": "rdVoidedDate", "data": "voidedDate", "render": getfn_datatable_render_datetime_short() },
+                    {
+                        "targets": [ "dfilter", "drfilter" ],
+                        "sortable": true,
+                        "width": "100px",
+                        "defaultContent": "",
+                        "render": datatable_render_date
+                    },
+                    {
+                        "targets": "_all", "searchable": true, "className": "dt-center", "autowidth": true, "defaultContent": "", "sortable": true,
+                        render: $.fn.dataTable.render.text()
+                    },
+                    {
+                        "targets": ["dfilter", "drfilter", "datefmt", "drofilter", "dsearch" ],
+                        "sortable": @Html.Raw(SortableOption(true)),
+                        "width": "80px",
+                        "defaultContent": "",
+                        "render": getfn_datatable_render_date('@(Model.DefaultDateFormat)')
+                    }
+                ],  
+                "processing": true,
+                "serverSide": true,
+                "ajax":
+                    {
+                        "url": "@Model.DataUrl",
+                        "type": "POST",
+                        "dataType": "JSON",
+                        headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() }
+                    },
+                "buttons": [
+                    {
+                        extend: 'selectAll',
+                        className: 'selectall',
+                        action: function (e) {
+                            e.preventDefault();
+                            table.rows({ search: 'applied' }).deselect();
+                            table.rows({ search: 'applied' }).select();
+                        }
+                    },
+                    'selectNone',
+                    @if (Model.AllowVoiding)
+                    {
+                    <text>
+                        {
+                        text: "Void", className: "selectOnOff selectOne", action: function (e) {
+                                e.preventDefault();
+                                vendor_void_Disbursement(table);
+                            }
+                        },
+                    </text>
+                    }
+                    @if (Model.AllowClearing)
+                    {
+                    <text>
+                        {
+                        text: "Cleared", className: "selectOnOff selectOne", action: function (e) {
+                                e.preventDefault();
+                                vendor_cleared_Disbursement(table);
+                            }
+                        },
+                        {
+                        text: "Import CSV", className: "selectOnOff selectOne", action: function (e) {
+                                e.preventDefault();
+                                vendor_cleared_Disbursement_ImportCSV(table);
+                            }
+                        },
+                    </text>
+                    }
+                    @*{ text: "Update", className: "selectOnOff selectOne", action: function (e) { e.preventDefault(); vendor_show_EditShipment(table); } },*@
+                    {
+                        extend: 'collection',
+                        text: 'Export',
+                        dropup: true,
+                        background: false,
+                        buttons: [
+                            {
+                                extend: 'copy',
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                            {
+                                extend: 'excelHtml5',
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                            {
+                                extend: 'pdfHtml5',
+                                orientation: 'landscape',
+                                pageSize: 'LETTER',
+                                exportOptions: {
+                                    columns: ':visible',
+                                },
+                                footer: true
+                            },
+                            {
+                                extend: "print",
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                            {
+                                name: 'ExportCsvData',
+                                className: 'exportCsvData selectOnOff',
+                                text: 'Data as CSV',
+                                action: function (e) {
+                                    e.preventDefault();
+                                    exportInvoicesToCsv(table);
+                                }
+                            },
+                        ]
+                    },
+                    { text: "", titleAttr: "Refresh", className: "listRefresh", action: function (e) { e.preventDefault(); table.ajax.reload(); }}
+                ],
+                "initComplete": function (settings, json ) {
+                    var colFilters = json.columnFilters;
+                    var api = this.api();
+                    var tblid = '@Model.ListId';
+                    api.columns(['.dsearch']).every(getfn_datatable_dsearch(tblid));
+                    api.columns(['.dfilter']).every(function () {
+                        var column = this;
+                        var select = $('<select class="customFilter"><option value=""></option></select>')
+                            .appendTo($("#filterRow-@Model.ListId th").eq(column.index()).empty())
+                            .on('change', function () {
+                                var val = $(this).val();
+                                let col = getTransposedColumn(column);
+                                col
+                                    .search(val ? val : '', false, false)
+                                    .draw();
+                        });
+                        var colName = column.dataSrc();
+                        if (!(colName === undefined) && !(colFilters[colName] === undefined)) {
+                            $.each(colFilters[colName], function (index, value) {
+                                if (value) {
+                                    //var d = moment.utc(value).format('MM-DD-YYYY');
+                                    //var dval = moment.utc(value).format('YYYY-MM-DD');
+                                    //select.append('<option value="' + dval + '">' + d + '</option>');
+                                    select.append(buildOption_Date(value));
+                                }
+                            });
+                        }
+                    });
+                    api.columns(['.drfilter','.dfilter']).every(function () {
+                        var column = this;
+                        var select = $('<div class="filterToggle"><select class="customFilter simple"><option value=""></option></select><div class="customFilter advanced"><input id="min" class="mindate" type="date"></input><input id="max" class="maxdate" type="date"></input></div></div>')
+                            .appendTo($("#filterRow-@Model.ListId th").eq(column.index()).empty());
+                        select.find('select').on('change', function () {
+                                var val = $(this).val();
+                                var dt;
+                                if (val != '')
+                                    dt = moment.utc(val);
+                                if (val != '' && !dt.isValid()) {
+                                    $(this).addClass("invalidDate");
+                                }
+                                else {
+                                    $(this).removeClass("invalidDate");
+                                    let col = getTransposedColumn(column);
+                                    if (val != '') {
+                                        val = dt.format('MM-DD-YYYY');
+                                        col
+                                            .search(val ? val : '', false, false)
+                                            .draw();
+                                    }
+                                    else {
+                                        col
+                                            .search('', false, false)
+                                            .draw();
+                                    }
+                                }
+                            });
+                            select.find('div').find("#min, #max").on('change', function () {
+                                if ($(this).is(":visible")) {
+                                    var fromval = $(this).parent().find("#min").val();
+                                    var toval = $(this).parent().find("#max").val();
+                                    var rangeVal = "";
+                                    if (fromval != "" || toval != "")
+                                        rangeVal = fromval + ";-to-;" + toval;
+
+                                    let col = getTransposedColumn(column);
+                                    col
+                                        .search(rangeVal ? rangeVal : '', false, false)
+                                        .draw();
+                                }
+                            });
+                        var colName = column.dataSrc();
+                        if (!(colName === undefined) && !(colFilters[colName] === undefined)) {
+                            $.each(colFilters[colName], function (index, value) {
+                                if (value) {
+                                    //var d = moment.utc(value).format('MM-DD-YYYY');
+                                    //var dval = moment.utc(value).format('YYYY-MM-DD');
+                                    //select.find('select').append('<option value="' + dval + '">' + d + '</option>');
+                                    select.find('select').append(buildOption_Date(value));
+                                }
+                            });
+                        }
+                    });
+                    api.columns(['.afilter']).every(function () {
+                        var column = this;
+                        var select = $('<select class="customFilter"><option value=""></option></select>')
+                            .appendTo($("#filterRow-@Model.ListId th").eq(column.index()).empty())
+                            .on('change', function () {
+                                var val = $(this).val();
+                                let col = getTransposedColumn(column);
+                                col
+                                    .search(val ? val : '', false, false)
+                                    .draw();
+                        });
+                        var colName = column.dataSrc();
+                        if (!(colName === undefined) && !(colFilters[colName] === undefined)) {
+                            $.each(colFilters[colName], function (index, value) {
+                                if (value) {
+                                    var opt = $('<option></option>').attr({ value: value }).text(value);
+                                    select.append(opt);                                
+                                }
+                            });
+                        }
+                    });
+                    api.columns(['.statusFilter']).every(function () {
+                        var column = this;
+                        var select = getStatusSelectFilter()
+                            .appendTo($("#filterRow-@Model.ListId th").eq(column.index()).empty())
+                            .on('change', function () {
+                                var val = $(this).val();
+                                let col = getTransposedColumn(column);
+                                col
+                                    .search(val ? val : '', false, false)
+                                    .draw();
+                            });
+                    });
+                    api.columns(['.asearch']).every(function () {
+                        var column = this;
+                        var select = $('<input class="customFilter" type="text" placeholder="Search" />')
+                            .appendTo($("#filterRow-@Model.ListId th").eq(column.index()).empty())
+                            .on('change', function () {
+                                var val = $(this).val();
+                                let col = getTransposedColumn(column);
+                                col
+                                    .search(val ? val : '', false, false)
+                                    .draw();
+                            }); 
+                    });
+                    fixupColumnWidths(this);
+                },
+                "dom": "<'row'<'col-sm-6'l><'col-sm-6'<'#buttonContainer.site-datatable-button-container'>>>" + "<'row'<'col-sm-12'tr>>" + "<'row'<'col-sm-5'i><'col-sm-7'p>><'alert row'>B",
+            });
+
+        @if (Model.EnableKeyNavigation)
+        {
+        <text>
+            table.on('key-focus.dt', function (e, datatable, cell) {
+                table.row(cell.index().row).select();
+            });
+
+            table.on('key-blur.dt', function (e, datatable, cell) {
+                table.row(cell.index().row).deselect();
+            });
+            // Handle click on table cell
+            table.on('click', 'tbody td', function(e){
+                e.stopPropagation();
+        
+                // Get index of the clicked row
+                var rowIdx = table.cell(this).index().row;
+        
+                // Select row
+                table.row(rowIdx).select();
+            });
+        </text>
+        }
+
+        @Model.TableVarName = table;
+
+        // Add event listener for opening and closing details
+        table.on('click', 'td.details-control', function () {
+            var tr = $(this).closest('tr');
+            var row = table.row(tr);
+
+            if (row.child.isShown()) {
+                // This row is already open - close it
+                row.child.hide();
+                tr.removeClass('shown');
+            }
+            else {
+                // Open this row
+                vendorShowNotes(row.data(), tr, row);
+            }
+        });
+        table.on('draw', function () {
+            if (table.rows({ selected: true }).indexes().length === 0) {
+                table.buttons('.selectOnOff').disable();
+            }
+            else if (table.rows({ selected: true }).indexes().length === 1) {
+                table.buttons('.selectOnOff').enable();
+            }
+            else {
+                table.buttons('.selectOnOff').enable();
+                table.buttons('.selectOnOff.selectOne').disable();
+            }
+        });
+        table.on('select deselect', function (e, dt, type, indexes) {
+            if (type === 'row') {
+                if (table.rows({ selected: true }).indexes().length === 0) {
+                    table.buttons('.selectOnOff').disable();
+                }
+                else if (table.rows({ selected: true }).indexes().length === 1) {
+                    table.buttons('.selectOnOff').enable();
+                }
+                else {
+                    table.buttons('.selectOnOff').enable();
+                    table.buttons('.selectOnOff.selectOne').disable();
+                }
+            }
+        });
+        table.buttons('.selectOnOff').disable();
+        $('#filterRow-@Model.ListId').find('.clearFilter').on('click', function () {
+            $('#@Model.ListId').find('.customFilter').val('');
+            table.search('').columns().search('').draw();
+        });
+        $('#filterRow-@Model.ListId').find('.advancedFilter').on('click', function () {
+            $('#@Model.ListId').find('.filterToggle').toggleClass('advancedOn');
+            table.columns.adjust().draw();
+        });
+    });
+</script>

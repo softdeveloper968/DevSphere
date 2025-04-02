@@ -1,0 +1,830 @@
+﻿@model MyDMVpro.Models.VendorViewModels.AdministrationViewModel
+
+@{
+    ViewData["Title"] = "Administration";
+}
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+
+@{ await Html.RenderPartialAsync("_billToInfo"); }
+<div class="row" style="padding-left:20px">
+    <div class="col-md-4">
+        <div>Select group</div>
+        <div class="box">
+            <div class="box-body table-responsive" height="80%">
+                <select id="vendorGroupId" asp-items="@Model.GetGroups()" class="form-control" data-required="required">
+                    <option value=""></option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div id="groupDetailAccordion" class="panel-group" style="display:none;">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" href="#groupDetailsPanel">Details</a>
+                </h4>
+            </div>
+            <div class="panel-collapse collapse in" id="groupDetailsPanel">
+                <div class="panel-body nooutline">
+                    @{ await Html.RenderPartialAsync("_groupInfo", Model.Business); }
+                </div>
+                <div class="panel-footer">
+                    <button class="btn btn-default" id="groupInfoEdit" >Edit</button>
+                </div>
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" href="#profilesPanel">Billing Profiles</a>
+                </h4>
+            </div>
+            <div class="panel-collapse collapse" id="profilesPanel">
+                <div class="panel-body nooutline">
+                    <div class="">
+                        <form id="billToListForm" method="post">
+                            <input type="hidden" id="groupId" name="groupId" value="" />
+                            <input type="hidden" id="vendorId" name="vendorId" value="" />
+                            <input type="hidden" id="json" name="json" value="" />
+                        </form>
+                        <div id="billingInfoPanel">
+                            <div class="table-responsive" height="80%">
+                                <table id="DT_billToListTable">
+                                    <thead>
+                                        <tr>
+                                            <th class="btiChkbx"></th>
+                                            <th class="btiShortName">Short Name</th>
+                                            <th class="btiCustName">Billing Name</th>
+                                            <th class="btiCustAddr1">Address 1</th>
+                                            <th class="btiCustAddr2">Address 2</th>
+                                            <th class="btiCustCity">City</th>
+                                            <th class="btiCustState">State</th>
+                                            <th class="btiCustZip">Zip</th>
+                                            <th class="btiCustAttn">Attn</th>
+                                            <th class="btiCustNote">Note</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                    <tfoot></tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-footer"></div>
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading" style="height:50px;">
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" href="#feeInfoPanel">Fees</a>
+                </h4>
+            </div>
+            <div class="panel-collapse collapse" id="feeInfoPanel">
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <form id="feesListForm" method="post" style="display:none;">
+                                <input type="hidden" id="groupId" name="groupId" value="" />
+                                <input type="hidden" id="vendorId" name="vendorId" value="" />
+                                <input type="hidden" id="json" name="json" value="" />
+                            </form>
+                            <div>
+                                <div id="feeInfoTableDiv" class="table-responsive" height="80%">
+                                    <table id="DT_feeListTable">
+                                        <thead>
+                                            <tr>
+                                                <th></th>
+                                                <th class="feeState">State</th>
+                                                <th class="feeAppType">App Type</th>
+                                                <th class="feeDMV">DMV</th>
+                                                <th class="feeService">Service</th>
+                                                <th class="feeOtherDesc">Other Desc</th>
+                                                <th class="feeOther">Other</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                        <tfoot></tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-footer"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<form method="post"></form>
+<script>
+    $(document).ready(function () {
+        initGroupSelect();
+        initBillToListTable();
+        initFeeListTable();
+        initGroupDetailsPanel();
+        $("#groupDetailsPanel").on('shown.bs.collapse', function () {
+            resizeNotes();
+        });
+        $("#profilesPanel").on('shown.bs.collapse', function () {
+            $("#DT_billToListTable").DataTable().columns.adjust().draw();
+        });
+        $("#feeInfoPanel").on('shown.bs.collapse', function () {
+            $("#DT_feeListTable").DataTable().columns.adjust().draw();
+        });
+    });
+    var groupDetailsEditor;
+    function initGroupDetailsPanel() {
+        initStatesList();
+        groupDetailsEditor = new $.fn.dataTable.Editor({
+                fields: [
+                    {
+                        label: "Business Name:",
+                        name: "BusinessName"
+                    }, {
+                        label: "Address",
+                        name: "AddrLine1"
+                    }, {
+                        label: "Address line 2:",
+                        name: "AddrLine2"
+                    }, {
+                        label: "City:",
+                        name: "City"
+                    }, {
+                        label: "State:",
+                        name: "State",
+                        type: "select",
+                        options: statesList,
+                        optionsPair: {
+                            label: 'name',
+                            value: 'abbrev'
+                        }
+                    }, {
+                        label: "Zip:",
+                        name: "Zip"
+                    }, {
+                        label: "Note:",
+                        name: "Notes",
+                        type:   "textarea",
+                        attr: {
+                          class: "form-control",
+                          rows: "10",
+                          cols: "160",
+                          length : "10000",
+                          height: "400"
+                        }
+                    }
+                ],
+                formOptions: {
+                    inline: {
+                        onBlur: 'submit'
+                    }
+                }
+        });
+        $('#groupInfoEdit').off('click').on('click', function (e) {
+            e.preventDefault();
+            // Refresh before edit, to get most recent Version#
+            refreshGroupInfoPanel(function () {
+                groupDetailsEditor
+                    .buttons({
+                        label: "Save",
+                        fn: function () {
+                            this.trigger("submit");
+                            SaveGroupInfo();
+                        }
+                    })
+                    .edit();
+            });
+        } );
+    }
+    function initGroupSelect() {
+        $("#groupDetailAccordion").hide();
+        $("#vendorGroupId").on('change', function (e) {
+            RefreshGroupData(this);
+        });
+    }
+    function RefreshGroupData(ctl) {
+        if (typeof ctl === 'undefined') {
+            ctl = $("#vendorGroupId");
+        } else {
+            ctl = $(ctl);
+        }
+        var gid = ctl.val();
+        currentGroupId = gid;
+        if (gid == '') {
+            $("#groupDetailAccordion").hide();
+        }
+        else {
+            populateBillingPanel(gid);
+            populateFeePanel(gid);
+            populateGroupInfoPanel(gid, function () {
+                $("#groupDetailAccordion").show();
+                resizeNotes();
+            });
+        }
+    }
+    function RefreshBillToInfoData() {
+        var ctl = $("#vendorGroupId");
+        var gid = ctl.val();
+        currentGroupId = gid;
+        if (gid == '') {
+        }
+        else {
+            populateBillingPanel(gid);
+        }
+    }
+    function RefreshFeeData() {
+        var ctl = $("#vendorGroupId");
+        var gid = ctl.val();
+        currentGroupId = gid;
+        if (gid == '') {
+        }
+        else {
+            populateFeePanel(gid);
+        }
+    }
+    //function initGroupTable() {
+    //    var table = $("#DT_GroupTable").DataTable({
+    //        "select": { style: 'single' },
+    //        columnDefs: [
+    //            {
+    //                "targets": "nosort",
+    //                "orderable": false
+    //            },
+    //            {
+    //                targets: "checksort",
+    //                orderDataType: 'dom-checkbox'
+    //            },
+    //            {
+    //                "targets": "tblChkbox",
+    //                "orderable": false,
+    //                "className": "select-checkbox",
+    //                "min-width": "40px",
+    //                "max-width": "40px",
+    //                "sortable": false,
+    //            },
+    //        ],
+    //        order: [1],
+    //        dom: "lfr<'row'tipB>"
+    //        , buttons: []
+    //    });
+
+    //    table.on('select deselect', function (e, dt, type, indexes) {
+    //        if (type === 'row') {
+    //            selectionChanged(table);
+    //        }
+    //    });
+    //    table.buttons('.selectOnOff').disable();
+    //}
+    //function selectionChanged(table) {
+    //    var row = $(getSelectedRow(table));
+    //    var gid = row.data('groupid');
+    //    currentGroupId = gid;
+    //    populateBillingPanel(gid);
+    //}
+    var billToChangesMade = false;
+    function updateBillToSaveButton(changes) {
+        if (typeof changes == 'boolean') {
+            billToChangesMade = changes;
+        }
+        var table = $("#DT_billToListTable").DataTable();
+        if (billToChangesMade) {
+            table.button('.save-changes').enable();
+        } else {
+            table.button('.save-changes').disable();
+        }
+    }
+    function refreshGroupInfoPanel(fn) {
+        var gid = $("#groupInfoForm").find("[name='GroupId']").val();
+        populateGroupInfoPanel(gid, fn);
+    }
+    function populateGroupInfoPanel(groupid, fn) {
+        var succeeded = false;
+        var formData = new FormData();
+        formData.append('groupId', groupid);
+
+        $.ajax({
+            url: '/Vendor/GetGroupInfo',
+            type: 'POST',
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            data: formData,
+            async: true,
+            dataType: 'json',
+            cache: false,
+            contentType: false,
+            processData: false,
+        }).done(function (data) {
+            if (typeof data.GroupId === 'undefined') {
+                // none
+                clearGroupInfoFields();
+            } else {
+                fillGroupInfoFields(data);
+                if (typeof fn == undefined) {
+                    alert('Error');
+                } else {
+                    fn();
+                }
+            }
+        }).fail(function (e) {
+            $e = e
+        });
+        return false;
+    }
+    function fillGroupInfoFields(data) {
+        var form = $("#groupInfoForm");
+        form.find("[name='GroupId']").val(data.GroupId);
+        form.find("[name='Version']").val(data.Version);
+        form.find("[name='BusinessName']").text(data.BusinessName);
+        form.find("[name='AddrLine1']").text(data.PrimaryAddress[0].AddressLine1);
+        form.find("[name='AddrLine2']").text(data.PrimaryAddress[0].AddressLine2);
+        form.find("[name='City']").text(data.PrimaryAddress[0].City);
+        form.find("[name='State']").text(data.PrimaryAddress[0].State);
+        form.find("[name='Zip']").text(data.PrimaryAddress[0].Zip);
+        form.find("[name='Notes']").text(data.Notes);
+        resizeNotes();
+    }
+    function resizeNotes() {
+        $('#groupInfoForm textarea').each(function () {
+            this.setAttribute('style', 'height:1px;overflow-y:scroll;');
+            if (this.scrollHeight < 400) {
+                this.setAttribute('style', 'height:' + (this.scrollHeight) + 'px;overflow-y:hidden;');
+            }
+            else {
+                this.setAttribute('style', 'height:400px;overflow-y:scroll;');
+            }
+        });
+    }
+    function clearGroupInfoFields() {
+        var form = $("#groupInfoForm");
+        form.find("[name='GroupId']").val('');
+        form.find("[name='Version']").val('');
+        form.find("[name='BusinessName']").text('');
+        form.find("[name='AddrLine1']").text('');
+        form.find("[name='AddrLine2']").text('');
+        form.find("[name='City']").text('');
+        form.find("[name='State']").text('');
+        form.find("[name='Zip']").text('');
+        form.find("[name='Notes']").text('');
+        resizeNotes();
+    }
+    function getGroupInfoFields() {
+        var form = $("#groupInfoForm");
+        var data = {
+            "GroupId": "",
+            "BusinessName": "",
+            "Version": "",
+            "PrimaryAddress": [{
+                "AddressLine1": "",
+                "AddressLine2": "",
+                "City": "",
+                "State": "",
+                "Zip": "",
+            }],
+            "Notes": ""
+        };
+        data.GroupId = form.find("[name='GroupId']").val();
+        data.Version = form.find("[name='Version']").val();
+        data.BusinessName = form.find("[name='BusinessName']").text();
+        data.PrimaryAddress[0].AddressLine1 = form.find("[name='AddrLine1']").text();
+        data.PrimaryAddress[0].AddressLine2 = form.find("[name='AddrLine2']").text();
+        data.PrimaryAddress[0].City = form.find("[name='City']").text();
+        data.PrimaryAddress[0].State = form.find("[name='State']").text();
+        data.PrimaryAddress[0].Zip = form.find("[name='Zip']").text();
+        data.Notes = form.find("[name='Notes']").text();
+        return data;
+    }
+    var feeChangesMade = false;
+    function updateFeeSaveButton(changes) {
+        if (typeof changes == 'boolean') {
+            feeChangesMade = changes;
+        }
+        var table = $("#DT_feeListTable").DataTable();
+        if (feeChangesMade) {
+            table.button('.save-changes').enable();
+        } else {
+            table.button('.save-changes').disable();
+        }
+    }
+    function populateFeePanel(groupid) {
+        var succeeded = false;
+        var formData = new FormData();
+        formData.append('groupId', groupid);
+
+        updateFeeSaveButton(false);// todo: change back to false 
+
+        $.ajax({
+            url: '/Vendor/GetFeeInfo',
+            type: 'POST',
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            data: formData,
+            async: true,
+            dataType: 'json',
+            cache: false,
+            contentType: false,
+            processData: false,
+        }).done(function (data) {
+            var t = $("#DT_feeListTable").DataTable();
+            t.clear();
+            if (typeof data.Fees === 'undefined') {
+                // none
+            } else {
+                t.rows.add(addKeyCol(data.Fees));
+            }
+            t.columns.adjust().draw();
+        }).fail(function (e) {
+            $e = e
+        });
+        return false;
+    }
+    function addKeyCol(d) {
+        var data = [];
+        Object.assign(data, d);
+
+        $.each(data, function (index,value) {
+            this.DT_RowId = index;
+        });
+        return data;
+    }
+    function removeKeyCol(d) {
+        var data = [];
+        Object.assign(data, d);
+
+        $.each(d, function () {
+            this.DT_RowId = null;
+        });
+        return data;
+    }
+    var unchangedBillToInfo = [];
+    function populateBillingPanel(groupid) {
+        var succeeded = false;
+        var formData = new FormData();
+        formData.append('groupId', groupid);
+
+        updateBillToSaveButton(false);
+
+        $.ajax({
+            url: '/Vendor/GetBillToInfo',
+            type: 'POST',
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            data: formData,
+            async: true,
+            dataType: 'json',
+            cache: false,
+            contentType: false,
+            processData: false,
+        }).done(function (data) {
+            var t = $("#DT_billToListTable").DataTable();
+            t.clear();
+            if (typeof data.BillingAddresses === 'undefined') {
+                // none
+            } else {
+                var d = addKeyCol(data.BillingAddresses);
+                Object.assign(unchangedBillToInfo, d);
+                t.rows.add(unchangedBillToInfo);
+            }
+            t.columns.adjust().draw();
+        }).fail(function (e) {
+            $e = e
+            //console.log(e);
+        });
+        return false;
+    }
+    var currentGroupId = '';
+
+    var feeListEditor;
+    var states = [ 'AL', 'AK', 'AS', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FM', 'FL', 'GA', 'GU', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MH', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'MP', 'OH', 'OK', 'OR', 'PW', 'PA', 'PR', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VI', 'VA', 'WA', 'WV', 'WI', 'WY' ];
+    var statesList = [];
+
+    function initStatesList() {
+        if (statesList.length == 0) {
+            $.each(states, function () {
+                var state = { name: this, abbrev: this };
+                statesList.push(state);
+            });
+        }
+    }
+    function initFeeListTable() {
+        initStatesList();
+        var feeListEditor = new $.fn.dataTable.Editor( {
+                table: "#DT_feeListTable",
+                fields: [
+                    {
+                        label: "State:",
+                        name: "State",
+                        type: "select",
+                        options: statesList,
+                        optionsPair: {
+                            label: 'name',
+                            value: 'abbrev'
+                        }
+                    }, {
+                        label: "App Type:",
+                        name: "AppType"
+                    }, {
+                        label: "DMV Fee:",
+                        name: "DMVFee"
+                    }, {
+                        label: "Service Fee:",
+                        name: "ServiceFee"
+                    }, {
+                        label: "Other Desc:",
+                        name: "OtherDesc"
+                    }, {
+                        label: "Other Fee:",
+                        name: "OtherFee"
+                    }, {
+                        label: "GL Code",
+                        name: "GLCode"
+                    }
+                ],
+                formOptions: {
+                    inline: {
+                        onBlur: 'submit'
+                    }
+                }
+        });
+        feeListEditor.on( 'onInitEdit', function () {
+            feeListEditor.disable('State');
+            feeListEditor.disable('AppType');
+        } );
+        feeListEditor.on( 'onInitCreate', function () {
+            feeListEditor.enable('State');
+            feeListEditor.enable('AppType');
+        } );
+        feeListEditor.on('create edit remove', function () {
+            updateFeeSaveButton(true);
+        } );
+        // Activate an inline edit on click of a table cell
+        $('#DT_feeListTable').on( 'click', 'tbody td:not(:first-child)', function (e) {
+            feeListEditor.inline( this );
+        });
+        var table = $("#DT_feeListTable").DataTable({
+            select: {
+                style:    'os',
+                selector: 'td:first-child'
+            },
+            keys: {
+                columns: ':not(:first-child)',
+                keys: [ 9 ],
+                editor: feeListEditor,
+                editOnFocus: true
+            },
+            order: [ 1,2 ],
+            columns: [
+                {
+                    data: null,
+                    defaultContent: '',
+                    className: 'select-checkbox',
+                    orderable: false
+                },
+                { data: "State", "width": "100px", orderable: true },
+                { data: "AppType", "width": "100px", orderable: true },
+                { data: "DMVFee", "width": "100px", render: $.fn.dataTable.render.number( ',', '.', 2, '$' ) },
+                { data: "ServiceFee", "width": "100px", render: $.fn.dataTable.render.number( ',', '.', 2, '$' ) },
+                { data: "OtherDesc", "width": "150px" },
+                { data: "OtherFee", "width": "100px", render: $.fn.dataTable.render.number( ',', '.', 2, '$' ) },
+                {
+                    "data": function ( row, type, val, meta ) {
+                          if (type === 'set') {
+                            return;
+                          }
+                          return row.AppType+row.State;
+                        },
+                    "visible": false,
+                }
+            ],
+            autoWidth: false,
+            dom: "lfr<'row'tipB>",
+            buttons: [
+                {
+                    extend: "create", editor: feeListEditor,
+                    formTitle: function () { return "Add Fee"; }
+                },
+                {
+                    extend: "edit", editor: feeListEditor,
+                    formTitle: function () { return "Edit Fee"; }
+                },
+                {
+                    extend: "remove", editor: feeListEditor,
+                    formTitle: function () { return "Remove Fee"; }
+                },
+                {
+                    text: 'Save Changes',
+                    className: "save-changes btn-secondary",
+                    action: function (e, dt, node, config) {
+                        e.preventDefault();
+                        saveFeeRows(table, currentGroupId);
+                    }
+                },
+                { text: "", titleAttr: "Refresh", className: "listRefresh", action: function (e) { e.preventDefault(); RefreshFeeData(); } }
+            ]
+        });
+        //configureTableSelect(table);
+    }
+    function getCurrencyRender() {
+        return $.fn.dataTable.render.number(',', '.', 0, '$');
+    }
+    var billToEditor;
+    function initBillToListTable() {
+        var billToEditor = new $.fn.dataTable.Editor( {
+                table: "#DT_billToListTable",
+                fields: [
+                    {
+                        label: "Short Name:",
+                        name: "ShortName"
+                    }, {
+                        label: "Company Name:",
+                        name: "CompanyName"
+                    }, {
+                        label: "Address",
+                        name: "AddressLine1"
+                    }, {
+                        label: "Address line 2:",
+                        name: "AddressLine2"
+                    }, {
+                        label: "City:",
+                        name: "City"
+                    }, {
+                        label: "State:",
+                        name: "State"
+                    }, {
+                        label: "Zip:",
+                        name: "ZipCode"
+                    }, {
+                        label: "Attn:",
+                        name: "Attn"
+                    }, {
+                        label: "Note:",
+                        name: "Note",
+                        type:   "textarea",
+                        attr: {
+                          class: "form-control",
+                          rows: "10",
+                          cols: "80",
+                          length : "1000",
+                          height: "400"
+                        }
+                    }
+                ],
+                formOptions: {
+                    inline: {
+                        onBlur: 'submit'
+                    }
+                }
+        });
+        billToEditor.on('create edit remove', function () {
+            updateBillToSaveButton(true);
+        } );
+
+
+        $('#DT_billToListTable').on( 'click', 'tbody td:not(:first-child)', function (e) {
+            billToEditor.inline( this );
+        });
+
+        var table = $("#DT_billToListTable").DataTable({
+            select: {
+                style:    'os',
+                selector: 'td:first-child'
+            },
+            keys: {
+                columns: ':not(:first-child)',
+                keys: [ 9 ],
+                editor: billToEditor,
+                editOnFocus: true
+            },
+            autoWidth: false,
+            order: [ 1 ],
+            columnDefs: [
+                { targets: "nosort", "orderable": false },
+                { targets: "checksort", orderDataType: 'dom-checkbox' },
+                { targets: "btiHidden", visible: false },
+                { targets: "btiShortName", data: "ShortName", "min-width": "150px", "width": 150, orderable: true },
+                { targets: "btiCustName", data: "CompanyName", "min-width": "150px", "width": 200  },
+                { targets: "btiCustAddr1", data: "AddressLine1", "min-width": "150px", "width": 200  },
+                { targets: "btiCustAddr2", data: "AddressLine2", "min-width": "150px", "width": 200  },
+                { targets: "btiCustCity", data: "City", "min-width": "150px", "width": 150  },
+                { targets: "btiCustState", data: "State", "min-width": "50px", "width": 50  },
+                { targets: "btiCustZip", data: "ZipCode", "min-width": "50px", "width": 50  },
+                { targets: "btiCustAttn", data: "Attn", "min-width": "100px", "width": 150  },
+                { targets: "btiCustNote", data: "Note", "min-width": "150px", "width": 200  },
+                {
+                    targets: "btiChkbx",
+                    defaultContent: "",
+                    orderable: false,
+                    className: "select-checkbox",
+                    "min-width": "40px",
+                    "max-width": "40px",
+                    sortable: false,
+                },
+            ],
+            bSort: false,
+            dom: "lfr<'row'tipB>",
+            buttons: [
+                {
+                    extend: "create",
+                    editor: billToEditor,
+                    formTitle: function () { return "Create Billing Profile"; }
+                },
+                {
+                    extend: "edit", editor: billToEditor,
+                    formTitle: function () { return "Edit Billing Profile"; }
+                },
+                {
+                    extend: "remove", editor: billToEditor,
+                    formTitle: function () { return "Delete Billing Profile"; }
+                },
+                {
+                    text: 'Save Changes',
+                    className: "save-changes btn-secondary",
+                    action: function (e, dt, node, config) {
+                        e.preventDefault();
+                        saveBillToRows(table, currentGroupId);
+                    }
+                },
+                { text: "", titleAttr: "Refresh", className: "listRefresh", action: function (e) { e.preventDefault(); RefreshBillToInfoData(); } },
+            ]
+        });
+        configureTableSelect(table);
+    }
+    function saveBillToRows(table, groupid) {
+        var j = { BillingAddresses: [] };
+        j.BillingAddresses = removeKeyCol(table.rows().data());
+
+        var formData = new FormData();
+        formData.append('groupId', groupid);
+        formData.append('json', JSON.stringify(j));
+
+        $.ajax({
+            url: '/Vendor/SaveBillToInfo',
+            type: 'POST',
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            data: formData,
+            async: true,
+            dataType: 'json',
+            cache: false,
+            contentType: false,
+            processData: false,
+        }).done(function (data) {
+            updateBillToSaveButton(false);
+        }).fail(function (e) {
+            $e = e
+        });
+    }
+    function saveFeeRows(table, groupid) {
+        var j = { Fees: [] };
+        j.Fees = removeKeyCol(table.rows().data());
+
+        var formData = new FormData();
+        formData.append('groupId', groupid);
+        formData.append('json', JSON.stringify(j));
+
+        $.ajax({
+            url: '/Vendor/SaveFeeInfo',
+            type: 'POST',
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            data: formData,
+            async: true,
+            dataType: 'json',
+            cache: false,
+            contentType: false,
+            processData: false,
+        }).done(function (data) {
+            if (data.status == 'error') {
+
+            }
+            else {
+                updateFeeSaveButton(false);
+            }
+        }).fail(function (e) {
+            $e = e
+        });
+    }
+    function configureTableSelect(table) {
+        table.on('select deselect', function (e, dt, type, indexes) {
+            if (type === 'row') {
+                if (table.rows({ selected: true }).indexes().length !== 1) {
+                    table.buttons('.selectOnOff').disable();
+                }
+                else {
+                    var row = $(getSelectedRow(table));
+                    if (row.data("disable") == 'True') {
+                        table.buttons('.selectOnOff').disable();
+                    }
+                    else {
+                        table.buttons('.selectOnOff').enable();
+                    }
+                }
+            }
+        });
+        table.buttons('.selectOnOff').disable();
+    }
+    function getSelectedRow(table) {
+        var a = [];
+        return table.rows({ selected: true }).nodes()[0];
+    }
+</script>

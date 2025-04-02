@@ -1,0 +1,57 @@
+﻿@model IEnumerable<ChatMessages>
+@{ 
+    string allMessageLink = @Url.Action("Chats", "MyServices");
+    if (ViewBag.IsVendor)
+    {
+        allMessageLink = @Url.Action("Chats", "Vendor");
+    }
+}
+<li class="dropdown messages-menu">
+    <!-- Menu toggle button -->
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+        <i class="fa fa-envelope-o"></i>
+        @if (Model.Count() > 0) {
+            <span class="label alert-error">@Model.Count()</span>
+        }
+        else
+        {
+            <span class="label label-success">@Model.Count()</span>
+        }
+    </a>
+    <ul class="dropdown-menu" style="width:350px;">
+        <li class="header">You have @Model.Count() unread messages</li>
+        <li>
+            <ul class="menu">
+                @foreach (var message in Model)
+                {
+                    <li>
+                        <a href="@allMessageLink">
+                            <div class="pull-left">
+                                <img src="~/images/avatar.png" class="img-circle" alt="ui">
+                            </div>
+                            @if (message.WaitingForUser)
+                            {
+                                <h4>
+                                    @message.UserName<small><i class="fa fa-clock-o"></i> @message.TimeSpan</small>
+                                    <br />
+                                    <span style="font-size:xx-small">@message.VendorName</span>
+                                </h4>
+                            }
+                            else
+                            {
+                                <h4>
+                                    @message.UserName<small><i class="fa fa-clock-o"></i> @message.TimeSpan</small>
+                                    <br />
+                                    <span style="font-size:xx-small">@message.GroupName</span>
+
+                                </h4>
+                            }
+                            <p>@message.Message</p>
+                        </a>
+                    </li>
+                }
+            </ul>
+        </li>
+        <li class="footer"><a href="@allMessageLink">See All Messages</a></li>
+    </ul>
+</li>

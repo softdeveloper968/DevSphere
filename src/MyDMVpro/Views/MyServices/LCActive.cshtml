@@ -1,0 +1,53 @@
+﻿@using System.Collections.Generic
+@using Microsoft.AspNetCore.Http
+@{
+    ViewData["Title"] = "Active LCs";
+    string GetUrl(string name)
+    {
+        return MyDMVpro.Controllers.RequestStatusController.GetEndpointUrl(this.Context, name);
+    }
+}
+
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+
+@{ await Html.RenderPartialAsync("_Chat", new Chats()); }
+@{ await Html.RenderPartialAsync("_AttachmentList"); }
+@{ await Html.RenderPartialAsync("_EditDetails"); }
+@{
+    RequestViewModel list = new RequestViewModel(MyServicesViewType.LCActive)
+    {
+        DataUrl = GetUrl("LCActive"),
+        ListId = "DT_LCActive",
+        TableVarName = "LCActive",
+        EnableAdvancedSearch = true
+    };
+    list.Columns.Add_Select();
+    list.Columns.Add_Chat();
+    list.Columns.Add_Attachments();
+    //list.Columns.Add("", "reqViewRequest");
+    list.Columns.Add("", "reqEditRequest");
+    list.Columns.Add_DupeCheck();
+
+    list.Columns.Add_AppType();
+    list.Columns.Add_AppState();
+    list.Columns.Add_VIN();
+    list.Columns.Add_ClientRef();
+    list.Columns.Add_DateToVendor();
+    list.Columns.Add_DateReceivedFromLH();
+    list.Columns.Add_VendorToDMV();
+    list.Columns.Add("LI Requested", "reqLIDateToDMV dsearch", "Applies only to LCs");
+    list.Columns.Add("LI Received", "reqLIDateFromDMV dsearch", "Applies only to LCs");
+    list.Columns.Add_DateToDMV();
+    list.Columns.Add_DateFromDMV();
+    list.Columns.Add_FinishDate();
+    list.Columns.Add_LienExpiration();
+    list.Columns.Add_Notes();
+    list.Columns.Add_SubmittedBy();
+    list.Columns.Add_Vendor();
+
+    list.SortColumns.Add("reqType");
+    list.SortColumns.Add("reqState");
+    list.SortColumns.Add("reqVIN");
+
+    await Html.RenderPartialAsync("_MyServicesRequests", list);
+}

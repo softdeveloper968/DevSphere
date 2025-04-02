@@ -1,0 +1,285 @@
+﻿<div id="modal-DirectToBilling" class="modal fade hidden-print" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Direct to Billing</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="note">Notes (will append to existing notes)</label>
+                    <textarea rows="5" width="100" name="note" id="note" class="form-control"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="remark">Internal remarks (will append to existing remarks)</label>
+                    <textarea rows="5" width="100" name="remark" id="remark" class="form-control"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="code">Code</label>
+                    <input type="text" maxlength="10" width="50" name="code" id="code" class="form-control" />
+                    <div class="checkbox" style="margin-right:10px">
+                        <label>
+                            <input type="checkbox" id="codeNotRequired" name="codeNotRequired" />
+                            Code not required
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="date">Date Finished</label>
+                    <input type="date" name="dateFinished" id="date" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label id="selectedCount" class="m-0"></label>
+                </div>
+                <div class="form-group">
+                    <label id="DirectToBilling_VinsToUpdate" class="vinUpdateList m-0 d-block"></label>
+                </div>
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="modal-MarkAsReceivedByLH" class="modal fade hidden-print" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Received by Lienholder</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="note">Notes (will append to existing notes)</label>
+                    <textarea rows="5" width="100" name="note" id="note" class="form-control"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="remark">Internal remarks (will append to existing remarks)</label>
+                    <textarea rows="5" width="100" name="remark" id="remark" class="form-control"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="code">Code</label>
+                    <input type="text" maxlength="10" width="50" name="code" id="code" class="form-control" />
+                    <div class="checkbox" style="margin-right:10px">
+                        <label>
+                            <input type="checkbox" id="codeNotRequired" name="codeNotRequired" />
+                            Code not required
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="date">Date Received</label>
+                    <input type="date" name="date" id="date" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label id="selectedCount" class="m-0"></label>
+                </div>
+                <div class="form-group">
+                    <label id="MarkAsReceivedByLH_VinsToUpdate" class="vinUpdateList m-0 d-block"></label>
+                </div>
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="modal-move" class="modal fade hidden-print" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Move Record<span style="font-weight:bold" id="moveItemsToStage"></span></h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" id="REQ_VIN_RNO_HEADER"></div>
+                <div id="info_notReadyToProcess" style="display:none">
+                    <div class="form-group text-center">
+                        Applications that are not ready for processing must have a client facing note detailing what is needed
+                    </div>
+                </div>
+                <div id="info_other" style="display:none">
+                    <div class="form-group text-center">
+                        A note or remark is required for this move.  Please send chat if client action required.
+                    </div>
+                </div>
+                <div class="row row gap_15">
+                    <div class="col-lg-6">
+                        <input type="hidden" id="requestId" name="requestId" />
+                        <div class="form-group">
+                            <label for="stage">Move to:</label>
+                            <select name="stage" id="stage" class="form-control">
+                                @* This will be populated on load based on App Type *@
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="code" class="control-label required">Code</label>
+                            <input id="code" name="code" maxlength="10" class="form-control" required="required" />
+                            <div class="checkbox" style="margin-right:10px">
+                                <label>
+                                    <input type="checkbox" id="codeNotRequired" name="codeNotRequired" />
+                                    Code not required
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group" id="reasonCancelledDiv">
+                            <label for="reasonCancelled" class="control-label required">Reason Cancelled</label>
+                            <input id="reasonCancelled" name="reasonCancelled" maxlength="10" class="form-control" required="required" />
+                        </div>
+                        <div class="form-group">
+                            <label for="Note" class="required">Note</label>
+                            <textarea id="note" name="note" cols="80" placeholder="" required="required" class="form-control"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="Remark">Internal remarks</label>
+                            <textarea id="remark" name="remark" cols="80" placeholder="" class="form-control"></textarea>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 pull-right">
+                        <div class="chatsEditPanel" tabindex="-1">
+                            <h2 id="myModal-label">Chat</h2>
+                            <div class="panel-body chat-body" style="max-height: 300px;"></div>
+                            <div class="panel-footer mt_10">
+                                <form asp-controller="Chats" asp-action="Create" method="post" class="chatform">
+                                    <input type="hidden" name="RequestId" id="chat-RequestId" />
+                                    <textarea class="form-control" name="Message" id="chat-newMsg" rows="4" width="100%" placeholder="Type message" style="resize:none;"></textarea>
+                                    <div class="mt_10">
+                                        <input type="submit" value="Send" class="btn btn-primary custom_btn" />
+                                        <button type="button" id="chatMarkAsRead" class="btn btn-default custom_btn">Mark As Read</button>
+                                        <button type="button" id="chatRefreshBtn" class="btn custom_btn">Refresh</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="alert alert-danger" style="display:none">Code and client facing note are required</div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="modal-move-manualbutton" class="modal fade hidden-print" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label"></h4>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div style="" class="col-md-12 col-md-12">
+                        <div class="form-group" style="display:none">
+                            <label for="stage" class="control-label">Stage</label>
+                            <input id="stage" name="stage" maxlength="25" class="form-control" />
+                        </div>
+                        @{
+                            await Html.RenderPartialAsync("_standardCodeNotesChat", "");
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-moveTitlePending" class="modal fade hidden-print" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Move Record<span style="font-weight:bold" id="moveItemsToStage"></span></h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" id="REQ_VIN_RNO_HEADER"></div>
+                <div id="info_notReadyToProcess" style="display:none">
+                    <div class="form-group text-center">
+                        Applications that are not ready for processing must have a client facing note detailing what is needed
+                    </div>
+                </div>
+                <div id="info_other" style="display:none">
+                    <div class="form-group text-center">
+                        A note or remark is required for this move.  Please send chat if client action required.
+                    </div>
+                </div>
+                <div class="row row gap_15">
+                    <div class="col-lg-6">
+                        <input type="hidden" id="requestId" name="requestId" />
+                        <div class="form-group" id="moveToDiv">
+                            <label for="stage">Move to:</label>
+                            <select name="stage" id="stage" class="form-control">
+                                @* This will be populated on load based on App Type *@
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="code" class="control-label required">Code</label>
+                            <input id="code" name="code" maxlength="10" class="form-control" required="required" />
+                            <div class="checkbox" style="margin-right:10px">
+                                <label>
+                                    <input type="checkbox" id="codeNotRequired" name="codeNotRequired" />
+                                    Code not required
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group" id="reasonCancelledDiv">
+                            <label for="reasonCancelled" class="control-label required">Reason Cancelled</label>
+                            <input id="reasonCancelled" name="reasonCancelled" maxlength="10" class="form-control" required="required" />
+                        </div>
+
+                        <div class="form-group" id="requiredEtaDiv">
+                            <label for="dateETA" class="control-label required">ETA</label>
+                            <input type="date" name="dateETA" id="dateETA" class="form-control" required="required" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="Note" class="required">Note</label>
+                            <textarea id="note" name="note" cols="80" placeholder="" required="required" class="form-control"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="Remark">Internal remarks</label>
+                            <textarea id="remark" name="remark" cols="80" placeholder="" class="form-control"></textarea>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 pull-right">
+                        <div class="chatsEditPanel" tabindex="-1">
+                            <h2 id="myModal-label">Chat</h2>
+                            <div class="panel-body chat-body" style="max-height: 300px;"></div>
+                            <div class="panel-footer mt_10">
+                                <form asp-controller="Chats" asp-action="Create" method="post" class="chatform">
+                                    <input type="hidden" name="RequestId" id="chat-RequestId" />
+                                    <textarea class="form-control" name="Message" id="chat-newMsg" rows="4" width="100%" placeholder="Type message" style="resize:none;"></textarea>
+                                    <div class="mt_10">
+                                        <input type="submit" value="Send" class="btn btn-primary custom_btn" />
+                                        <button type="button" id="chatMarkAsRead" class="btn btn-default custom_btn">Mark As Read</button>
+                                        <button type="button" id="chatRefreshBtn" class="btn custom_btn">Refresh</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="alert alert-danger" style="display:none">Code and client facing note are required</div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+

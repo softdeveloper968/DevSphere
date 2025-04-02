@@ -1,0 +1,67 @@
+﻿@* @model ICollection<RequestNotes>
+<div class="form-group note-body mb-0">
+<table class="note-body">
+    @foreach (var note in Model)
+    {
+        if (!string.IsNullOrEmpty(note.ClientRemarks))
+        {
+            <tr>
+                <td class="note-vendor">
+                    <span class="note-by">@Html.Encode(DateTimeHelpers.EasternDateTime(note?.LastUpdated, "f")) by @Html.Encode(note?.ModifiedByNavigation?.DisplayName ?? "System")</span>
+                    <br />
+                    <span class="note-msg">@Html.Raw(Html.Encode(note.ClientRemarks).Replace("&#xD;&#xA;", "<br/>").Replace("&#xA;", "<br />"))</span>
+                </td>
+            </tr>
+        }
+    }
+</table>
+</div>
+
+
+ *@
+
+ @model ICollection<RequestNotes>
+
+<style>
+    .tagged-user {
+        color: blue;
+        font-weight: bold;
+    }
+
+</style>
+<div class="form-group note-body mb-0">
+    <table class="note-body">
+        @foreach (var note in Model)
+        {
+            if (!string.IsNullOrEmpty(note.ClientRemarks))
+            {
+                <tr>
+                    <td class="note-vendor">
+                        <span class="note-by">
+                            @Html.Encode(DateTimeHelpers.EasternDateTime(note?.LastUpdated, "f"))
+                            by @Html.Encode(note?.ModifiedByNavigation?.DisplayName ?? "System")
+                        </span>
+                        <br />
+                        <span class="note-msg">
+                            @Html.Raw(HighlightUserTags(Html.Encode(note.ClientRemarks)))
+                        </span>
+                    </td>
+                </tr>
+            }
+        }
+    </table>
+</div>
+
+@functions {
+    public static string HighlightUserTags(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return text;
+        }
+
+        // Regular expression to match @Username format
+        string pattern = @"@(\w+)";
+        return System.Text.RegularExpressions.Regex.Replace(text, pattern, "<span class='tagged-user'>@$1</span>");
+    }
+}

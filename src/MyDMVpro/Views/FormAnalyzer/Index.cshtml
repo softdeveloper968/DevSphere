@@ -1,0 +1,516 @@
+﻿@using  MyDMVpro.Models.AppFormModels
+@model ValueTuple<List<FormAnalyzerForms>, NewAppTypeViewModel>
+
+@using MyDMVpro.Models.FormAnalyzerModels
+@{
+    const string PageName = VendorPageNames.FormAnalyzer;
+    ViewData["Title"] = "Document Upload";
+    string GetUrl(string name)
+    {
+        return MyDMVpro.Controllers.RequestStatusController.GetEndpointUrl(this.Context, name);
+    }
+}
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/formanalyzer.css" asp-append-version="true" />
+<script src="~/js/formanalyzer.js" asp-append-version="true"></script>
+@{ await Html.RenderPartialAsync("_AttachmentList"); }
+@{ await Html.RenderPartialAsync("~/Views/Vendor/_EditDetails.cshtml"); }
+@{ await Html.RenderPartialAsync("~/Views/Vendor/_ExportItems.cshtml"); }
+<div id="modal-DeleteUpload" class="modal fade hidden-print" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Delete Upload</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label id="selectedCount"></label>
+                </div>
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="modal-RescanUpload" class="modal fade hidden-print" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Re-scan Upload</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label id="selectedCount"></label>
+                </div>
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="modal-ProcessTitles" class="modal fade hidden-print" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Process Titles</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label id="selectedCount"></label>
+                </div>
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="modal-AttachNoUpdate" class="modal fade hidden-print" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Attach upload to Request</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label id="selectedCount"></label>
+                </div>
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div>
+    <div class="row gap_15 mb_15 flex_row">
+        <div class="formListPanel col-md-7 col-lg-7">
+            @{{
+                    FormAnalyzerViewModel list = new FormAnalyzerViewModel()
+                    {
+                        DataUrl = "/FormAnalyzer/FormAnalyzerUploads",
+                        ListId = "DT_AnalyzerUploads",
+                        TableVarName = "AnalyzerUploadsTable",
+                        PageLength = 10,
+                        EnableKeyNavigation = false,
+                        AllowMultilineVin = false,
+                        AllowMultiSelect = true
+                    };
+                    list.Columns.Add_Select();
+                    list.Columns.Add("", "reqBlank");
+                    list.Columns.Add("", "reqBlank");
+
+                    list.Columns.Add("Form", "colFormName afilter", filterField: "formName");
+                    list.Columns.Add("Date Uploaded", "colDateUploaded dfilter", filterField: "dateUploaded");
+                    list.Columns.Add("Date Scanned", "colDateScanned dfilter", filterField: "dateScanned");
+                    list.Columns.Add_VIN();
+                    list.Columns.Add("Matches", "colActiveMatches afilter", filterField: "activeMatches");
+                    list.Columns.Add("Filename", "colFileName asearch", filterField: "uploadFileName");
+                    list.Columns.Add("FormId", "colFormId");
+                    list.Columns.Add("UploadId", "colUploadId");
+
+                    list.SortColumns.Add("colFormName");
+                    list.SortColumns.Add("reqVIN");
+
+                    await Html.RenderPartialAsync("_uploadedForms", list);
+                }}
+            @* DROP LOCATION FOR UPDATES VIA SPREADSHEET *@
+
+        </div>
+        <div class="col-md-5 col-lg-5">
+            <div class="white_box p_15 h-100">
+                <div class="analyzerDropZonePanel">
+                    <div id="drop-area">
+                        <form class="analyzeruploadform">
+                            <div class="form-group mb_10">
+                                <div class="row gap_15">
+                                    <div class="col-sm-3">
+                                        <input type="file" id="fileElem" multiple accept="image/*" onchange="handleFiles(this.files)">
+                                        <label class="button btn btn-default custom_btn" for="fileElem">Select files</label>
+                                    </div>
+                                    <div class="col-sm-5">
+                                        @* <label for="formId" class="text-left control-label"></label> *@
+                                        <select id="formId" name="formId" class="form-control">
+                                            <option value="">Unknown type</option>
+                                            @foreach (var f in Model.Item1)
+                                            {
+                                                <option value="@f.FormId">@f.FormName</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <label class="mt_10">
+                                            <input type="checkbox" id="allowDupes" name="allowDupes">
+                                            Allow Duplicates
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <p>Upload multiple files with the file dialog or by dragging and dropping images onto the dashed region</p>
+                        </form>
+                        <div style="width:100%">
+                            <progress id="progress-bar" max="100" value="0"></progress>
+                        </div>
+                    </div>
+                </div>
+                <div class="applyToListPanel p-0 mt_15" id="applyToListPanel">
+                    @{
+                        {
+                            VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.FormAnalyzer, PageName)
+                            {
+                                QueueTitle = "Form Analyzer Match",
+                                DataUrl = GetUrl("FormAnalyzerMatch"),
+                                ListId = "DT_FormAnalyzerMatch",
+                                TableVarName = "FormAnalyzerMatch",
+                                AllowMove = false,
+                                AllowDelete = false,
+                                AllowMultilineVin = false,
+                                AllowRefresh = false,
+                                EnableFilter = false,
+                                EnableAdvancedSearch = false,
+                                UseButtonList = true,
+                                AllowGlobalSearch = false,
+                                DeferLoading = false,
+                                AllowMultiSelect = false,
+                                PageLength = 5,
+                                ForceVinSearch = true,
+                                ColorizeStatus = true,
+                                LengthMenu = "[5,10,15]"
+                            };
+
+                            list.Columns.Add_Select();
+                            list.Columns.Add_Chat();
+                            list.Columns.Add_Attachments();
+                            list.Columns.Add_Links();
+                            list.Columns.Add("Type", "reqType");
+                            list.Columns.Add("State", "reqState");
+                            list.Columns.Add_VIN();
+                            list.Columns.Add_Notes();
+                            list.Columns.Add_RNo();
+
+                            list.SortColumns.Add("reqVIN");
+                            list.SortColumns.Add("reqNo", true);
+
+                            await Html.RenderPartialAsync("~/Views/Vendor/_VendorRequestList.cshtml", list);
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    @*<div class="row">
+        <div class="col-md-6 col-lg-6"><div class="detailsViewPanel" id="detailsViewPanel"></div></div>
+    </div>*@
+    <div class="row gap_15">
+        <div class="col-md-7 col-lg-5 mb_10">
+            <div id="detailsEditPanel" class="detailsEditPanel white_box p_15" tabindex="-1">
+                <form class="vinUpdater" name="vinUpdater" id="vinUpdater" method="post" action="/FormAnalyzer/UpdateVin">
+                    <input type="hidden" name="uploadId" id="formAnalyzer_uploadId" value="">
+                    <label for="formAnalyzer_vinUpdater"><span id="unmatchedvalidvintext">Unmatched or no VIN detected</span><span id="invalidvintext" style="display:none">Invalid VIN</span>, enter corrected VIN and click Update:<span class="vinvalidation"></span></label>
+                    <div class="d-flex gap_5 mb_10">
+                        <input type="text" class="vinupper form-control" id="formAnalyzer_vinUpdater" list="partialVinSearchList" name="vin" value="" autocomplete="on">
+                        <button type="submit" class="btn btn-success custom_btn" id="vinUpdateButton" disabled>Update</button>
+                    </div>
+                    <datalist id="partialVinSearchList"></datalist>
+                </form>
+                <div class="vertical-alignment-helper" id="createFormPanelBody" style="display:none;">
+                    @{
+                        await Html.RenderPartialAsync("_NewAppType", Model.Item2);
+                    }
+                    @section Scripts {
+                        @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+                    }
+                </div>
+                <div class="d-flex gap_5">
+                    <button type="button" class="btn custom_btn" id="prevButton">Prev</button>
+                    <button type="button" class="btn custom_btn" id="nextButton">Next</button>
+                    <button type="button" class="btn btn-primary custom_btn" id="detailsEditPanel_saveButton" disabled>Save</button>
+                </div>
+                <div class="vertical-alignment-helper">
+                    <div class="panel-body p-0 mt_15" id="detailsEditPanelBody">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12 col-lg-7">
+            <div id="docViewPanel" class="docViewPanel white_box p_15"></div>
+        </div>
+    </div>
+    <div style="display:none">
+        <form id="hiddenform" method="post" action=""></form>
+    </div>
+</div>
+<script>
+    // ************************ Drag and drop ***************** //
+    let dropArea = document.getElementById("drop-area")
+
+    $(document).ready(function () {
+
+        // Prevent default drag behaviors
+        ;['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false)
+            document.body.addEventListener(eventName, preventDefaults, false)
+        });
+
+        // Highlight drop area when item is dragged over it
+        ;['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false)
+        });
+
+        ;['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false)
+        });
+
+        // Handle dropped files
+        dropArea.addEventListener('drop', handleDrop, false)
+
+        $("#newFormSelector").find("input[name='ForceVendorMode']").val("true");
+        formAnalyzer_hide_ViewDetails();
+
+        $("#DT_FormAnalyzerMatch").DataTable().on('select deselect', function (e, dt, type, indexes) {
+            if (type === 'row') {
+                if (e.type === 'select') {
+                    formAnalyzer_show_ViewDetails(false);
+                    formAnalyzer_match_selected();
+                }
+                else {
+                    formAnalyzer_match_deselected();
+                }
+            }
+        });
+
+        var $panel = $("#detailsEditPanel");
+        var $footer = $panel.find(".panel-footer");
+        $("#detailsEditPanel_saveButton").prop('disabled', true);
+        $("#detailsEditPanel_saveButton").off('click').on('click', function (e) {
+            e.preventDefault();
+            if ($("#newFormPanel").is(":visible")) {
+                $("#newFormPanel").find("form").trigger("submit");
+            }
+            else {
+                $("#detailsEditPanelBody").find("form").trigger("submit");
+            }
+        });
+
+        $panel.find("#nextButton").off('click').on('click', function (e) {
+            e.preventDefault();
+            var t = $("#DT_AnalyzerUploads").DataTable();
+            var curselnode = t.row('.selected').node();
+            var nodes = t.rows({ order: 'current', page: 'all' }).nodes();
+            var curIndex = nodes.indexOf(curselnode);
+            if (curIndex < nodes.count()) {
+                $.each($(nodes[curIndex + 1]), function () {
+                    t.row(curselnode).deselect();
+                    t.row(this).select();
+                    t.row(this).scrollTo();
+                });
+            }
+        });
+        $panel.find("#prevButton").off('click').on('click', function (e) {
+            e.preventDefault();
+            var t = $("#DT_AnalyzerUploads").DataTable();
+            var curselnode = t.row('.selected').node();
+            var nodes = t.rows({ order: 'current', page: 'all' }).nodes();
+            var curIndex = nodes.indexOf(curselnode);
+            if (curIndex > 0) {
+                $.each($(nodes[curIndex - 1]), function () {
+                    t.row(curselnode).deselect();
+                    t.row(this).select();
+                    t.row(this).scrollTo();
+                });
+            }
+        });
+        $panel.find("#vinUpdater").submit(function (e) {
+            e.preventDefault();
+            var $thisForm = $(this);
+            $.ajax({
+                url: $thisForm.attr('action'),
+                type: 'POST',
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                data: $thisForm.serialize()
+            }).done(function (data) {
+                // refresh list
+                var t = $("#DT_AnalyzerUploads").DataTable();
+                t.ajax.reload();
+            }).fail(function (xhr) {
+                formAnalyzer_processError(xhr);
+            });
+            return false;
+        });
+        $('#formAnalyzer_vinUpdater').on('input', function (e) {
+            var vin = $(this).val().toUpperCase();
+            var ctl = $(this).parent().parent().find(".vinvalidation");
+            getVinDetail(vin, ctl);
+        });
+        $("#formAnalyzer_vinUpdater").on('input propertychange paste', function () {
+            var vin = $(this).val().toUpperCase();
+            $("#vinUpdateButton").prop('disabled', !isVIN(vin));
+            formAnalyzer_fill_vinlist(vin);
+        });
+        $("#formAnalyzer_vinUpdater").on('change', function () {
+            var vin = $(this).val().toUpperCase();
+            $("#vinUpdateButton").prop('disabled', !isVIN(vin));
+        });
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault()
+        e.stopPropagation()
+    }
+
+    function highlight(e) {
+        dropArea.classList.add('highlight')
+    }
+
+    function unhighlight(e) {
+        dropArea.classList.remove('active')
+    }
+
+    function handleDrop(e) {
+        var dt = e.dataTransfer
+        var files = dt.files
+
+        handleFiles(files)
+    }
+
+    let uploadProgress = []
+    let progressBar = document.getElementById('progress-bar')
+
+    function initializeProgress(numFiles) {
+        progressBar.value = 0
+        uploadProgress = []
+
+        for (let i = numFiles; i > 0; i--) {
+            uploadProgress.push(0);
+        }
+    }
+
+    function updateProgress(fileNumber, percent) {
+        if (!(percent)) {
+            percent = 0;
+        }
+        uploadProgress[fileNumber] = percent
+        let total = uploadProgress.reduce((tot, curr) => tot + curr, 0) / uploadProgress.length
+        //console.debug('update', fileNumber, percent, total)
+        if (total) {
+            progressBar.value = total
+        }
+        else {
+            progressBar.value = 0
+        }
+    }
+
+    function handleFiles(files) {
+        files = [...files]
+        initializeProgress(files.length)
+        files.forEach(uploadFile); // calls uploadFile for each file uploaded
+        //files.forEach(previewFile)
+    }
+
+    function previewFile(file) {
+        let reader = new FileReader()
+        reader.readAsDataURL(file)
+        reader.onloadend = function () {
+            //let img = document.createElement('img')
+            //img.src = reader.result
+            //document.getElementById('gallery').appendChild(img)
+        }
+    }
+
+    function uploadFile(file, i) {
+        var url = '/FormAnalyzer/Upload';
+        var ajax = new XMLHttpRequest();
+        var formData = new FormData();
+        ajax.open('POST', url, true);
+        ajax.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        ajax.setRequestHeader('RequestVerificationToken', $('[name="__RequestVerificationToken"]').val())
+
+        // Update progress (can be used to show progress indicator)
+        ajax.upload.addEventListener("progress", function (e) {
+            if (e.total == 0) {
+                updateProgress(i, 0);
+            }
+            updateProgress(i, (e.loaded * 100.0 / e.total) || 100);
+        })
+
+        ajax.addEventListener('readystatechange', function (e) {
+            if (ajax.readyState == 4 && ajax.status == 200) {
+                updateProgress(i, 100); // <- Add this
+            }
+            else if (ajax.readyState == 4 && ajax.status != 200) {
+                // Error. Inform the user
+            }
+        });
+
+        formData.append('file', file);
+        const dt = new Date(file.lastModified);
+        formData.append('filedate', dt.toUTCString());
+        formData.append('formId', $("#formId").val());
+        formData.append('allowDuplicates', $('#allowDupes').prop('checked'));
+        ajax.send(formData);
+    }
+    function createUploadPromise(iteration) {
+
+        return new Promise((resolve, reject) => {
+            // create FormData object - add file and form fields manually
+            var files = droppedFiles || fileUploadElem.files;
+            const file = files[iteration];
+
+            const formData = new FormData()
+            formData.append('file', file);
+            const dt = new Date(file.lastModified);
+            formData.append('filedate', dt.toUTCString());
+            formData.append('allowDuplicates', 'true');
+            formData.append('formId', $("#formId").val());
+            formData.append('allowDuplicates', $('#allowDupes').prop('checked'));
+
+            // dispatch xhr to start file upload - listen to file upload complete event and notify user
+            let xhr = new XMLHttpRequest()
+            var url = '/FormAnalyzer/Upload';
+            xhr.open('POST', url, true);
+
+            // set onload (i.e. upload completion) callback
+            xhr.onload = () => {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    this.selectedFilesList.querySelectorAll('li')[iteration].style.color = 'darkgreen'
+                    resolve()
+                } else {
+                    this.selectedFilesList.querySelectorAll('li')[iteration].style.color = 'red'
+                    reject()
+                }
+            }
+
+            // watch for file upload progress
+            xhr.upload.addEventListener('progress', (e) => {
+                this.selectedFilesList.querySelectorAll('progress')[iteration].setAttribute("value", (e.loaded / e.total * 100))
+            })
+
+            // initiate AJAX request
+            xhr.open("POST", this.formElem.action)
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            xhr.setRequestHeader('RequestVerificationToken', $('[name="__RequestVerificationToken"]').val())
+
+            xhr.send(formData)
+
+        })
+    }
+
+</script>
+
+

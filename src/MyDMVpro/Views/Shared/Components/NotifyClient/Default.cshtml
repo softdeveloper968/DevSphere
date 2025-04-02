@@ -1,0 +1,62 @@
+﻿@model List<NotifyClient>
+@{
+    string GetLink(string vin, int requestNo)
+    {
+
+        return $"/MyServices/RequestLookup/{vin}/{requestNo}";
+
+    }
+
+}
+@if (User.Identity.IsAuthenticated)
+{
+  @if (!ViewBag.IsVendor)
+    {
+       <li class="dropdown messages-menu notifyClient-menu">
+        <a class="dropdown-toggle" data-toggle="dropdown">
+            <i class="fa fa-bell-o" style="font-size:x-large;line-height:15px"></i>
+            @if (Model.Count() > 0)
+            {
+                <span class="label alert-error">@Model.Count()</span>
+            }
+            else
+            {
+                <span class="label label-success">0</span>
+            }
+        </a>
+        <ul class="dropdown-menu" style="width:350px;">
+            @if(Model.Count() > 0)
+            {
+            <li>
+                <ul class="menu">
+                    @foreach (var item in Model)
+                    {
+                        <li class="header"><span>@item.Vin</span></li>
+                        <li>
+                            <a href="@GetLink(item.Vin, item.RequestNumber)">
+                                <div class="pull-left">
+                                    <img src="~/images/avatar.png" class="img-circle" alt="ui">
+                                </div>
+                                @if (item.Note != null)
+                                {
+                                    <h4>
+                                        @item.SubmittedUserName<small><i class="fa fa-clock-o"></i> @item.CreatedDate</small>
+                                        <br />
+                                        <span>@item.Note</span>
+                                    </h4>
+                                }
+                                <p>message</p>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </li>
+            }
+            else
+            {
+                <li class="header">You have @Model.Count() unread notification threads</li>
+            }
+        </ul>
+    </li>
+    }
+}

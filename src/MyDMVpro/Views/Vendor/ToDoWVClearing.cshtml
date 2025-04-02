@@ -1,0 +1,547 @@
+﻿@model MyDMVpro.Common.ViewHelpers.ViewDefinitionCollection
+
+@{
+    string PageName = "ToDoWVClearing";
+    bool allowAutoIMSRefresh = false;
+    if (Context.Request.Query["autoims"] == new Microsoft.Extensions.Primitives.StringValues("1"))
+    {
+        allowAutoIMSRefresh = true;
+    }
+    string GetUrl(string name)
+    {
+        return MyDMVpro.Controllers.RequestStatusController.GetEndpointUrl(this.Context, name);
+    }
+}
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+@{
+    await Html.RenderPartialAsync("_Chat", new Chats());
+    await Html.RenderPartialAsync("_AttachmentList");
+    await Html.RenderPartialAsync("_MoveDialog");
+    await Html.RenderPartialAsync("_BulkDialog");
+    await Html.RenderPartialAsync("_EditDetails");
+    await Html.RenderPartialAsync("_ExportItems");
+    await Html.RenderPartialAsync("_DeleteRequest");
+    await Html.RenderPartialAsync("_downloadStatements");
+    await Html.RenderPartialAsync("_ChampsDialogs");
+    // These are required for the bulk print dialogs
+    await Html.RenderPartialAsync("~/Views/Requests/_ApplicationsSelectionForPrinting.cshtml");
+    await Html.RenderPartialAsync("~/Views/Requests/_CheckMergeForPrinting.cshtml");
+    await Html.RenderPartialAsync("~/Views/Requests/_AttachmentsSelectionForPrinting.cshtml");
+}
+<h2 class="sub_heading">Incoming</h2>
+<div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.RT_Incoming, PageName)
+                {
+                    QueueTitle = "Incoming - CRT WV",
+                    QueueName = "Incoming",
+                    AllowMove = true,
+                    AllowAutoIMSRefresh = true
+                };
+            list.Columns.Add_Select();
+            list.Columns.Add_CodeCount();
+            list.Columns.Add_Chat();
+            list.Columns.Add_Attachments();
+            list.Columns.Add_Links();
+            list.Columns.Add_AutoIMS();
+            list.Columns.Add_DupeCheck();
+            //list.Columns.Add_EditStatus();
+            list.Columns.Add_AppType(true);
+            list.Columns.Add_AppState();
+            list.Columns.Add_VIN();
+            list.Columns.Add_Notes();
+            list.Columns.Add_Code();
+            list.Columns.Add_RepoDate();
+            list.Columns.Add_Odometer();
+            list.Columns.Add_Group();
+            list.Columns.Add_RT_LH();
+            list.Columns.Add_DT_LH();
+            list.Columns.Add_Make();
+            list.Columns.Add_Year();
+            list.Columns.Add_LHShippedToVendor();
+            list.Columns.Add_RNo();
+            list.Columns.Add_SubmittedBy();
+
+            list.SortColumns.Add("reqType");
+            list.SortColumns.Add("reqState");
+
+            await Html.RenderPartialAsync("_VendorRequestList", list);
+        }
+    }
+</div>
+<h2 class="sub_heading">Not Ready to be Processed</h2>
+<div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.RT_NotReadyToProcess, PageName)
+                {
+                    QueueTitle = "Not Ready for Processing - CRT WV",
+                    QueueName = "NotReadyToProcess",
+                    AllowMove = true,
+                    AllowAutoIMSRefresh = true
+                };
+            list.Columns.Add_Select();
+            list.Columns.Add_CodeCount();
+            list.Columns.Add_Chat();
+            list.Columns.Add_Attachments();
+            list.Columns.Add_Links();
+            list.Columns.Add_AutoIMS();
+            list.Columns.Add_DupeCheck();
+            //list.Columns.Add_EditStatus();
+            list.Columns.Add_AppType(true);
+            list.Columns.Add_AppState();
+            list.Columns.Add_VIN();
+            list.Columns.Add_Notes();
+            list.Columns.Add_Code();
+            list.Columns.Add_RepoDate();
+            list.Columns.Add_Odometer();
+            list.Columns.Add_Make();
+            list.Columns.Add_Year();
+            list.Columns.Add_Group();
+            list.Columns.Add_RT_LH();
+            list.Columns.Add_DT_LH();
+            list.Columns.Add_LHShippedToVendor();
+            list.Columns.Add_RNo();
+            list.Columns.Add_SubmittedBy();
+
+            list.SortColumns.Add("reqType");
+            list.SortColumns.Add("reqState");
+
+            await Html.RenderPartialAsync("_VendorRequestList", list);
+        }
+    }
+</div>
+<h2 class="sub_heading">Ready to be Processed</h2>
+<div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.RT_ReadyToProcess, PageName)
+                {
+                    QueueTitle = "Ready to be Processed - RT",
+                    QueueName = "ReadyToProcess",
+                    AllowMove = true,
+                    TableVarName = "RT_ReadyToProcess_Table",
+                    AddProcessButton = true,
+                    AllowAutoIMSRefresh = true
+                };
+            list.Columns.Add_Select();
+            list.Columns.Add_CodeCount();
+            list.Columns.Add_Chat();
+            list.Columns.Add_Attachments();
+            list.Columns.Add_Links();
+            list.Columns.Add_AutoIMS();
+            list.Columns.Add_DupeCheck();
+            //list.Columns.Add_EditStatus();
+            list.Columns.Add_AppType(true);
+            list.Columns.Add_AppState();
+            list.Columns.Add_VIN();
+            list.Columns.Add_Notes();
+            list.Columns.Add_Code();
+            list.Columns.Add_RepoDate();
+            list.Columns.Add_Odometer();
+            list.Columns.Add_Make();
+            list.Columns.Add_Year();
+            list.Columns.Add_Group();
+            list.Columns.Add_RT_LH();
+            list.Columns.Add_DT_LH();
+            list.Columns.Add_LHShippedToVendor();
+            list.Columns.Add_RNo();
+            list.Columns.Add_SubmittedBy();
+
+            list.SortColumns.Add("reqType");
+            list.SortColumns.Add("reqState");
+            list.SortColumns.Add("reqVIN");
+
+            await Html.RenderPartialAsync("_VendorRequestList", list);
+        }
+    }
+</div>
+<h2 class="sub_heading">In Processing</h2>
+<div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.RT_InProcessing, PageName)
+                {
+                    QueueTitle = "In Processing - CRT WV",
+                    QueueName = "InProcessing",
+                    AllowMove = true,
+                    AllowAutoIMSRefresh = true
+                };
+            list.Columns.Add_Select();
+            list.Columns.Add_CodeCount();
+            list.Columns.Add_Chat();
+            list.Columns.Add_Attachments();
+            list.Columns.Add_Links();
+            list.Columns.Add_AutoIMS();
+            list.Columns.Add_DupeCheck();
+            //list.Columns.Add_EditStatus();
+            list.Columns.Add_AppType(true);
+            list.Columns.Add_AppState();
+            list.Columns.Add_VIN();
+            list.Columns.Add_Notes();
+            list.Columns.Add_Code();
+            list.Columns.Add_RepoDate();
+            list.Columns.Add_Odometer();
+            list.Columns.Add_Make();
+            list.Columns.Add_Year();
+            list.Columns.Add_Group();
+            list.Columns.Add_RT_LH();
+            list.Columns.Add_DT_LH();
+            list.Columns.Add_LHShippedToVendor();
+            list.Columns.Add_RNo();
+            list.Columns.Add_SubmittedBy();
+
+            list.SortColumns.Add("reqType");
+            list.SortColumns.Add("reqState");
+            list.SortColumns.Add("reqVIN");
+
+            await Html.RenderPartialAsync("_VendorRequestList", list);
+        }
+    }
+</div>
+@{
+    await Html.RenderPartialAsync("_vendorReadyForPrinting", PageName);
+    await Html.RenderPartialAsync("_vendorBulkPrintApplications", PageName);
+    await Html.RenderPartialAsync("_vendorBulkPrintAttachments", PageName);
+}
+
+
+<h2 class="sub_heading">Ready for Packing/Shipping</h2>
+<div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.RT_ReadyForPacking, PageName)
+                {
+                    QueueTitle = "Send To DMV - CRT WV",
+                    QueueName = "ReadyForPacking",
+                    AllowMove = true,
+                };
+            list.Columns.Add_Select();
+            list.Columns.Add_CodeCount();
+            list.Columns.Add_Chat();
+            list.Columns.Add_Attachments();
+            list.Columns.Add_Links();
+            list.Columns.Add_AutoIMS();
+            list.Columns.Add_DupeCheck();
+            //list.Columns.Add_EditStatus();
+            list.Columns.Add_AppType(true);
+            list.Columns.Add_AppState();
+            list.Columns.Add_VIN();
+            list.Columns.Add_Notes();
+            list.Columns.Add_Code();
+            list.Columns.Add_RepoDate();
+            list.Columns.Add_Odometer();
+            list.Columns.Add_Make();
+            list.Columns.Add_Year();
+            list.Columns.Add_Group();
+            list.Columns.Add_RT_LH();
+            list.Columns.Add_DT_LH();
+            list.Columns.Add_LHShippedToVendor();
+            list.Columns.Add_RNo();
+            list.Columns.Add_SubmittedBy();
+
+            list.SortColumns.Add("reqType");
+            list.SortColumns.Add("reqState");
+            list.SortColumns.Add("reqVIN");
+
+            await Html.RenderPartialAsync("_VendorRequestList", list);
+        }
+    }
+</div>
+@*
+<h2 class="sub_heading">Send Queue</h2>
+<div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.RT_WVSendQueue, PageName)
+                {
+                    QueueTitle = "Send Queue - CRT WV",
+                    QueueName = "WVSendQueue",
+                    AllowMove = true,
+                };
+            list.Columns.Add_Select();
+            list.Columns.Add_CodeCount();
+            list.Columns.Add_Chat();
+            list.Columns.Add_Attachments();
+            list.Columns.Add_Links();
+            list.Columns.Add_AutoIMS();
+            list.Columns.Add_DupeCheck();
+            //list.Columns.Add_EditStatus();
+            list.Columns.Add_AppType(true);
+            list.Columns.Add_AppState();
+            list.Columns.Add_VIN();
+            list.Columns.Add_Notes();
+            list.Columns.Add_Code();
+            list.Columns.Add_RepoDate();
+            list.Columns.Add_Odometer();
+            list.Columns.Add_Make();
+            list.Columns.Add_Year();
+            list.Columns.Add_Group();
+            list.Columns.Add_RT_LH();
+            list.Columns.Add_DT_LH();
+            list.Columns.Add_LHShippedToVendor();
+            list.Columns.Add_RNo();
+            list.Columns.Add_SubmittedBy();
+
+            list.SortColumns.Add("reqType");
+            list.SortColumns.Add("reqState");
+            list.SortColumns.Add("reqVIN");
+
+            await Html.RenderPartialAsync("_VendorRequestList", list);
+        }
+    }
+</div>
+*@
+<h2 class="sub_heading">Rejections</h2>
+<div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.RT_WVRejections, PageName)
+                {
+                    QueueTitle = "Rejections - CRT WV",
+                    QueueName = "WVRejections",
+                    AllowMove = true,
+                };
+            list.Columns.Add_Select();
+            list.Columns.Add_CodeCount();
+            list.Columns.Add_Chat();
+            list.Columns.Add_Attachments();
+            list.Columns.Add_Links();
+            list.Columns.Add_AutoIMS();
+            list.Columns.Add_DupeCheck();
+            //list.Columns.Add_EditStatus();
+            list.Columns.Add_AppType(true);
+            list.Columns.Add_AppState();
+            list.Columns.Add_VIN();
+            list.Columns.Add_Notes();
+            list.Columns.Add_Code();
+            list.Columns.Add_RepoDate();
+            list.Columns.Add_Odometer();
+            list.Columns.Add_Make();
+            list.Columns.Add_Year();
+            list.Columns.Add_Group();
+            list.Columns.Add_RT_LH();
+            list.Columns.Add_DT_LH();
+            list.Columns.Add_LHShippedToVendor();
+            list.Columns.Add_RNo();
+            list.Columns.Add_SubmittedBy();
+
+            list.SortColumns.Add("reqType");
+            list.SortColumns.Add("reqState");
+            list.SortColumns.Add("reqVIN");
+
+            await Html.RenderPartialAsync("_VendorRequestList", list);
+        }
+    }
+</div>
+<h2 class="sub_heading">Title Pending</h2>
+<div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.RT_TitlePending, PageName)
+                {
+                    QueueTitle = "Title Pending - CRT WV",
+                    QueueName = "TitlePending",
+                    AllowMove = true,
+                    AllowAutoIMSRefresh = allowAutoIMSRefresh
+                };
+            list.Columns.Add_Select();
+            list.Columns.Add_CodeCount();
+            list.Columns.Add_Chat();
+            list.Columns.Add_Attachments();
+            list.Columns.Add_Links();
+            list.Columns.Add_DupeCheck();
+            //list.Columns.Add_EditStatus();
+            list.Columns.Add_AppType(true);
+            list.Columns.Add_AppState();
+            list.Columns.Add_VIN();
+            list.Columns.Add_Notes();
+            list.Columns.Add_Code();
+            list.Columns.Add_ETA();
+            list.Columns.Add_FromDMVTracking();
+            list.Columns.Add_DateToDMV().AddClass("elapseddays");
+            list.Columns.Add_Auction();
+            list.Columns.Add_Group();
+            list.Columns.Add_Odometer();
+            list.Columns.Add_Make();
+            list.Columns.Add_Year();
+            list.Columns.Add_RT_LH();
+            list.Columns.Add_DT_LH();
+            list.Columns.Add_LHShippedToVendor();
+            list.Columns.Add_RNo();
+            list.Columns.Add_SubmittedBy();
+
+            list.SortColumns.Add("reqState");
+            list.SortColumns.Add("reqDateToDMV", true);
+            list.SortColumns.Add("reqDmvTracking");
+            list.SortColumns.Add("reqVIN");
+
+            await Html.RenderPartialAsync("_VendorRequestList", list);
+        }
+    }
+</div>
+<h2 class="sub_heading">In-Transit</h2>
+<div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.RT_InTransit, PageName)
+                {
+                    QueueTitle = "In-Transit",
+                    QueueName = "InTransit",
+                    AllowMove = true,
+                };
+            list.Columns.Add_Select();
+            list.Columns.Add_CodeCount();
+            list.Columns.Add_Chat();
+            list.Columns.Add_Attachments();
+            list.Columns.Add_Links();
+            //list.Columns.Add_EditStatus();
+            list.Columns.Add_AppType(true);
+            list.Columns.Add_AppState();
+            list.Columns.Add_VIN();
+            list.Columns.Add_Notes();
+            list.Columns.Add_Code();
+            list.Columns.Add_ETA();
+            list.Columns.Add_SentToDMV();
+            list.Columns.Add_TitleIssued();
+            list.Columns.Add_Auction();
+            list.Columns.Add_Group();
+            list.Columns.Add_Odometer();
+            list.Columns.Add_RT_LH();
+            list.Columns.Add_DT_LH();
+            list.Columns.Add_RNo();
+            list.Columns.Add_SubmittedBy();
+
+            list.SortColumns.Add("reqState");
+            list.SortColumns.Add("reqDateToDMV");
+            list.SortColumns.Add("reqVIN");
+
+            await Html.RenderPartialAsync("_VendorRequestList", list);
+        }
+    }
+</div>
+<h2 class="sub_heading">Receiving</h2>
+<div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.RT_Receiving, PageName)
+                {
+                    QueueTitle = "Receiving - CRT WV",
+                    QueueName = "Receiving",
+                    AllowMove = true,
+                };
+            list.Columns.Add_Select();
+            list.Columns.Add_CodeCount();
+            list.Columns.Add_Chat();
+            list.Columns.Add_Attachments();
+            list.Columns.Add_Links();
+            //list.Columns.Add_EditStatus();
+            list.Columns.Add_AppType(true);
+            list.Columns.Add_AppState();
+            list.Columns.Add_VIN();
+            list.Columns.Add_Notes();
+            list.Columns.Add_Code();
+            list.Columns.Add_SentToDMV();
+            list.Columns.Add_TitleIssued();
+            list.Columns.Add_Auction();
+            list.Columns.Add_Group();
+            list.Columns.Add_Odometer();
+            list.Columns.Add_RT_LH();
+            list.Columns.Add_DT_LH();
+            list.Columns.Add_RNo();
+            list.Columns.Add_SubmittedBy();
+
+            list.SortColumns.Add("reqState");
+            list.SortColumns.Add("reqDateToDMV");
+            list.SortColumns.Add("reqVIN");
+
+            await Html.RenderPartialAsync("_VendorRequestList", list);
+        }
+    }
+
+</div>
+<h2 class="sub_heading">Ship to Lienholder</h2>
+<div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.RT_ShipToLH, PageName)
+                {
+                    QueueTitle = "Ship to Lienholder - CRT WV",
+                    QueueName = "ShipToLH",
+                    AllowMove = true,
+                };
+            list.Columns.Add_Select();
+            list.Columns.Add_CodeCount();
+            list.Columns.Add_Chat();
+            list.Columns.Add_Attachments();
+            list.Columns.Add_Links();
+            list.Columns.Add_Group();
+            list.Columns.Add_Auction();
+            list.Columns.Add_AppType(true);
+            list.Columns.Add_AppState();
+            list.Columns.Add_VIN();
+            list.Columns.Add_Notes();
+            list.Columns.Add_Code();
+            list.Columns.Add_Year();
+            list.Columns.Add_Make();
+            list.Columns.Add_Odometer();
+            list.Columns.Add_RT_LH();
+            list.Columns.Add_DT_LH();
+
+            list.Columns.Add_ReceivedFromDMV();
+            list.Columns.Add_TitleIssued();
+            list.Columns.Add_RNo();
+            list.Columns.Add_ClientRef();
+            list.Columns.Add_SubmittedBy();
+
+            list.SortColumns.Add("reqGroup");
+            list.SortColumns.Add("reqAuctioneer");
+            list.SortColumns.Add("reqVIN");
+
+            await Html.RenderPartialAsync("_VendorRequestList", list);
+        }
+    }
+</div>
+@* THIS IS TEMPORARILY REMOVED UNTIL ShippingReports can filter on apptype
+
+<h2 class="sub_heading">Shipping Reports</h2>
+<div class="white_box p_15 mb_5">
+    @{
+        {
+            VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.ShippingReports, PageName)
+                {
+                    QueueTitle = "Shipping Reports",
+                    QueueName = "ShippingReports",
+                    ControllerName = "Shipment",
+                    //DataUrl = "/Shipment/VendorShipments",
+                    ListId = "DT_ShippingReports",
+                    //TableVarName = "vendorShippingReportTable",
+                    PageLength = 25,
+                    EnableKeyNavigation = false
+                };
+            list.Columns.Add_Select();
+            list.Columns.Add("", ""); //spacer
+            list.Columns.Add("", "shpLinks");
+            list.Columns.Add("", "shpPdf");
+            list.Columns.Add("Date Shipped", "shpDateShipped dsearch");
+            list.Columns.Add("Auction", "shpAuction afilter");
+            list.Columns.Add("Group", "shpGroup afilter");
+            list.Columns.Add("# Shipped", "shpNumberShipped");
+            list.Columns.Add("Tracking #", "shpTracking asearch");
+            list.Columns.Add("ShipmentId", "shpShipmentId");//hidden field
+
+            list.SortColumns.Add("shpDateShipped", true);
+            list.SortColumns.Add("shpAuction");
+            list.SortColumns.Add("shpGroup");
+
+            await Html.RenderPartialAsync("_shipmentList", list);
+        }
+    }
+</div>
+*@
+@{
+    // Shared views
+    await Html.RenderPartialAsync("_moveItemsToStage");
+}

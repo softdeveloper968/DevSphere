@@ -1,0 +1,44 @@
+﻿<div id="modal-RequestRollback" class="modal fade hidden-print" tabindex="-1">
+    <div class="container vertical-alignment-helper">
+        <div class="row vertical-align-center">
+            <div class="col-sm-4"></div>
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="myModal-label">Request Rollback</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <span style="font-weight:bold;font-size:large;color:red">Important! <br />This will rollback user supplied fields to the original submission.</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="note">Notes (will append to existing notes)</label>
+                            <textarea rows="5" width="100" name="note" id="note" class="form-control"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="remark">Internal remarks (will append to existing remarks)</label>
+                            <textarea rows="5" width="100" name="remark" id="remark" class="form-control"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="code">Code</label>
+                            <input type="text" maxlength="10" width="50" name="code" id="code" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label for="RequestRollback_Verify">Verify (type ROLLBACK)</label>
+                            <input type="text" maxlength="10" width="50" name="code" id="RequestRollback_Verify" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label id="selectedCount"></label>
+                        </div>
+                    </div>
+                    <div class="alert alert-danger" style="display:none" role="alert"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-success" id="okButton">OK</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

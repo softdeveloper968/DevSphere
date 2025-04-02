@@ -1,0 +1,141 @@
+﻿@{
+}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const inputs = document.querySelectorAll(".form-control.individual-save");
+
+        inputs.forEach(input => {
+            input.addEventListener("input", function () {
+                showButtons(this);
+            });
+        });
+    });
+
+    function showButtons(input) {
+        let parent = input.parentElement;
+        let existingBtns = parent.querySelector(".inline-buttons");
+
+        if (!existingBtns) {
+            let btnContainer = document.createElement("span");
+            btnContainer.classList.add("inline-buttons");
+
+            let saveBtn = document.createElement("button");
+            saveBtn.innerHTML = "<i class='fa fa-check'></i>";
+            saveBtn.classList.add("btn", "btn-primary");
+            saveBtn.onclick = function () {
+                saveInput(input);
+            };
+
+            let cancelBtn = document.createElement("button");
+            cancelBtn.innerHTML = "<i class='fa fa-times'></i>";
+            cancelBtn.classList.add("btn", "btn-danger");
+            cancelBtn.onclick = function () {
+                cancelEdit(input);
+            };
+
+            btnContainer.appendChild(saveBtn);
+            btnContainer.appendChild(cancelBtn);
+            parent.appendChild(btnContainer);
+
+            // Store original value
+            input.dataset.originalValue = input.value;
+        }
+    }
+
+    function saveInput(input) {
+        let parent = input.parentElement;
+        let btnContainer = parent.querySelector(".inline-buttons");
+
+        if (btnContainer) {
+            parent.removeChild(btnContainer);
+        }
+    }
+
+    function cancelEdit(input) {
+        let parent = input.parentElement;
+        let btnContainer = parent.querySelector(".inline-buttons");
+
+        if (btnContainer) {
+            input.value = input.dataset.originalValue; // Revert to original value
+            parent.removeChild(btnContainer);
+        }
+    }
+</script>
+<style>
+    .inline-buttons {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+    }
+
+    .inline-buttons .btn {
+        padding: 6px 9px;
+        min-width: 34px;
+    }
+</style>
+<body>
+    <div>
+        <div>
+            <form method="post">
+                <div class="form-group">
+                    <label for="TitleFee">Title Fee</label>
+                    <div class="d-flex gap-2">
+                        <input id="TitleFee" name="TitleFee" class="form-control individual-save" type="number" step="0.01" required />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="LienFee">Lien Fee</label>
+                    <div class="d-flex gap-2">
+                        <input id="LienFee" name="LienFee" class="form-control individual-save" type="number" step="0.01" required />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="RegistrationFee">Registration Fee</label>
+                    <div class="d-flex gap-2">
+                        <input id="RegistrationFee" name="RegistrationFee" class="form-control individual-save" type="number" step="0.01" required />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="SalesTax">Sales Tax</label>
+                    <div class="d-flex gap-2">
+                        <input id="SalesTax" name="SalesTax" class="form-control individual-save" type="number" step="0.01" required />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="StateExpeditedFee">State Expedited Fee</label>
+                    <div class="d-flex gap-2">
+                        <input id="StateExpeditedFee" name="StateExpeditedFee" class="form-control individual-save" type="number" step="0.01" required />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="MiscStateFees">Misc State Fees</label>
+                    <div class="d-flex gap-2">
+                        <input id="MiscStateFees" name="MiscStateFees" class="form-control individual-save" type="number" step="0.01" required />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="MaggardServiceFee">Maggard Service Fee</label>
+                    <div class="d-flex gap-2">
+                        <input id="MaggardServiceFee" name="MaggardServiceFee" class="form-control individual-save" type="number" step="0.01" required />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="StateVendorFee">State Vendor Fee</label>
+                    <div class="d-flex gap-2">
+                        <input id="StateVendorFee" name="StateVendorFee" class="form-control individual-save" type="number" step="0.01" required />
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+        </div>
+    </div>
+</body>
+

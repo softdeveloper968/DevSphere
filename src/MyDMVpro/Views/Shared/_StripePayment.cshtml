@@ -1,0 +1,44 @@
+﻿@model MyDMVpro.Models.StripePaymentModel
+
+@{
+    ViewData["Title"] = "Checkout";
+}
+
+<h2>Payment</h2>
+
+    <div>
+            <input type="hidden" name="id" id="pay-RequestId" />
+            <input type="hidden" name="vin" id="pay-vin" />
+
+            <div class="form-group" id="StripePaymentTypeDiv">
+                <label for="">Transaction Type</label>
+                <select class="form-control" name="StripePaymentTypeId" id="StripePaymentTypeId">
+                    <option value="">Select Type</option>
+                    <option value="card">Credit/Debit</option>
+                    <option value="us_bank_account">ACH</option>
+                </select>
+            </div>
+            <div class="form-group" id="stripeAmountDiv">
+                <label for="Amount">Amount($)</label>
+                <input type="number" class="form-control" name="StripeAmount" id="StripeAmount" />
+                <span for="Amount" class="text-danger"></span>
+            </div>
+
+            <div class="form-group" id="stripeServiceAmountDiv">
+                <label for="Amount">Service Charge($)</label>
+                <input type="number" class="form-control" name="StripeServiceCharge" id="StripeServiceCharge" readonly />
+                <span for="Amount" class="text-danger"></span>
+            </div>
+
+            <div>
+                <button id="payNowBtn" class="btn btn-primary">Pay Now</button>
+                <button id="copyPayLinkButton" class="btn btn-primary">Copy Payment Link</button>
+            </div>
+
+            <div id="paymentMessageDiv" class="alert alert-warning" style="display:none;">
+                <p id="paymentMessage"></p>
+        <p id="paymentMessage1"><b>test.com</b></p>
+            </div>
+
+    </div>
+

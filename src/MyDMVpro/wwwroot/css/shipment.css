@@ -1,0 +1,150 @@
+﻿body {
+    font-size: 14pt;
+    width: 960px;
+    max-width: 960px;
+}
+
+.shippingReport {
+    width: 960px;
+    max-width: 960px;
+    white-space: nowrap;
+}
+
+.topCenter {
+    display: inline-block;
+    width: 20%;
+    align-content: center;
+}
+
+img.qrcode {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.upperLeft {
+    float: left;
+    display: inline-block;
+    width: 40%;
+}
+
+.upperRight {
+    float: right;
+    display: inline-block;
+    width: 40%;
+}
+
+.vendorName {
+    font-size: 16pt;
+}
+
+.dateShipped {
+    font-size: 14pt;
+}
+
+.auctionName {
+    font-size: 16pt;
+}
+
+.groupName {
+    font-size: 14pt;
+    height: 20pt;
+}
+
+.auctionName, .trackingNumber, .numberShipped, .groupName {
+    text-align: right;
+    float: right;
+    width: 100%;
+}
+
+.trackingNumber {
+    font-size: 11pt;
+}
+
+.numberShipped {
+    font-size: 11pt;
+}
+
+table {
+    font-size: 11pt;
+}
+
+    table > caption {
+        font-size: 20pt;
+    }
+
+tfoot > tr {
+    margin-top: 50px;
+    font-size: 14pt
+}
+
+.colCheck {
+    max-width: 30px;
+    width: 30px;
+    margin-right: 5px;
+}
+
+.colState {
+    width: 20px;
+}
+
+.colVin {
+    width: 100px;
+    padding-left: 20px;
+    font-family: monospace;
+    font-size: 14pt;
+}
+
+.colODO {
+    width: 50px;
+    text-align: right;
+    padding-left: 20px;
+    padding-right: 50px;
+    font-size: 14pt;
+}
+
+.colYear {
+    width: 50px;
+}
+
+.colMake {
+    width: 100px;
+}
+
+.colClientRef {
+    width: 100px;
+}
+
+.colLH {
+    width: 100px;
+}
+.colAuction {
+    padding-left: 20px;
+    width: 100px;
+}
+.dateShipped {
+    margin-top: 30px;
+}
+
+.numberShipped {
+    margin-top: 30px;
+}
+
+.formfillline {
+    border-bottom: 1px solid black;
+}
+
+.leftspacer {
+    width: 20px;
+}
+
+.qrsizer {
+    width: 100px;
+    height: 100px;
+    max-width: 100px;
+    max-height: 100px;
+}
+
+.signature {
+    padding-top: 50px;
+}

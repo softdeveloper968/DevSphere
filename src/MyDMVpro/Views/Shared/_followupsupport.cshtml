@@ -1,0 +1,280 @@
+﻿<div id="modal-FollowUp-New" class="modal fade hidden-print" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <div class="modal-title h4" style="margin-right:20px" id="REQ_VIN_RNO_HEADER">Create Follow-Up</div>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="FollowUp_New_DueDate" class="control-label">Due Date</label>
+                    <input type="date" width="150" id="FollowUp_New_DueDate" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label for="FollowUp_New_Title" class="control-label">Title</label>
+                    <input type="text" maxlength="50" id="FollowUp_New_Title" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label for="FollowUp_New_Contacts" class="control-label">Contact</label>
+                    <div class="">
+                        <select id="FollowUp_New_Contacts" class="form-control" multiple></select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="FollowUp_New_ContactAction" class="control-label">Action</label>
+                    <div class="">
+                        <select id="FollowUp_New_ContactAction" class="form-control">
+                            <option value=""></option>
+                            <option value="phone">Phone</option>
+                            <option value="email">Email</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="FollowUp_New_Code" class="control-label">Follow-Up Codes</label>
+                    <div class="">
+                        <select id="FollowUp_New_Code" multiple></select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="FollowUp_New_StatusOfRecord" class="control-label">Noted Status of Follow-Up</label>
+                    <textarea type="text" id="FollowUp_New_StatusOfRecord" rows="3" style="resize:vertical" placeholder="" class="form-control"></textarea>
+                </div>
+                <div id="FollowUp_NoteHistory" class="form-group" height="auto">
+                </div>
+                <div class="alert alert-danger m-0" style="display:none" role="alert"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">Save</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-FollowUp-Edit" class="modal fade hidden-print" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true" style="">&times;</button>
+                <div class="modal-title h4" style="margin-right:20px" id="REQ_VIN_RNO_HEADER">Edit Follow-Up</div>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="FollowUp_Edit_FollowUpId" />
+                <div class="form-group">
+                    <label for="FollowUp_Edit_CreatedDate" class="control-label">Created Date</label>
+                    <input type="date" width="150" id="FollowUp_Edit_CreatedDate" class="form-control" readonly />
+                </div>
+                <div class="form-group">
+                    <label for="FollowUp_Edit_DueDate" class="control-label">Due Date</label>
+                    <input type="date" width="150" id="FollowUp_Edit_DueDate" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label for="FollowUp_Edit_Title" class="control-label">Title</label>
+                    <input type="text" maxlength="50" id="FollowUp_Edit_Title" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label for="FollowUp_Edit_Contacts" class="control-label">Contact</label>
+                    <div class="">
+                        <select id="FollowUp_Edit_Contacts" class="form-control" multiple></select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="FollowUp_Edit_ContactAction" class="control-label">Action</label>
+                    <div class="">
+                        <select id="FollowUp_Edit_ContactAction" class="form-control">
+                            <option value=""></option>
+                            <option value="phone">Phone</option>
+                            <option value="email">Email</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="FollowUp_Edit_Code" class="control-label">Code</label>
+                    <div class="">
+                        <select id="FollowUp_Edit_Code" class="form-control" multiple></select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="FollowUp_Edit_StatusOfRecord" class="control-label">Noted Status of Follow-Up</label>
+                    <textarea type="text" id="FollowUp_Edit_StatusOfRecord" rows="3" style="resize:vertical" placeholder="" class="form-control"></textarea>
+                </div>
+                <div id="FollowUp_NoteHistory" class="form-group">
+                </div>
+                <div class="form-group">
+                    <div class="checkbox">
+                        <label for="FollowUp_Edit_IsCompleted">
+                            <input type="checkbox" id="FollowUp_Edit_IsCompleted" name="FollowUp_Edit_IsCompleted" />
+                            Completed
+                        </label>
+                    </div>
+                </div>
+                <div class="alert alert-danger m-0" style="display:none" role="alert"></div>
+            </div>
+            <div class="modal-footer justify-between">
+                <label id="FollowUp_Edit_LastModified" class="lastmodinfo">Last modified </label>
+                <div class="d-flex">
+                    <button type="button" class="btn btn-success" id="okButton">Save</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</div>
+<div id="modal-FollowUp-Completed" class="modal fade hidden-print" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <div class="modal-title h4" style="margin-right:20px" id="REQ_VIN_RNO_HEADER">Complete Follow-Up</div>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" id="REQ_MULTI_VIN_RNO_HEADER"></div>
+                <input type="hidden" id="FollowUp_Completed_FollowUpId" />
+                <div class="form-group">
+                    <label for="FollowUp_Completed_CompletedDate" class="control-label">Date Completed</label>
+                    <input type="date" id="FollowUp_Completed_CompletedDate" class="form-control" readonly />
+                </div>
+                @*
+                <div class="form-group">
+                <label for="FollowUp_Completed_DueDate" class="control-label">Due Date</label>
+                <input type="date" width="150" id="FollowUp_Edit_DueDate" class="form-control" readonly/>
+                </div>
+                <div class="form-group">
+                <label for="FollowUp_Completed_Title" class="control-label">Title</label>
+                <input type="text" maxlength="50" id="FollowUp_Edit_Title" class="form-control"  readonly/>
+                </div>
+                *@
+                <div class="form-group">
+                    <label id="selectedCount"></label>
+                </div>
+                <div class="alert alert-danger m-0" style="display:none" role="alert"></div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">Mark Completed</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script asp-add-nonce="true">
+$(document).ready(function () {
+
+    var followUpContactsSource = new Bloodhound({
+        name: "followUpContacts",
+        identify: function (item) {
+            return item.id;
+        },
+        sufficient: 1,
+        datumTokenizer: Bloodhound.tokenizers.obj.whitespace('tag', 'desc'),
+        queryTokenizer: Bloodhound.tokenizers.whitespace,
+        prefetch: { url: '/Contacts/GetContactsForTags', cache: false }
+    });
+    followUpContactsSource.initialize();
+
+    let contactSettings = {
+        tagClass: function (item) {
+            switch (item.class) {
+                case 'primary': return 'label label-primary';
+                case 'danger': return 'label label-danger label-important';
+                case 'success': return 'label label-success';
+                case 'default': return 'label label-default';
+                case 'warning': return 'label label-warning';
+                default:
+                    return 'label label-primary';
+                    break;
+            }
+        },
+        //confirmKeys: [13, 32, 44],
+        maxTags: 3,
+        itemValue: 'id',
+        itemText: 'tag',
+        freeInput: false,
+        trimValue: true,
+        typeaheadjs: [
+            {
+                hint: true,
+                highlight: true,
+                minLength: 0
+            },
+            {
+                name: 'followUpContacts',
+                limit: 10, // This controls the number of suggestions displayed
+                displayKey: 'tag',
+                source: function (q, sync) {
+                    if (q === '') {
+                            sync(followUpContactsSource.all());
+                    }
+                    else {
+                        followUpContactsSource.ttAdapter()(q, sync)
+                    }
+                },
+                showHintOnFocus: true
+            }
+        ]
+    };
+
+    $("#FollowUp_New_Contacts").tagsinput(contactSettings);
+    $("#FollowUp_Edit_Contacts").tagsinput(contactSettings);
+
+    var followUpTagsSource = new Bloodhound({
+        name: "followUpTags",
+        identify: function (item) {
+            return item.id;
+        },
+        sufficient: 1,
+        datumTokenizer: Bloodhound.tokenizers.obj.whitespace('tag', 'desc'),
+        queryTokenizer: Bloodhound.tokenizers.whitespace,
+        prefetch: { url: '/Tags/FollowUpTags', cache: false }
+    });
+    followUpTagsSource.initialize();
+
+    let settings = {
+        tagClass: function (item) {
+            switch (item.class) {
+                case 'primary': return 'label label-primary';
+                case 'danger': return 'label label-danger label-important';
+                case 'success': return 'label label-success';
+                case 'default': return 'label label-default';
+                case 'warning': return 'label label-warning';
+                default:
+                    return 'label label-primary';
+                    break;
+            }
+        },
+        //confirmKeys: [13, 32, 44],
+        maxTags: 5,
+        itemValue: 'id',
+        itemText: 'tag',
+        freeInput: false,
+        trimValue: true,
+        typeaheadjs: [
+            {
+                hint: true,
+                highlight: true,
+                minLength: 0
+            },
+            {
+                name: 'followUpTags',
+                limit: 10, // This controls the number of suggestions displayed
+                displayKey: 'tag',
+                source: function (q, sync) {
+                    if (q === '') {
+                        sync(followUpTagsSource.all());
+                    }
+                    else {
+                        followUpTagsSource.ttAdapter()(q, sync)
+                    }
+                },
+                showHintOnFocus: true
+            }
+        ]
+    };
+
+    $("#FollowUp_New_Code").tagsinput(settings);
+    $("#FollowUp_Edit_Code").tagsinput(settings);
+});
+</script>

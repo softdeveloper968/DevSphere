@@ -1,0 +1,18 @@
+﻿@model  MyDMVpro.Models.RequestsViewModels.PurgeDataViewModel
+
+@{
+    ViewData["Title"] = "Purge";
+}
+
+<h2>Purge Lienholder Data</h2>
+
+<form asp-controller="Requests" asp-action="Purge" asp-route-returnurl="/Home" method="post" class="form-horizontal">
+    <input type="hidden" asp-for="id" />
+
+    <div class="form-group">
+        <label asp-for="Email" class="control-label"></label>
+        <input asp-for="Email" class="form-control" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+    <div class="form-group"><button type="submit">Purge Data</button></div>
+</form>

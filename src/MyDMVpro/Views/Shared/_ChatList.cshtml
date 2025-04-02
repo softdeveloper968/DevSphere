@@ -1,0 +1,277 @@
+﻿@model MyDMVpro.Models.ChatsViewModels.ChatViewModel
+
+<table class="display stripe chat_grid" id="DT_chatHistory" cellspacing="0" align="left" style="max-width:1440px;width:100%;">
+    <thead>
+        <tr id="headerRow-chatHistory">
+            <th class="chatVIN">VIN</th>
+            <th class="chatDateSent">Date</th>
+            <th class="chatReadByRecipient">Was Read</th>
+            <th class="chatIsVendor">Is Vendor</th>
+            <th class="chatUser">User</th>
+            <th class="chatOrg">Org</th>
+            <th class="chatMessage">Message</th>
+            <th class="reqId">RequestId</th>
+        </tr>
+        <tr id="filterRow-chatHistory">
+            <th class="clearFilter" data-toggle="tooltip" title="Clear filter"></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+    <tfoot>
+    </tfoot>
+</table>
+<script asp-add-nonce="true">
+    $(document).ready(function () {
+        $.fn.dataTable.render.shortDate = datatable_render_shortdate;
+        var groupColumn = 0;
+        var dt = $('#DT_chatHistory').DataTable(
+            {
+                "select": true,
+                bSortCellsTop: true,
+                "searching": true,
+                "scrollX": true,
+                "pageLength": 100,
+                "language": {
+                    select: {
+                        rows: "<span class='info_xrowsselected'>%d rows selected</span>"
+                        , selector: 'td:not(.norowselect)'
+                    }
+                },
+                "lengthMenu": [ 10, 25, 50, 100, 200, 500],
+                "order": [[0, 'asc'],[1,'asc']],
+                searchDelay: 500,
+                "columnDefs": [
+                    { "visible": false, "targets": groupColumn },
+                    { "targets": "chatVIN", "type": "text-vin",
+                        "data": "vin",
+                        "render": datatable_render_vin
+                    },
+                    {
+                        "targets": ["chatReadByRecipient", "chatReadByVendor", "chatIsVendor", "chatReadByUser" ],
+                        "render": function (data, type, full, meta) {
+                            if (typeof data === 'undefined') return '';
+                            if (type == "sort" || type == "type")
+                                return '';
+                            if (type == 'display' || type == 'filter') {
+                                try {
+                                    if (data == true)
+                                        return 'X'
+                                    return '';
+                                }
+                                catch (e) {
+                                }
+                            }
+                            return '';
+                        }
+                    },
+                    {
+                        "targets": "xchatReadByUser",
+                        "data": "readByUser",
+                        "sortable": false,
+                        "autowidth": true,
+                        "render": function (data, type, full, meta) {
+                            if (typeof data === 'undefined') return '';
+                            if (type == "sort" || type == "type")
+                                return '';
+                            if (type == 'display' || type == 'filter') {
+                                try {
+                                    if (data === true)
+                                        return 'Yes'
+                                    return 'No';
+                                }
+                                catch (e) {
+                                    return e;
+                                }
+                            }
+                            return '';
+                        }
+                    },
+                    { "targets": "chatReadByRecipient", "data": "readByRecipient", "sortable": false, "autowidth": true },
+                    { "targets": "chatIsVendor", "data": "isVendor", "sortable": false, "autowidth": true },
+                    {
+                        "targets": ["chatDateSent"],
+                        "className": "chatDateSent",
+                        "sortable": false,
+                        "autowidth": true,
+                        "defaultContent": "",
+                        "render": getfn_datatable_render_datetime()
+                    },
+                    {
+                        "targets": ["chatMessage"], "sortable": true,
+                        "className": "chatMessage",
+                        "orderable": false,
+                        "data": "message", "defaultContent": '',
+                        "searchable": true,
+                        "autowidth": false,
+                        "width": "50%"
+                    },
+                    { "targets": "chatDateSent", "data": "dateSent", "sortable": false, "autowidth": true },
+                    { "targets": "chatUser", "data": "userName", "sortable": false, "autowidth": true, "className": "chatUser"  },
+                    { "targets": "chatOrg", "data": "userOrg", "sortable": false, "autowidth": true, "className": "chatUserOrg" },
+                    { "targets": "reqId", "visible": false, "sortable": false, "data": "requestId", "searchable": false },
+                    {
+                        "targets": "_all", "searchable": true, "className": "dt-center", "autowidth": true, "defaultContent": "", "sortable": true,
+                        render: $.fn.dataTable.render.text()
+                    },
+                ],
+                "drawCallback": function (settings) {
+                    var api = this.api();
+                    var rows = api.rows({ page: 'current' }).nodes();
+                    var last = null;
+
+                    api.column(groupColumn, { page: 'current' }).data().each(function (group, i) {
+                        if (last !== group) {
+                            $(rows).eq(i).before(
+                                '<tr class="chatGrouping"><td colspan="6">' + group + '</td></tr>'
+                            );
+
+                            last = group;
+                        }
+                    });
+                },
+                "processing": true,
+                "serverSide": true,
+                //"filter": true,
+                "ajax":
+                    {
+                        "url": "/RequestChats/Master",
+                        "type": "POST",
+                        "dataType": "JSON",
+                        headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() }
+                    },
+                "buttons": [
+                    {
+                        extend: 'selectAll',
+                        className: 'selectall',
+                        action: function (e) {
+                            e.preventDefault();
+                            table.rows({ search: 'applied' }).deselect();
+                            table.rows({ search: 'applied' }).select();
+                        }
+                    },
+                    'selectNone',
+                    {
+                        extend: 'collection',
+                        text: 'Export',
+                        dropup: true,
+                        background: false,
+                        buttons: [
+                            {
+                                extend: 'copy',
+                                filename: 'mydmv_ChatHistory',
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                            {
+                                extend: "csv",
+                                filename: 'mydmv_ChatHistory',
+                                exportOptions: {
+                                    modifier: {
+                                        selected: null
+                                    }
+                                }
+                            },
+                            {
+                                extend: 'excelHtml5',
+                                filename: 'mydmv_ChatHistory',
+                                exportOptions: {
+                                    modifier: {
+                                        selected: null
+                                    }
+                                }
+                            },
+                            {
+                                extend: 'pdfHtml5',
+                                title: 'myDmv.pro Chat History',
+                                filename: 'mydmv_ChatHistory',
+                                orientation: 'landscape',
+                                pageSize: 'LEGAL',
+                                exportOptions: {
+                                    columns: ':visible',
+                                }
+                            },
+                            {
+                                extend: "print",
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                        ]
+                    },
+                    { text: "", titleAttr: "Refresh", className: "listRefresh", action: function (e) { e.preventDefault(); table.ajax.reload(); } }
+                ],
+                "initComplete": function (settings, json) {
+                    var api = this.api();
+                            api.columns(['.chatDateSent']).every(function () {
+                                var column = this;
+                                var select = $('<select class="customFilter"><option value=""></option></select>')
+                                    .appendTo($(column.footer()).empty())
+                                    .on('change', function () {
+                                        var val = $(this).val();
+                                        var escapedVal = $.fn.dataTable.util.escapeRegex(val);
+                                        column
+                                            //.search(escapedVal ? '^' + escapedVal + '$' : '', true, false)
+                                            .search(val ? val : '', false, false)
+                                            .draw();
+                                    });
+                                var dates = [];
+                                column.data().unique().sort().each(function (d, j) {
+                                    dates.push(moment.utc(d).format('YYYY-MM-DD'));
+                                });
+                                $.unique(dates.sort()).sort().forEach(function (d) {
+                                    if (d) {
+                                        var $opt = $("<option value=''></option>");
+                                        var dtext = moment.utc(d).format('MM-DD-YYYY');
+                                        var dval = moment.utc(d).format('YYYY-MM-DD');
+                                        $opt.text(dtext);
+                                        $opt.val(dval);
+                                        select.append($opt);
+                                    }
+                                });
+                            });
+                    api.columns(['.chatVIN']).every(function () {
+                                var column = this;
+                                var title = "VIN";
+                                var select = $('<input class="customFilter" type="text" placeholder="Search ' + title + '" />')
+                                    .appendTo($(column.footer()).empty())
+                                    .on('change', function () {
+                                        var val = $(this).val();
+                                        var escapedVal = $.fn.dataTable.util.escapeRegex(val);
+                                        column
+                                            //.search(escapedVal ? '^' + escapedVal + '$' : '', true, false)
+                                            .search(val ? val : '', false, false)
+                                            .draw();
+                                });
+                            });
+                    fixupColumnWidths(this);
+                },
+                "dom": "<'row'<'col-sm-6'l><'col-sm-6'<'#buttonContainer.site-datatable-button-container'>f>>" + "<'row'<'col-sm-12'tr>>" + "<'row'<'col-sm-5'i><'col-sm-7'p>><'dtalert row'>B",
+            });
+
+        var table = $('#DT_chatHistory');
+        // Order by the grouping
+        table.find('tbody').on('click', 'tr.group', function (e) {
+            e.stopPropogation();
+            var currentOrder = table.order()[0];
+            if (currentOrder[0] === groupColumn && currentOrder[1] === 'asc') {
+                dt.order([groupColumn, 'desc']).draw();
+            }
+            else {
+                dt.order([groupColumn, 'asc']).draw();
+            }
+        });
+        table.find('.clearFilter').on('click', function (e) {
+            e.preventDefault();
+            table.find('.customFilter').val('');
+            dt.search('').columns().search('').draw();
+        });
+    });
+</script>

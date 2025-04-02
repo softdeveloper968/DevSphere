@@ -1,0 +1,90 @@
+﻿@model MyDMVpro.Models.AttachmentReviewModels.AttachmentReviewFieldsModel
+@{
+    Dictionary<string, string> fieldValues = null;
+    void initFieldValues()
+    {
+        if (fieldValues == null && !string.IsNullOrWhiteSpace(Model.JRequest))
+        {
+            try
+            {
+                fieldValues = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(Model.JRequest);
+            }
+            catch (Exception ex)
+            {
+                // log error
+                System.Diagnostics.Trace.TraceError("Error deserializing JRequest: " + ex.Message);
+            }
+        }
+    }
+    string GetFieldValue(string xlName)
+    {
+        if (fieldValues.ContainsKey(xlName))
+        {
+            return fieldValues[xlName].ToString();
+        }
+        return "";
+    }
+    string GetColumnValue_AppTypeAttachmentType(MdpAppTypeAttachmentTypeReviewColumn column)
+    {
+        string xlName = column.MasterField?.ExcelName;
+        return GetFieldValue(xlName);        
+    }
+    string GetColumnReviewText_AppTypeAttachmentType(MdpAppTypeAttachmentTypeReviewColumn column)
+    {
+        return column.ReviewText ?? "";
+    }
+    string GetColumnLabel_AppTypeAttachmentType(MdpAppTypeAttachmentTypeReviewColumn column)
+    {
+        return column.MasterField?.FormDefaultLabel ?? "unknown";
+    }
+    string GetColumnValue_AttachmentType(MdpAttachmentTypeReviewColumn column)
+    {
+        string xlName = column.MasterField?.ExcelName;
+        return GetFieldValue(xlName);
+    }
+    string GetColumnReviewText_AttachmentType(MdpAttachmentTypeReviewColumn column)
+    {
+        return column.ReviewText ?? "";
+    }
+    string GetColumnLabel_AttachmentType(MdpAttachmentTypeReviewColumn column)
+    {
+        return column.MasterField?.FormDefaultLabel ?? "unknown";
+    }
+    initFieldValues();
+}
+<div id="reviewFields" class="" tabindex="-1">
+    <div class="">
+        <div class="reviewInstructions">@Model.AttachmentType?.ReviewTextLine1</div>
+        @if ((Model.AppTypeAttachmentTypeReviewColumns?.Count ?? 0) > 0)
+        {
+            foreach (var column in Model.AppTypeAttachmentTypeReviewColumns)
+            {
+                var xlName = column.MasterField.ExcelName;
+                <div class="form-group">
+                    <label asp-for="@xlName" class="control-label">@GetColumnLabel_AppTypeAttachmentType(column)</label>
+                    <input asp-for="@xlName" class="form-control" value="@GetColumnValue_AppTypeAttachmentType(column)" readonly />
+                    <div class="control-label">@GetColumnReviewText_AppTypeAttachmentType(column)</div>
+                </div>
+            }
+        }
+        else if ((Model.AttachmentTypeReviewColumns?.Count ?? 0) > 0)
+        {
+            // use the columns specified on the MdpAttachmentType
+            foreach (var column in Model.AttachmentTypeReviewColumns)
+            {
+                var xlName = column.MasterField.ExcelName;
+                <div class="form-group">
+                    <label asp-for="@xlName" class="control-label">@GetColumnLabel_AttachmentType(column)</label>
+                    <input asp-for="@xlName" class="form-control" value="@GetColumnValue_AttachmentType(column)" readonly />
+                    <div class="control-label">@GetColumnReviewText_AttachmentType(column)</div>
+                </div>
+            }
+        }
+        else
+        {
+            <div>
+                <p>No review fields are available for this attachment type.</p>
+            </div>
+        }
+    </div>
+</div>

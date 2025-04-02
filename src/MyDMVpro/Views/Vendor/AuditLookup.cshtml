@@ -1,0 +1,202 @@
+﻿@model List<MyDMVpro.Models.AuditCompleteResponse>
+
+@{
+    const string PageName = VendorPageNames.AuditLookup;
+    ViewData["Title"] = "Audit Lookup";
+    List<string> columnsToShow = ViewData["ColumnsToShow"] as List<string>;
+    // UserInfo ui = UserInfo.GetCurrentUser(User, false);
+    // string GetUrl(string name)
+    // {
+    //     return MyDMVpro.Controllers.RequestStatusController.GetEndpointUrl(this.Context, name);
+    // }
+}
+
+@functions {
+    public string FormatDateForDisplay(DateTime? date)
+    {
+        if (date.HasValue)
+        {
+            return date.Value.ToString("MM-dd-yyyy");
+        }
+        else
+        {
+            return "";
+        }
+    }
+    public string GetColumnValue(MyDMVpro.Models.AuditCompleteResponse record, string columnName)
+    {
+        switch (columnName.ToLower())
+        {
+            case "stage":
+                return record.ProcessStageName;
+            case "status":
+                return record.Status;
+            case "type":
+                return record.Type;
+            case "state":
+                return record.State;
+            case "vin":
+                return record.Vin;
+            case "r#":
+                return record.RequestNo.ToString();
+            case "make":
+                return record.VehicleMake;
+            case "year":
+                return record.VehicleYear;
+            case "group":
+                return record.GroupName;
+            case "rt-lh":
+                return record.RT_LH;
+            case "dt-lh":
+                return record.DT_LH_Name;
+            case "eta":
+                return FormatDateForDisplay(record.Eta);
+            case "sent to dmv":
+                return FormatDateForDisplay(record.DateToDmv);
+            case "outcome":
+                return record.Outcome;
+            case "notes":
+                return record.Notes;
+            case "internal":
+                return record.Internal;
+            case "assign user":
+                return record.AssignedUser;
+            case "lh shipped to vendor":
+                return record.LH_SToV;
+            case "repo date":
+                return FormatDateForDisplay(record.RepoDate);
+            case "odometer":
+                return record.Odometer;
+            case "created":
+                return FormatDateForDisplay(record.Created);
+            case "due date":
+                return FormatDateForDisplay(record.DueDate);
+            case "title":
+                return record.Title;
+            default:
+                return "";
+        }
+    }
+}
+
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+
+<div class="white_box p_15 Audits_view">
+    <div class="auditLookup_header">
+        <div class="audit_ETAheader_Name"></div>
+        <div class="audit_ETAheader_Lookup"></div>
+    </div>
+    <table class="table table-striped" id="auditTable" border="1">
+        <thead>
+            <tr>
+                @foreach (var columnName in columnsToShow)
+                {
+                    <th>@columnName</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                foreach (var record in Model)
+                {
+                    <tr>
+                        @foreach (var columnName in columnsToShow)
+                        {
+                            <td>@GetColumnValue(record, columnName)</td>
+                        }
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+    <div id="export-button-audit"></div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        var table = $('#auditTable').DataTable({
+            "paging": true,
+            "pageLength": 10,
+            "scrollX": true,
+            "scrollY": "400px",
+            "scrollCollapse": true,
+            "searching": true,
+            "info": true,
+            "lengthChange": true,
+            "ordering": true,
+            "buttons": [
+                {
+                    extend: 'collection',
+                    className: 'btn-export-auditlookup',
+                    text: 'Export',
+                    buttons: [
+                        {
+                            extend: 'copy',
+                            text: 'Copy',
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'excelHtml5',
+                            text: 'Excel',
+                            autoFilter: true,
+                            sheetName: 'myDMV.pro',
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'pdfHtml5',
+                            text: 'PDF',
+                            orientation: 'landscape',
+                            pageSize: 'LEGAL',
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'print',
+                            text: 'Print',
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        }
+                    ]
+                }
+            ]
+        });
+
+        table.buttons().container().appendTo('#export-button-audit');
+        table.columns.adjust();
+
+        SetDynamicValueForHeader();
+    });
+
+    function SetDynamicValueForHeader() {
+        var url = window.location.href;
+        var id = url.substring(url.lastIndexOf('/') + 1);
+        $.ajax({
+            url: '/Vendor/GetBatchId/'+ id,
+            type: 'GET',
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            success: function (data) {
+                if (data && data.length > 0) {
+                    var batch = data[0];
+                    var auditHeaderlookup = '<span class="static-data green">Completed – completed at ' + convertLocalTime(batch.auditFinalTime) + ' by ' + batch.auditCompletedBy + '</span>';
+                    var auditNameHtml = '<span class="Name-data">Audit Name: ' + batch.auditName + '</span>';
+                    $('.audit_ETAheader_Lookup').html(auditHeaderlookup);
+                    $('.audit_ETAheader_Name').html(auditNameHtml);
+                } else {
+                    jqToast.error({ text: 'No Data Found for Batch' });
+                }
+            },
+            error: function (xhr, status, error) {
+                jqToast.error({ text: 'No Data Found for Batch' });
+            }
+        });
+    }
+
+</script>

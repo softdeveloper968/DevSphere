@@ -1,0 +1,321 @@
+﻿@model List<MyDMVpro.Models.Groups>
+
+@{
+    const string PageName = "Reports";
+    string GetUrl(string name)
+    {
+        return MyDMVpro.Controllers.RequestStatusController.GetEndpointUrl(this.Context, name);
+    }
+    IEnumerable<SelectListItem> GetGroups()
+    {
+        List<SelectListItem> groups = new();
+        foreach (var group in Model)
+        {
+            groups.Add(new SelectListItem(){ Disabled = false, Selected = false, Text = group.GroupName, Value = group.GroupId.ToString() });
+        }
+        return groups;
+    }
+}
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+@{
+    await Html.RenderPartialAsync("_ExportItems");
+}
+
+<div class="white_box p_15 mb_20">
+    <div class="row gap_15">
+        <div class="col-md-8 form-group m-0">
+            <label class="control-label font-600">Select a Group </label>
+            <div class="row gap_15">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <select id="vendorGroupId" asp-items="@(GetGroups())" class="form-control" data-required="required">
+                            <option value=""></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <select id="reportDateRange" class="form-control">
+                            <option value="last30">Completed Last 30 days</option>
+                            <option value="lastmonth">Completed since first of last month</option>
+                            <option value="thismonth">Completed this month</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label for="reportStartDate" class="control-label">Completed Start Date</label>
+                <input type="date" id="reportStartDate" name="reportStartDate" class="form-control" />
+            </div>
+        </div>
+        <div class="col-md-4">
+            <label class="m-0 d-inline-flex gap-2 mt_10 font-600">
+                <input type="checkbox" id="reportWorkbook" name="reportWorkbook" class="m-0" />
+                Download as Excel Workbook
+            </label>
+        </div>
+        <div class="col-md-4">
+            <button type="button" class="btn btn-primary custom_btn" id="downloadReports">Download</button>
+            <button type="button" class="btn custom_btn" id="refreshReports">Refresh Lists</button>
+        </div>
+            
+    </div>
+</div>
+<div>
+    <h2 class="sub_heading">Incoming Holds</h2>
+    <div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.Reports_IncomingHolds, PageName)
+                {
+                    QueueTitle = "",
+                    DataUrl = GetUrl("Vendor_Reports_IncomingHolds"),
+                    ListId = "Reports_IncomingHolds",
+                    AllowMove = false,
+                    TableVarName = "Reports_IncomingHolds_Table",
+                    TableClass = "reportTable",
+                    AllowAutoIMSRefresh = false,
+                    AddLastModified = false,
+                    AddLastModifiedBy = false,
+                    EnableReportBuilder = false,
+                    EnableAdvancedSearch = true,
+                    EnableFilter = true,
+                    EnableBulkEdit = false,
+                    EnableUniversalExport = false,
+                    EnableExportAll = true,
+                    AllowDirectToBilling = false,
+                    AllowAddToInvoice = false,
+                    AllowCancel = false,
+                    AllowDelete = false,
+                    AllowMultilineVin = false,
+                    AllowReassign = false,
+                    AllowSort = true,
+                    AllowStatusEdit = false
+                };
+            list.Columns.Add_Blank();
+            list.Columns.Add_Blank();
+            list.Columns.Add_AppType(false);
+            list.Columns.Add_AppState();
+            list.Columns.Add_Code();
+            list.Columns.Add_VIN();
+            list.Columns.Add_Make();
+            list.Columns.Add_Year();
+            list.Columns.Add_LHShippedToVendor();
+            list.Columns.Add_RNo();
+            list.Columns.Add_SubmittedBy();
+            list.Columns.Add_Group().SetExportable(false);
+
+            list.SortColumns.Add("reqType");
+            list.SortColumns.Add("reqState");
+
+            await Html.RenderPartialAsync("_VendorRequestList", list);
+            await Html.RenderPartialAsync("_downloadFile", list);
+        }
+    }
+    </div>
+    <h2 class="sub_heading">Active</h2>
+    <div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.Reports_Active, PageName)
+                {
+                    QueueTitle = "",
+                    DataUrl = GetUrl("Vendor_Reports_Active"),
+                    ListId = "Reports_Active",
+                    AllowMove = false,
+                    TableVarName = "Reports_Active_Table",
+                    TableClass = "reportTable",
+                    AllowAutoIMSRefresh = false,
+                    AddLastModified = false,
+                    AddLastModifiedBy = false,
+                    EnableReportBuilder = false,
+                    EnableAdvancedSearch = true,
+                    EnableFilter = true,
+                    EnableBulkEdit = false,
+                    EnableUniversalExport = false,
+                    EnableExportAll = true,
+                    AllowDirectToBilling = false,
+                    AllowAddToInvoice = false,
+                    AllowCancel = false,
+                    AllowDelete = false,
+                    AllowMultilineVin = false,
+                    AllowReassign = false,
+                    AllowSort = true,
+                    AllowStatusEdit = false
+
+                };
+            list.Columns.Add_Blank();
+            list.Columns.Add_Blank();
+            list.Columns.Add_StageName();
+            list.Columns.Add_AppType(false);
+            list.Columns.Add_AppState();
+            list.Columns.Add_VIN();
+            list.Columns.Add_RNo();
+            list.Columns.Add_SubmittedBy();
+            list.Columns.Add_Group().SetExportable(false);
+
+            list.SortColumns.Add("reqType");
+            list.SortColumns.Add("reqState");
+
+            await Html.RenderPartialAsync("_VendorRequestList", list);
+            await Html.RenderPartialAsync("_downloadFile", list);
+        }
+    }
+    </div>
+    <h2 class="sub_heading">Holds</h2>
+    <div class="white_box p_15 mb_20">
+    @{
+        {
+                VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.Reports_Holds, PageName)
+                {
+                    QueueTitle = "",
+                    DataUrl = GetUrl("Vendor_Reports_Holds"),
+                    ListId = "Reports_Holds",
+                    AllowMove = false,
+                    TableVarName = "Reports_Holds_Table",
+                    TableClass = "reportTable",
+                    AllowAutoIMSRefresh = false,
+                    AddLastModified = false,
+                    AddLastModifiedBy = false,
+                    EnableReportBuilder = false,
+                    EnableAdvancedSearch = true,
+                    EnableFilter = true,
+                    EnableBulkEdit = false,
+                    EnableUniversalExport = false,
+                    EnableExportAll = true,
+                    AllowDirectToBilling = false,
+                    AllowAddToInvoice = false,
+                    AllowCancel = false,
+                    AllowDelete = false,
+                    AllowMultilineVin = false,
+                    AllowReassign = false,
+                    AllowSort = true,
+                    AllowStatusEdit = false
+                };
+            list.Columns.Add_Blank();
+            list.Columns.Add_Blank();
+            list.Columns.Add_AppType(false);
+            list.Columns.Add_AppState();
+            list.Columns.Add_VIN();
+            list.Columns.Add_RNo();
+            list.Columns.Add_SubmittedBy();
+            list.Columns.Add_Make();
+            list.Columns.Add_Year();
+            list.Columns.Add_LHShippedToVendor();
+            list.Columns.Add_Group().SetExportable(false);
+
+            list.SortColumns.Add("reqType");
+            list.SortColumns.Add("reqState");
+
+            await Html.RenderPartialAsync("_VendorRequestList", list);
+            await Html.RenderPartialAsync("_downloadFile", list);
+        }
+    }
+    </div>
+    <h2 class="sub_heading">Completed</h2>
+    <div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.Reports_Completed, PageName)
+                {
+                    QueueTitle = "",
+                    DataUrl = GetUrl("Vendor_Reports_Completed"),
+                    ListId = "Reports_Completed",
+                    AllowMove = false,
+                    TableVarName = "Reports_Completed_Table",
+                    TableClass = "reportTable",
+                    AllowAutoIMSRefresh = false,
+                    AddLastModified = false,
+                    AddLastModifiedBy = false,
+                    EnableReportBuilder = false,
+                    EnableAdvancedSearch = true,
+                    EnableFilter = true,
+                    EnableBulkEdit = false,
+                    EnableUniversalExport = false,
+                    EnableExportAll = true,
+                    AllowDirectToBilling = false,
+                    AllowAddToInvoice = false,
+                    AllowCancel = false,
+                    AllowDelete = false,
+                    AllowMultilineVin = false,
+                    AllowReassign = false,
+                    AllowSort = true,
+                    AllowStatusEdit = false,
+                    IncludeArchivedOnCsvDownload = true
+                };
+            list.Columns.Add_Blank();
+            list.Columns.Add_Blank();
+            list.Columns.Add_AppType(false);
+            list.Columns.Add_AppState();
+            list.Columns.Add_VIN();
+            list.Columns.Add_RNo();
+            list.Columns.Add_FinishDate();
+            list.Columns.Add_SubmittedBy();
+            list.Columns.Add_Tracking();
+            list.Columns.Add_Group().SetExportable(false);
+
+            list.SortColumns.Add("reqType");
+            list.SortColumns.Add("reqState");
+
+            await Html.RenderPartialAsync("_VendorRequestList", list);
+            await Html.RenderPartialAsync("_downloadFile", list);
+        }
+    }
+    </div>
+</div>
+
+<form method="post"></form>
+<script>
+    function updateStartDate() {
+        const val = $("#reportDateRange").find("option:selected").val();
+
+        const date = new Date();
+        if (val == "last30") {
+            // get the date 30 days ago
+            date.setDate(date.getDate() - 30);
+        }
+        else if (val == "lastmonth") {
+            // get a date with containing the first day of the previous month
+            date.setMonth(date.getMonth() - 1);
+            date.setDate(1);
+        }
+        else if (val == "thismonth") {
+            date.setDate(1);
+        }
+        // set the reportStartDate field with the date
+        let completeStartDate = date.toISOString().split('T')[0];
+        let maxctl = $("#filterRow-Reports_Completed").find(".maxdate");
+        maxctl.val("");
+        $("#reportStartDate").val(completeStartDate);
+        let minctl = $("#filterRow-Reports_Completed").find(".mindate");
+        if (!minctl.is(":visible")) {
+            $("#filterRow-Reports_Completed").find(".advancedFilter").trigger('click');
+        }
+        minctl.val(completeStartDate);
+        minctl.trigger('change');
+    }
+    $(document).ready(function () {
+        $("#vendorGroupId").on('change', function (e) {
+            Reports_RefreshViewFilters(this);
+        });
+        $("#downloadReports").on('click', function (e) {
+            Reports_Download($("#vendorGroupId").val(), 
+                $("#vendorGroupId option:selected").text(), 
+                $("#reportWorkbook").is(':checked'));
+        });
+        $("#refreshReports").on('click', function (e) {
+            updateStartDate();
+            Reports_RefreshViewFilters($("#vendorGroupId"));
+        });
+        $("#reportDateRange").on('change', function (e) {
+            updateStartDate();
+        });
+        updateStartDate();
+        $("#reportStartDate").on('change', function (e) {
+            updateStartDate();
+        });
+    });
+</script>

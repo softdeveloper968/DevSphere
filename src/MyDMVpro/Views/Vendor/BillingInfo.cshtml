@@ -1,0 +1,303 @@
+﻿@model MyDMVpro.Models.VendorViewModels.BillingInfoViewModel
+
+@{
+    ViewData["Title"] = "Billing Info";
+}
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+
+@{ await Html.RenderPartialAsync("_billToInfo"); }
+<div class="row" style="padding-left:20px">
+    <div class="col-md-4">
+        <div>Billing information for invoice creation.</div>
+        <div class="box">
+            <div class="box-body table-responsive" height="80%">
+                <select id="vendorGroupId" asp-items="@(Model.GetGroups())" class="form-control" data-required="required">
+                    <option value=""></option>
+                </select>
+                @*<table id="DT_GroupTable">
+            <thead>
+                <tr>
+                    <th class="tblChkbox"></th>
+                    <th>Group</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var g in Model.Groups)
+                {
+                    <tr data-groupid="@g.GroupId">
+                        <td></td>
+                        <td>@g.GroupName</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot></tfoot>
+        </table>*@
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row" style="padding-left:20px">
+    <div class="col-md-12">
+        <form id="billToListForm" method="post">
+            <input type="hidden" id="groupId" name="groupId" value="" />
+            <input type="hidden" id="vendorId" name="vendorId" value="" />
+            <input type="hidden" id="json" name="json" value="" />
+        </form>
+        <div class="box" id="billingInfoPanel">
+            <div class="box-body table-responsive" height="80%">
+                <table id="DT_billToListTable">
+                    <thead>
+                        <tr>
+                            <th class="btiChkbx"></th>
+                            <th class="btiShortName">Short Name</th>
+                            <th class="btiCustName">Billing Name</th>
+                            <th class="btiCustAddr1">Address 1</th>
+                            <th class="btiCustAddr2">Address 2</th>
+                            <th class="btiCustCity">City</th>
+                            <th class="btiCustState">State</th>
+                            <th class="btiCustZip">Zip Code</th>
+                            <th class="btiCustAttn">Attn</th>
+                            <th class="btiCustNote">Note</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                    <tfoot></tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<form method="post"></form>
+<script>
+    $(document).ready(function () {
+        initBillToListTable();
+        initGroupSelect();
+        @*initGroupTable();*@
+    });
+    function initGroupSelect() {
+        $("#billingInfoPanel").hide();
+        $("#vendorGroupId").on('change', function (e) {
+            var ctl = this;
+            var gid = $(ctl).val();
+            currentGroupId = gid;
+            if (gid == '') {
+                $("#billingInfoPanel").hide();
+            }
+            else {
+                populateBillingPanel(gid);
+                $("#billingInfoPanel").show();
+            }
+        });
+    }
+    function initGroupTable() {
+        var table = $("#DT_GroupTable").DataTable({
+            "select": { style: 'single' },
+            columnDefs: [
+                {
+                    "targets": "nosort",
+                    "orderable": false
+                },
+                {
+                    targets: "checksort",
+                    orderDataType: 'dom-checkbox'
+                },
+                {
+                    "targets": "tblChkbox",
+                    "orderable": false,
+                    "className": "select-checkbox",
+                    "min-width": "40px",
+                    "max-width": "40px",
+                    "sortable": false,
+                },
+            ],
+            order: [1],
+            dom: "lfr<'row'tipB>"
+            , buttons: []
+        });
+
+        table.on('select deselect', function (e, dt, type, indexes) {
+            if (type === 'row') {
+                selectionChanged(table);
+            }
+        });
+        table.buttons('.selectOnOff').disable();
+    }
+    function selectionChanged(table) {
+        var row = $(getSelectedRow(table));
+        var gid = row.data('groupid');
+        currentGroupId = gid;
+        populateBillingPanel(gid);
+    }
+    var billToChangesMade = false;
+    function updateBillToSaveButton(changes) {
+        if (typeof changes == 'boolean') {
+            billToChangesMade = changes;
+        }
+        var table = $("#DT_billToListTable").DataTable();
+        if (billToChangesMade) {
+            table.buttons('.save-changes').enable();
+        } else {
+            table.buttons('.save-changes').disable();
+        }
+    }
+    function populateBillingPanel(groupid) {
+        var succeeded = false;
+        var formData = new FormData();
+        formData.append('groupId', groupid);
+
+        updateBillToSaveButton(false);
+
+        $.ajax({
+            url: '/Vendor/GetBillToInfo',
+            type: 'POST',
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            data: formData,
+            async: true,
+            dataType: 'json',
+            cache: false,
+            contentType: false,
+            processData: false,
+        }).done(function (data) {
+            var t = $("#DT_billToListTable").DataTable();
+            t.clear();
+            if (typeof data.BillingAddresses === 'undefined') {
+                // none
+            } else {
+                t.rows.add(data.BillingAddresses);
+            }
+            t.draw();
+        }).fail(function (e) {
+            $e = e
+        });
+        return false;
+    }
+    var currentGroupId = '';
+    function initBillToListTable() {
+        var table = $("#DT_billToListTable").DataTable({
+            select: { style: 'single'
+                , selector: 'td:not(.norowselect)'
+            },
+            columnDefs: [
+                { targets: "nosort", "orderable": false },
+                { targets: "checksort", orderDataType: 'dom-checkbox' },
+                { targets: "btiHidden", visible: false },
+                { targets: "btiShortName", data: "ShortName", "min-width": "150px", "width": "150px" },
+                { targets: "btiCustName", data: "CompanyName", "min-width": "150px", "width": "200px"  },
+                { targets: "btiCustAddr1", data: "AddressLine1", "min-width": "150px", "width": "200px"  },
+                { targets: "btiCustAddr2", data: "AddressLine2", "min-width": "150px", "width": "200px"  },
+                { targets: "btiCustCity", data: "City", "min-width": "150px", "width": "150px"  },
+                { targets: "btiCustState", data: "State", "min-width": "50px", "width": "50px"  },
+                { targets: "btiCustZip", data: "ZipCode", "min-width": "50px", "width": "50px"  },
+                { targets: "btiCustAttn", data: "Attn", "min-width": "100px", "width": "150px"  },
+                { targets: "btiCustNote", data: "Note", "min-width": "150px", "width": "200px"  },
+                {
+                    targets: "btiChkbx",
+                    defaultContent: "",
+                    orderable: false,
+                    className: "select-checkbox",
+                    "min-width": "40px",
+                    "max-width": "40px",
+                    sortable: false,
+                },
+            ],
+            bSort: false,
+            dom: "lfr<'row'tipB>",
+            buttons: [
+                {
+                    text: 'New',
+                    action: function (e, dt, node, config) {
+                        e.preventDefault();
+                        addRow(table);
+                    }
+                },
+                {
+                    text: 'Edit',
+                    className: "selectOnOff",
+                    action: function (e, dt, node, config) {
+                        e.preventDefault();
+                        editRow(table);
+                    }
+                },
+                {
+                    text: 'Delete',
+                    className: "selectOnOff",
+                    action: function (e, dt, node, config) {
+                        e.preventDefault();
+                        removeRow(table);
+                    }
+                },
+                {
+                    text: 'Save Changes',
+                    className: "save-changes",
+                    action: function (e, dt, node, config) {
+                        e.preventDefault();
+                        saveRows(table, currentGroupId);
+                    }
+                }
+            ],
+        });
+        configureTableSelect(table);
+    }
+    function saveRows(table, groupid) {
+        var j = { BillingAddresses: [] };
+
+        $.each(table.rows().data(), function () {
+            j.BillingAddresses.push(this);
+        });
+
+        var formData = new FormData();
+        formData.append('groupId', groupid);
+        formData.append('json', JSON.stringify(j));
+
+        $.ajax({
+            url: '/Vendor/SaveBillToInfo',
+            type: 'POST',
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            data: formData,
+            async: true,
+            dataType: 'json',
+            cache: false,
+            contentType: false,
+            processData: false,
+        }).done(function (data) {
+            updateBillToSaveButton(false);
+        }).fail(function (e) {
+            $e = e
+        });
+    }
+    function addRow(table) {
+        vendor_show_AddBillToInfo(table);
+    }
+    function editRow(table) {
+        vendor_show_EditBillToInfo(table);
+    }
+    function removeRow(table) {
+        table.rows({ selected: true }).remove().draw();
+        updateBillToSaveButton(true);
+    }
+    function configureTableSelect(table) {
+        table.on('select deselect', function (e, dt, type, indexes) {
+            if (type === 'row') {
+                if (table.rows({ selected: true }).indexes().length !== 1) {
+                    table.buttons('.selectOnOff').disable();
+                }
+                else {
+                    var row = $(getSelectedRow(table));
+                    if (row.data("disable") == 'True') {
+                        table.buttons('.selectOnOff').disable();
+                    }
+                    else {
+                        table.buttons('.selectOnOff').enable();
+                    }
+                }
+            }
+        });
+        table.buttons('.selectOnOff').disable();
+        updateBillToSaveButton(false);
+    }
+    function getSelectedRow(table) {
+        var a = [];
+        return table.rows({ selected: true }).nodes()[0];
+    }
+</script>

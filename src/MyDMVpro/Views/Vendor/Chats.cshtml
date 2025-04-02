@@ -1,0 +1,106 @@
+﻿@{
+    string PageName = "Chats";
+    ViewData["Title"] = "Chats";
+    string GetUrl(string name)
+    {
+        return MyDMVpro.Controllers.RequestStatusController.GetEndpointUrl(this.Context, name);
+    }
+}
+
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/chat.css" asp-append-version="true" />
+
+<div>
+    <h2 class="sub_heading">Active Chats</h2>
+<div class="white_box p_15 mb_20">
+@{ await Html.RenderPartialAsync("_Chat", new Chats()); }
+@{ await Html.RenderPartialAsync("_AttachmentList"); }
+@{ await Html.RenderPartialAsync("_MoveDialog"); }
+@{ await Html.RenderPartialAsync("_BulkDialog"); }
+@{ await Html.RenderPartialAsync("_EditDetails"); }
+@{ await Html.RenderPartialAsync("_ExportItems"); }
+@{
+    VendorRequestViewModel activeChats = new VendorRequestViewModel(VendorViewType.Active, PageName)
+    {
+        QueueTitle = "Active Chats",
+        DataUrl = GetUrl("Chats"),
+        ListId = "DT_ActiveChats",
+        TableVarName = "vendorActiveChatsTable"
+    };
+    activeChats.Columns.Add_Select();
+    activeChats.Columns.Add_Chat();
+    activeChats.Columns.Add("Last Chat", "reqLastChat");
+    activeChats.Columns.Add_Attachments();
+    activeChats.Columns.Add_Links();
+    activeChats.Columns.Add_DupeCheck();
+    //activeChats.Columns.Add_EditIcon();
+    activeChats.Columns.Add_AppType(true);
+    activeChats.Columns.Add_AppState();
+    activeChats.Columns.Add_VIN();
+    activeChats.Columns.Add_RNo();
+    activeChats.Columns.Add_Notes();
+    activeChats.Columns.Add_Code();
+    activeChats.Columns.Add_Make();
+    activeChats.Columns.Add_Year();
+    activeChats.Columns.Add_PrintDate();
+    activeChats.Columns.Add_LHShippedToVendor();
+    activeChats.Columns.Add_FromLHCourier();
+    activeChats.Columns.Add_FromLHTracking();
+    activeChats.Columns.Add_SentToDMV();
+    activeChats.Columns.Add_ReceivedFromDMV();
+    activeChats.Columns.Add_FinishDate();
+    activeChats.Columns.Add_ETA();
+    activeChats.Columns.Add_Courier();
+    activeChats.Columns.Add_Tracking();
+    activeChats.Columns.Add_Group();
+    activeChats.Columns.Add_SubmittedBy();
+
+    activeChats.SortColumns.Add("reqChat", true);
+    activeChats.SortColumns.Add("reqType");
+    activeChats.SortColumns.Add("reqState");
+    activeChats.SortColumns.Add("reqVIN");
+
+    await Html.RenderPartialAsync("_VendorRequestList", activeChats);
+}
+    </div>
+</div>
+<div class="panel-group mb_5 accordion_tab" id="accordion" role="tablist" aria-multiselectable="true">
+    <div class="panel panel-default no_bg">
+        <div class="panel-heading accordion mb_5" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" role="tab" id="headingOne">
+            <h4 class="panel-title">
+                Chat History
+                <i class="fa fa-chevron-down"></i>
+            </h4>
+        </div>
+        <div class="panel panel white_box p_15">
+            @{
+                await Html.RenderPartialAsync("_ChatList");
+            }
+        </div>
+    </div>
+</div>
+
+<script asp-add-nonce="true">
+    function updateActiveChatsTable() {
+        if (vendorActiveChatsTable)
+            vendorActiveChatsTable.draw(false);
+    }
+    $(document).ready(() => {
+        var acc = document.getElementsByClassName("accordion");
+        var i;
+
+        for (i = 0; i < acc.length; i++) {
+            acc[i].addEventListener("click", function () {
+                this.classList.toggle("active");
+                var panel = this.nextElementSibling;
+                if (panel.style.display === "block") {
+                    panel.style.display = "none";
+                } else {
+                    panel.style.display = "block";
+                }
+            });
+        }
+        setInterval(updateActiveChatsTable, 60000);
+    });
+</script>

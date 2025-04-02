@@ -1,0 +1,221 @@
+﻿@{
+    var PageName = "ToDoLC";
+    ViewData["Title"] = "To Do - PA Lien Continuations";
+    string GetUrl(string name)
+    {
+        return MyDMVpro.Controllers.RequestStatusController.GetEndpointUrl(this.Context, name);
+    }
+    void AddSelectionColumns(VendorRequestViewModel list)
+    {
+        list.Columns.Add_Select();
+        list.Columns.Add_Chat();
+        list.Columns.Add_Attachments();
+        list.Columns.Add_DupeCheck();
+        list.Columns.Add_EditIcon();
+    }
+    void AddCommonColumns(VendorRequestViewModel list)
+    {
+        AddSelectionColumns(list);
+
+        list.Columns.Add_AppType(true);
+        list.Columns.Add_AppState();
+        list.Columns.Add_VIN();
+        list.Columns.Add_Notes();
+        list.Columns.Add_Code();
+        list.Columns.Add_DateToVendor();
+    }
+
+    void AddCommonSort(VendorRequestViewModel list)
+    {
+        list.SortColumns.Add("reqType");
+        list.SortColumns.Add("reqState");
+        list.SortColumns.Add("reqVIN");
+    }
+}
+
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+@*<script src="~/lib/js-xls/xlsx.js" asp-append-version="true"></script>*@
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+
+
+@{
+    await Html.RenderPartialAsync("_Chat", new Chats());
+    await Html.RenderPartialAsync("_AttachmentList");
+    await Html.RenderPartialAsync("_MoveDialog");
+    await Html.RenderPartialAsync("_BulkDialog");
+    await Html.RenderPartialAsync("_MarkFinished");
+    await Html.RenderPartialAsync("_EditDetails");
+    await Html.RenderPartialAsync("_ExportItems");
+    await Html.RenderPartialAsync("_lc_dialogs");
+
+    // These are required for the bulk print dialogs
+    await Html.RenderPartialAsync("~/Views/Requests/_ApplicationsSelectionForPrinting.cshtml");
+    await Html.RenderPartialAsync("~/Views/Requests/_CheckMergeForPrinting.cshtml");
+    await Html.RenderPartialAsync("~/Views/Requests/_AttachmentsSelectionForPrinting.cshtml");
+}
+<div>
+    <h2 class="sub_heading">Request Lien Inquiry</h2>
+    <div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.LCLI_Request, PageName)
+                {
+                    QueueTitle = "Lien Inquiry",
+                    QueueName = "LI_Request",
+                    AllowMove = true,
+                    AllowStatusEdit = true
+                };
+            AddCommonColumns(list);
+
+            list.Columns.Add_DT_LH();
+            list.Columns.Add_Group();
+            list.Columns.Add_ClientRef();
+            list.Columns.Add_RNo();
+            list.Columns.Add_SubmittedBy();
+
+            AddCommonSort(list);
+
+            await Html.RenderPartialAsync("_VendorRequestList", list);
+        }
+    }
+    </div>
+    <h2 class="sub_heading">Pending Lien Inquiries</h2>
+        <div class="white_box p_15 mb_20">
+    @{
+        {
+            VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.LCLI_Pending, PageName)
+                {
+                    QueueTitle = "Pending Lien Inquiries",
+                    QueueName = "Pending",
+                    AllowMove = true,
+                    AllowStatusEdit = true
+                };
+            AddCommonColumns(list);
+
+            list.Columns.Add_LIRequested();
+            list.Columns.Add_LICheckNumber();
+            list.Columns.Add_LITrackingToDMV();
+            list.Columns.Add_DT_LH();
+            list.Columns.Add_Group();
+            list.Columns.Add_ClientRef();
+            list.Columns.Add_RNo();
+            list.Columns.Add_SubmittedBy();
+
+            AddCommonSort(list);
+
+            await Html.RenderPartialAsync("_VendorRequestList", list);
+        }
+    }
+    </div>
+    <h2 class="sub_heading">Request Lien Continuation</h2>
+            <div class="white_box p_15 mb_20">
+    @{
+        {
+                VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.LC_Request, PageName)
+                {
+                    QueueTitle = "Lien Continuation",
+                    QueueName = "Request",
+                    AllowMove = true,
+                    AllowStatusEdit = true
+                };
+            AddCommonColumns(list);
+
+            list.Columns.Add_LIRequested();
+            list.Columns.Add_LICheckNumber();
+            list.Columns.Add_LITrackingToDMV();
+            list.Columns.Add_LIReceived();
+            list.Columns.Add_LICheckNumber();
+            list.Columns.Add_LITrackingToDMV();
+            list.Columns.Add_ELT();
+            list.Columns.Add_LienExpiration();
+            list.Columns.Add_DT_LH();
+            list.Columns.Add_Group();
+            list.Columns.Add_ClientRef();
+            list.Columns.Add_RNo();
+            list.Columns.Add_SubmittedBy();
+
+            AddCommonSort(list);
+
+            await Html.RenderPartialAsync("_VendorRequestList", list);
+        }
+    }
+    </div>
+    <h2 class="sub_heading">Completed Lien Continuations</h2>
+                <div class="white_box p_15 mb_20">
+    @{
+        {
+                VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.LC_Completed, PageName)
+                {
+                    QueueTitle = "Completed Lien Continuations",
+                    QueueName = "Completed",
+                    AllowStatusEdit = true
+                };
+            AddCommonColumns(list);
+
+            list.Columns.Add_LIRequested();
+            list.Columns.Add_LICheckNumber();
+            list.Columns.Add_LITrackingToDMV();
+            list.Columns.Add_LIReceived();
+            list.Columns.Add_LCRequested();
+            list.Columns.Add_LCCheckNumber();
+            list.Columns.Add_LCTrackingToDMV();
+            list.Columns.Add_LICheckNumber();
+            list.Columns.Add_LITrackingToDMV();
+            list.Columns.Add_ELT();
+            list.Columns.Add_LienExpiration();
+            list.Columns.Add_RejectionDate();
+            list.Columns.Add_DT_LH();
+            list.Columns.Add_Group();
+            list.Columns.Add_ClientRef();
+            list.Columns.Add_RNo();
+            list.Columns.Add_SubmittedBy();
+
+            AddCommonSort(list);
+
+            await Html.RenderPartialAsync("_VendorRequestList", list);
+        }
+    }
+    </div>
+    <h2 class="sub_heading">HOLD Lien Continuations</h2>
+                    <div class="white_box p_15 mb_20">
+    @{
+        {
+                VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.LC_Hold, PageName)
+                {
+                    QueueTitle = "Hold Lien Continuations",
+                    QueueName = "Hold",
+                    AllowMove = true,
+                    AllowStatusEdit = true
+                };
+            AddCommonColumns(list);
+
+            list.Columns.Add_LIRequested();
+            list.Columns.Add_LICheckNumber();
+            list.Columns.Add_LITrackingToDMV();
+            list.Columns.Add_LIReceived();
+            list.Columns.Add_LCRequested();
+            list.Columns.Add_LCCheckNumber();
+            list.Columns.Add_LCTrackingToDMV();
+            list.Columns.Add_LICheckNumber();
+            list.Columns.Add_LITrackingToDMV();
+            list.Columns.Add_ELT();
+            list.Columns.Add_LienExpiration();
+            list.Columns.Add_FinishDate();
+            list.Columns.Add_RejectionDate();
+            list.Columns.Add_DT_LH();
+            list.Columns.Add_Group();
+            list.Columns.Add_ClientRef();
+            list.Columns.Add_RNo();
+            list.Columns.Add_SubmittedBy();
+
+            AddCommonSort(list);
+
+            await Html.RenderPartialAsync("_VendorRequestList", list);
+        }
+    }
+    </div>
+</div>
+@{
+    // Shared views
+    await Html.RenderPartialAsync("_moveItemsToStage");
+}

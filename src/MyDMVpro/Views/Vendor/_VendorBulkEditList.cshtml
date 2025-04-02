@@ -1,0 +1,824 @@
+﻿@model BulkEditViewModel
+@using MyDMVpro.Common.ViewHelpers;
+@using MyDMVpro.Controllers;
+@using System.Text.Encodings.Web;
+@using System.Text.Json;
+@using System.Text.Unicode;
+@{
+    var listColumns = Model.ListColumns;
+
+    string GetAppType()
+    {
+        foreach (var item in Model.ListData)
+        {
+            return item["AppType"] as string;
+        }
+        return "";
+    }
+    string GetAppTypeState()
+    {
+        foreach (var item in Model.ListData)
+        {
+            return item["AppTypeState"] as string;
+        }
+        return "";
+    }
+    string GetListId()    
+    {
+        if (string.IsNullOrWhiteSpace(Model.ListId))
+        {
+            Model.ListId = "BEDIT_LISTID";
+        }
+        return Model.ListId;
+    }
+    // This function is used to encode the data field name
+    // and unencode the single quote character, as it is not necessary
+    // the json spec.  This is necessary for the DataTables editor
+    // to work properly.
+    string EncodeDataFieldName(object data)
+    {
+        string val = (data as string) ?? ""; // Should never occur, just in case
+        var s = JsonEncodedText.Encode(val);
+        string jsonString = s.ToString();
+        return jsonString.Replace(@"\u0027", "'");
+    }
+    // Same issue here, as the JsonSerializer encodes single quotes
+    // and causes issues with the DataTables editor
+    string SerializeVendorEditorFields()
+    {
+        string jsonString = JsonSerializer.Serialize(VendorDocumentFields());
+        return jsonString.Replace(@"\u0027", "'");
+    }
+    string SerializeEditorFields()
+    {
+        const char singleQuote = '\u0027';
+        var encoderSettings = new TextEncoderSettings();
+        encoderSettings.AllowRange(UnicodeRanges.BasicLatin);
+        encoderSettings.AllowCharacters(singleQuote);
+
+        var options2 = new JsonSerializerOptions
+        {
+            Encoder = JavaScriptEncoder.Create(encoderSettings)
+        };
+        string jsonString = JsonSerializer.Serialize(Model.EditorFields, options2);
+        return jsonString.Replace("\\u0027", "'");
+    }
+    string IconColumnWidth() {
+        return "30px";
+    }
+    List<Dictionary<string, object>> VendorDocumentFields() {
+        List<Dictionary<string, object>> result = new();
+        foreach (var field in Model.EditorFields)
+        {
+            if (field.ContainsKey("data"))
+            {
+                string excelName = field["data"] as string;
+                if (excelName == null) continue;
+                if (excelName.StartsWith("XV-", StringComparison.OrdinalIgnoreCase)
+                    || excelName.Equals("Today's Date", StringComparison.OrdinalIgnoreCase))
+                {
+                    result.Add(field);
+                }
+            }
+        }
+        return result;
+    }
+
+    listColumns.Insert(0, new Dictionary<string, object>()
+    {
+        { "title", "" },
+        { "defaultContent", "" },
+        { "orderable", false },
+        { "className", "select-checkbox nohide iconColumn dt-center noexport"},
+        { "autowidth", false },
+        { "width", $"{IconColumnWidth()}"},
+        { "min-width", $"{IconColumnWidth()}"},
+        { "max-width", $"{IconColumnWidth()}"},
+        { "sortable", false }
+    });
+    string BuildDOM()
+    {
+        string dom = "";
+
+        dom = "<'row'<'col-sm-6'l><'col-sm-6'<'bulkedit-profile-container'>>>"
+                + "<'row'<'col-sm-12'tr>>"
+                + "<'row'<'col-sm-5'i><'col-sm-7'p>><'alert row'><'col-sm-12'B>";
+        if (Model.ShowColVisButton)
+        {
+            //dom = dom + "C";
+        }
+
+        return dom;
+    }
+}
+<link rel="stylesheet" href="~/css/groupprofile.css" asp-append-version="true" />
+@{
+    await Html.RenderPartialAsync("_BulkEditCustomView", Model.EditorFields);
+    await Html.RenderPartialAsync("_vendorBulkEditProfileTemplate");
+}
+@{
+    await Html.RenderPartialAsync("_MoveDialog");
+    await Html.RenderPartialAsync("_requestRollback");
+}
+<style>
+    #profileList {
+    }
+    .listRefresh {
+    }
+    .profileApply {
+        margin-left: 20px;
+    }
+    .profileCompare {
+    }
+    .profilePanel {
+/*         padding-left: 0px !important;
+        padding-right: 0px !important;
+ */    }
+    div.GPS_Body.modal-body {
+        background-color:antiquewhite;
+    }
+    .GPS_Body_Content {
+        background-color:antiquewhite;
+    }
+    .GPS_Header {
+        z-index: 1;
+    }
+    .headerTools{
+        float:right;
+        position:relative;
+        z-index: 10;
+        font-size:large;
+        margin-top:10px;
+        margin-right:10px;
+    }
+</style>
+<div class="box">
+    <div class="box-body" height="80%">
+        <table style="" class="table table-striped table-bordered" id="@GetListId()" cellspacing="0" align="left">
+            <thead>
+                <tr id="headerRow-@GetListId()">
+                    @if (listColumns.Count > 0)
+                    {
+                        foreach (var c in listColumns)
+                        {
+                            <th>@c["title"]</th>
+                        }
+                    }
+                </tr>
+                @if (Model.EnableFilter && false)
+                {
+                    <tr id="filterRow-@GetListId()">
+                        @for (var i = 0; i < listColumns.Count; i++)
+                        {
+@*                            DatatableColumnInfo c = Model.Columns[i];
+                            string cls = c.Class;
+
+                            if (i == 0)
+                            {
+                                <th class="clearFilter" data-toggle="tooltip" title="Clear filter">&nbsp;</th>
+                            }
+                            else if (i == 1 && Model.EnableAdvancedSearch)
+                            {
+                                <th class="advancedFilter" data-toggle="tooltip" title="Advanced filter"></th>
+                            }
+                            else
+*@                            
+                            {
+                                <th>&nbsp;</th>
+                            }
+                        }
+                    </tr>
+                }
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+                <tr id="footerRow-@GetListId()">
+                    @if (listColumns.Count > 0)
+                    {
+                        foreach (var c in listColumns)
+                        {
+                            <th></th>
+                        }
+                    }
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div style="width:100%;height:auto;display:flex;">
+        <div id="bulkEditContainer" class="col-lg-6" height="auto">
+        </div>
+        <div class=" col-lg-6 profilePanel" style="display:none">
+            <div class="GPS">
+                <div class="GPS_Header modal-header">
+                    <div class="">
+                        <h4 class="modal-title">Profiles</h4>
+                    </div>
+                </div>
+                <div class="headerTools">
+                    <select id="profileList" name="profileList">
+                    </select>
+                    <button id="profileListApply" class="profileApply">Apply</button>
+                    @*<button id="profileListCompare" class="profileCompare">Compare</button>*@
+                    <button id="profileListRefresh" class="listRefresh"></button>
+                </div>
+                <div class="GPS_Body modal-body" style="clear:both">
+                    <div class="GPS_Body_Content">
+                        <form id="bulkEditProfiles">
+                        </form>
+                    </div>
+                </div>
+                 <div class="GPS_Footer modal-footer">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+'use strict';
+var profileData = [];
+var bulkFields = [];
+/*   format
+    {
+        "isRequired": true,
+        "vendorIsRequired": null,
+        "excelName": "",
+        "isInternalVendorAttachment": false,
+        "isInternalClientAttachment": false
+    } */
+function getProfileData() {
+    var profileId = $('#profileList').val();
+    const found = profileData.find((item) => item.groupProfileID == profileId);
+    if (found) {
+        return JSON.parse(found.jRequest || "{}");
+    }
+    return {};
+}
+function refreshProfileList(appType, appTypeState, groupId) {
+    $.ajax({
+        url: '@Url.Action("GetProfilesForAppType", "Vendor")',
+        type: 'GET',
+        data: { appType: appType, appTypeState: appTypeState, groupId: groupId },
+        dataType: 'json',
+        success: function (data) {
+            var options = $('#profileList');
+            options.empty();
+            $.each(data, function (i, item) {
+                profileData.push(item);
+                var txt = `${item.groupProfileName}`;
+                if (item.groupProfileType && item.groupProfileType.groupProfileTypeName != null) {
+                    txt = `${item.groupProfileName} (${item.groupProfileType.groupProfileTypeName})`;
+                }
+                options.append($('<option></option>').val(item.groupProfileID).text(txt));
+            });
+            vendor_initGroupAttachmentNames(groupId);
+            vendor_initVendorAttachmentNames();
+            populateProfileForm($("#@GetListId()"), options.val());
+        },
+        error: function (xhr, status, error) {
+            alert(error);
+        }
+    });
+}
+function getBulkFields() {
+    $.ajax({
+        url: '@Url.Action("GetFieldsAndAttachmentsForAppType", "AppForm")',
+        type: 'GET',
+        async: false,
+        data: { appType: '@GetAppType()', appTypeState: '@GetAppTypeState()' },
+        dataType: 'json',
+        success: function (data) {
+            bulkFields = [];
+            $.each(data, function (i, field) {
+                bulkFields.push(field);
+            });
+        },
+        error: function (xhr, status, error) {
+            alert(error);
+        }
+    });
+}
+function applyProfileToEntries() {
+    var data = getProfileData();
+    var editor = bulkEditor;
+    var fields = editor.order();
+
+    for (const [key, value] of Object.entries(data)) {
+        if (fields.includes(key)) {
+            if (typeof value == 'undefined' || value == null) {
+                continue;
+            }
+            editor.field(key).set(value);
+        }
+    }
+    hideBlankFields(editor);
+}
+
+const keysToSkip = ['groupProfileID', 'groupProfileTypeID', 'groupProfileName', '_softdelete'];
+
+function getFieldInfo(fname) {
+    const field = bulkFields.find((element) => element.excelName == fname);
+    return field;
+}
+function showRequiredFields(editor) {
+    $.each(editor.order(), function (idx,fname) {
+        let field = getFieldInfo(fname);
+        if (field) {
+            if (field.isInternalVendorAttachment || field.isInternalClientAttachment) {
+                editor.field(fname).show();
+                return;
+            }
+            // Check if the field value is blank
+            if (field.isRequired || field.vendorIsRequired) {
+                // Show the field (in case it was previously hidden)
+                editor.field(fname).show();
+                return;
+            }
+        }
+        else {
+            //console.log(`field not found: ${fname}`);
+        }
+        // Hide the field
+        editor.field(fname).hide();
+    });
+}
+function showAllFields(editor) {
+    $.each(editor.order(), function (idx,fname) {
+        editor.field(fname).show();
+    });
+}
+function showAppOnlyFields(editor) {
+    $.each(editor.order(), function (idx,fname) {
+        let field = getFieldInfo(fname);
+        if (field) {
+            editor.field(fname).show();
+        }
+        else {
+            editor.field(fname).hide();
+        }
+    });
+}
+// Function to hide blank fields
+function hideBlankFields(editor) {
+    let alwaysVisible = false;
+    $.each(editor.order(), function (idx,fname) {
+        let field = editor.field(fname);
+        // Check if the field value is blank
+        if (!alwaysVisible && !field.isMultiValue() && field.multiEditable && !field.val()) {
+            // Hide the field
+            editor.field(fname).hide();
+        } else {
+            // Show the field (in case it was previously hidden)
+            editor.field(fname).show();
+        }
+    });
+}
+function hideFieldsNotInProfile(editor) {
+    let data = getProfileData();
+    let showList = [];
+    for (const [key, value] of Object.entries(data)) {
+        if (value == null) continue;
+        if (keysToSkip.some((element) => element == key)) continue;
+        showList.push(key);
+    }
+    $.each(editor.order(), function (idx,fname) {
+        if (showList.includes(fname)) {
+            editor.field(fname).show();
+        } else {
+            editor.field(fname).hide();
+        }
+    });
+}
+function hookupListeners(editor, displayName) {
+    $('input[type="radio"][name="showFieldTypes"]').off('change').on('change', function () {
+        //console.log("display name: " + displayName);
+        if (this.value == 'All') {
+            //console.log("show all fields");
+            showAllFields(editor);
+        }
+        else if (this.value == 'Required') {
+            //console.log("show required fields");
+            //showRequiredFields(editor);
+            showBulkEditRequiredFields(editor);
+        }
+        else if (this.value == 'AppOnly') {
+            //console.log("show app only fields");
+            showAppOnlyFields(editor);
+        }
+        else if (this.value == 'NonBlank') {
+            //console.log("hide blank fields");
+            hideBlankFields(editor);
+        }
+        else if (this.value == 'Profile') {
+            //console.log("hide fields not in profile");
+            hideFieldsNotInProfile(editor);
+        }
+        else {
+            showAllFields(editor);
+        }
+    });
+    let groupId = vendor_UniversalBulkEditSelectedGroup($("#@GetListId()").DataTable());
+    vendor_initGroupAttachmentNames(groupId);
+    vendor_initVendorAttachmentNames();
+    updateAttachmentSelects(editor,groupId);
+}
+</script>
+<style>
+    #@GetListId() th, td {
+        white-space: nowrap;
+    }
+</style>
+
+<script asp-add-nonce="true">
+    'use strict';
+    var bulkDataEdited = @Html.Raw(Json.Serialize(Model.ListData));
+    var bulkEditor;
+    var vendorDocEditor;
+
+    $(document).ready(function () {
+        var defaultSortOrder = [];
+
+        $.fn.dataTable.render.shortDate = datatable_render_shortdate;
+
+        var tableId = "#@GetListId()";
+        var displayName = onPageDisplay($('#bulkEditContainer'));
+
+        vendor_initGroupAttachmentNames();
+        vendor_initVendorAttachmentNames();
+
+        vendorDocEditor = new DataTable.Editor( {
+                table: tableId,
+                idSrc: "RequestId",
+                display: displayName,
+                template: '#bulkEditFormVendorDocs',
+                fields: @Html.Raw(SerializeVendorEditorFields()),
+                i18n:{ "edit": { "title":  "Edit Vendor Documents" } }
+        });
+        bulkEditor = new DataTable.Editor( {
+                table: tableId,
+                idSrc: "RequestId",
+                display: displayName,
+                template: '#bulkEditForm',
+                fields: @Html.Raw(SerializeEditorFields()),
+                i18n:{ "edit": { "title":  "Edit Request" } }
+        });
+
+        configureBulkEditEditor(bulkEditor);
+        configureBulkEditEditor(vendorDocEditor);
+        configureDirtyPageWarning(bulkDataEdited);
+
+        // Call this function whenever you need to check the fields, e.g., before opening the editor
+        bulkEditor.on('open', function () {
+            hookupListeners(bulkEditor, displayName);
+        });
+        vendorDocEditor.on('open', function () {
+            vendor_initVendorAttachmentNames();
+            updateAttachmentSelects(vendorDocEditor,null);
+        });
+        getBulkFields();
+
+        //// TBD: Review if this is behavior we want
+        ////  it might be too intrusive
+        //var openVals;
+        //editor.on( 'open', function ( e, type ) {
+        //        openVals = JSON.stringify( editor.get() );
+        //    });
+        //editor.on( 'preBlur', function ( e ) {
+        //        let newVals = JSON.stringify( editor.get() );
+        //        if ( openVals !== newVals ) {
+        //            return confirm( 'You have unsaved changes. Are you sure you want to exit?' );
+        //        }
+        //    });
+
+        //editor.on('postEdit', function (e, json, data, id) {
+        //});
+
+        function pushColumnSort(table, sortorder, colSelector, dir) {
+            let col = table.column(colSelector);
+            if (col) {
+                let idx = col.index();
+                if (idx >= 0) {
+                    sortorder.push([ col.index(), dir ]);
+                }
+            }
+        }
+        function getSortOrder(table,idx) {
+            var sortorder = [];
+            if (idx == 0) {
+                pushColumnSort(table, sortorder, '.reqGroup', 'asc');
+                pushColumnSort(table, sortorder, '.reqRTLH', 'asc');
+                pushColumnSort(table, sortorder, '.reqVIN', 'asc');
+            }
+            if (idx == 1) {
+                pushColumnSort(table, sortorder, '.reqGroup', 'asc');
+                pushColumnSort(table, sortorder, '.reqDTLH', 'asc');
+                pushColumnSort(table, sortorder, '.reqVIN', 'asc');
+            }
+            return sortorder;
+        }
+        function sortOrderName(idx){
+            if (idx == 0) {
+                return "Group,RT-LH,VIN";
+            }
+            if (idx == 1) {
+                return "Group,DT-LH,VIN";
+            }
+            return "Default";
+        }
+
+        $(tableId).on( 'click', 'tbody td.editable', function (e) {
+            bulkEditor.inline( this );
+        } );
+
+        var table = $(tableId)
+            .DataTable({
+                dom: "@Html.Raw(BuildDOM())",
+                fixedColumns:   {
+                   left: 1
+                },
+                lengthMenu: [
+                    [10, 25, 50, -1],
+                    [10, 25, 50, 'All'],
+                ],
+                createdRow: function( row, data, dataIndex ) {
+                    //if ( data["RequestId"] == "A" ) {
+                    //    $(row).addClass( 'rowchanged' );
+                    //}
+                },
+                rowCallback: bulkedit_row_callback,
+                rowId: 'RequestId',
+                autoWidth: true,
+                scrollX: true,
+                sort: true,
+                buttons: [
+                    @if (Model.AddSelectDeselectButtons) 
+                    {
+                        <text>
+                        {
+                            extend: 'selectAll',
+                            className: 'selectall',
+                            action: function (e) {
+                                e.preventDefault();
+                                table.rows({ search: 'applied' }).deselect();
+                                table.rows({ search: 'applied' }).select();
+                            }
+                        },
+                        'selectNone',
+                        </text>
+                    }
+                    @if (Model.EnableSortButton)
+                    {<text>
+                        {
+                            extend: 'collection',
+                            text: 'Sort',
+                            "dropup": true,
+                            autoClose: true,
+                            background: false,
+                            buttons: [
+                                { text: function ( dt, button, config ) { return sortOrderName(0); }, action: function (e) { e.preventDefault(); vendor_sort_table(table,getSortOrder(table,0)); } },
+                                { text: function ( dt, button, config ) { return sortOrderName(1); }, action: function (e) { e.preventDefault(); vendor_sort_table(table,getSortOrder(table,1)); } },
+                                { text: "Default", className: "", action: function (e) { e.preventDefault(); vendor_sort_table(table, defaultSortOrder); } }
+                            ]
+                        },
+                    </text>}
+                    { text: 'Undo', className: 'undo', action: function (e) { vendorUndoBulkEdits(table); } },
+                    { text: "Move", className: "selectOnOff selectOne", action: function (e) { e.preventDefault(); vendor_show_Move(table,true); } },
+                    { text: 'Rollback', className: 'rollback', action: function (e) { vendor_show_RollbackRequests(table); } },
+                    { text: 'Save', className: 'save dtBulkEditSaveButton', action: function (e) { vendorSaveBulkEdits(bulkEditor,table); } },
+                    @if (Model.EnableBulkEditToInProcess)
+                    {
+                    <text>
+                        { text: 'Save to In Processing', className: 'save', action: function (e) { vendorSaveBulkEdits(bulkEditor,table, @((int)ProcessStageIDs.InProcessing)); } },
+                        { text: 'Not Ready for Processing', className: 'save', action: function (e) { vendorSaveBulkEdits_NotReady(table); } },
+                    </text>
+                    }
+                    //'colvis'
+                    { extend: 'colvis', text: 'Show/Hide Columns'},
+                    {
+                        text: 'Reset Filter',
+                        className: 'clearFilter',
+                        action: function (e) {
+                            table.columns()
+                                .every(function () {
+                                    var column = this;
+                                    if (column.searchable === false) {
+                                        return;
+                                    };
+                                    var select = $('<select><option value=""></option></select>')
+                                        .appendTo($(column.footer()).empty())
+                                        .on('change', function () {
+                                            var val = $.fn.dataTable.util.escapeRegex($(this).val());
+                                            column.search(val ? '^' + val + '$' : '', true, false).draw();
+                                        });
+ 
+                                    column
+                                        .data()
+                                        .unique()
+                                        .sort()
+                                        .each(function (d, j) {
+                                            if (d != null && d.trim() != '') {
+                                                var opt = $('<option></option>').attr({ value: d }).text(d);
+                                                select.append(opt);
+                                            }
+                                        });
+                                });
+                                table.search('').columns().search('').draw();
+                        }
+                    },
+                    {
+                        text: "Edit - Request", className: 'selectOnOff', 
+                        action: function (e, dt, node, config) {
+                            let groupId = vendor_UniversalBulkEditSelectedGroup($("#@GetListId()").DataTable());
+                            if (groupId == null) { 
+                                vendor_show_DataTable_alert(table, 'Bulk editing only supported for requests by the same group.');
+                            }
+                            else
+                            {
+                                updateAttachmentSelects(bulkEditor,groupId);
+                                $(".profilePanel").hide();
+                                // populate dropdown for group
+                                refreshProfileList('@GetAppType()', '@GetAppTypeState()', groupId);
+                                $(".profilePanel").show();
+                                bulkEditor.title('Edit Requests')
+                                        .buttons('Update')
+                                        .edit('.selected');
+                            }
+                        }
+                    },
+                    {
+                        text: "Edit - Vendor Docs", className: 'selectOnOff', 
+                        action: function (e, dt, node, config) {
+                            updateAttachmentSelects(vendorDocEditor,null);
+                            $(".profilePanel").hide();
+                            vendor_initVendorAttachmentNames();
+                            vendorDocEditor.title('Edit Vendor Documents')
+                                        .buttons('Update')
+                                        .edit('.selected');
+                        }
+                    }
+                ],
+                initComplete: function () {
+                    var api = this.api();
+                    //.columns( function ( idx, data, node ) { idx !== 0 } )
+                    api.columns()
+                        .every(function () {
+                            var column = this;
+                            if (column.searchable === false) {
+                                return;
+                            };
+                            var select = $('<select><option value=""></option></select>')
+                                .appendTo($(column.footer()).empty())
+                                .on('change', function () {
+                                    var val = $.fn.dataTable.util.escapeRegex($(this).val());
+ 
+                                    column.search(val ? '^' + val + '$' : '', true, false).draw();
+                                });
+ 
+                            column
+                                .data()
+                                .unique()
+                                .sort()
+                                .each(function (d, j) {
+                                    if (d != null && d.trim() != '') {
+                                        var opt = $('<option></option>').attr({ value: d }).text(d);
+                                        select.append(opt);
+                                    }
+                                });
+                        });
+                    fixupColumnWidths(this);
+                    datatable_addProfile(this);
+                },
+                data: bulkDataEdited,
+                columns: [
+                    @foreach (var col in listColumns.AsEnumerable())
+                    {
+                        <text>
+                        {
+                        </text>
+                        foreach (var attr in col.Keys)
+                        {
+                            var attrVal = col[attr];
+                            if (attrVal is OptionsFunction)
+                            {
+                                var optAttr = attrVal as OptionsFunction;
+                                <text>
+                                "@attr": @Html.Raw(optAttr.Text),
+                                </text>
+                            }
+                            else if (attr == "render")
+                            {
+                                <text>
+                                render: @Html.Raw(col[attr]),
+                                </text>
+                            }
+                            else if (attr == "data")
+                            {
+                                <text>
+                                data: "@Html.Raw(EncodeDataFieldName(col[attr]))",
+                                </text>
+                            }
+                            else if (attrVal is bool bVal)
+                            {
+                                <text>
+                                "@attr": @(bVal ? "true" : "false"),
+                                </text>
+                            }
+                            else if (attrVal is string sVal)
+                            {
+                                <text>
+                                "@attr": "@sVal",
+                                </text>
+                            }
+                            else
+                            {
+                                <text>
+                                "@attr": "@col[attr]",
+                                </text>
+                            }
+                        }
+
+                        <text>
+                        },
+                        </text>
+                    }],
+                select: {
+                    style: 'os',
+                    items: "row",
+                    selector: 'td:first-child',
+                    info: true
+                }
+            });
+
+            @if (!string.IsNullOrEmpty(Model.TableVarName))
+            {
+                <text>
+                @Model.TableVarName = table;
+                </text>
+            }
+
+        table.on('draw', function () {
+            if (table.rows({ selected: true }).indexes().length === 0) {
+                table.buttons('.selectOnOff').disable();
+            }
+            else if (table.rows({ selected: true }).indexes().length === 1) {
+                table.buttons('.selectOnOff').enable();
+            }
+            else {
+                table.buttons('.selectOnOff').enable();
+                table.buttons('.selectOnOff.selectOne').disable();
+            }
+        });
+        table.on('select deselect', function (e, dt, type, indexes) {
+            if (type === 'row') {
+                if (table.rows({ selected: true }).indexes().length === 0) {
+                    table.buttons('.selectOnOff').disable();
+                }
+                else if (table.rows({ selected: true }).indexes().length === 1) {
+                    table.buttons('.selectOnOff').enable();
+                }
+                else {
+                    table.buttons('.selectOnOff').enable();
+                    table.buttons('.selectOnOff.selectOne').disable();
+                }
+                if (vendorDocEditor) vendorDocEditor.close();
+                if (bulkEditor) bulkEditor.close();
+                $(".profilePanel").hide();
+            }
+        });
+
+        table.buttons('.selectOnOff').disable();
+        $('#filterRow-@GetListId()').find('.clearFilter').on('click', function (e) {
+            e.stopPropagation();
+            $('#filterRow-@GetListId()').find('.customFilter').val('');
+            table.search('').columns().search('').draw();
+        });
+        $('#filterRow-@GetListId()').find('.advancedFilter').on('click', function (e) {
+            e.stopPropagation();
+            $('#filterRow-@GetListId()').find('.filterToggle').toggleClass('advancedOn');
+            table.columns.adjust().draw();
+            table.draw();
+        });
+        $('#profileListRefresh').on('click', function (e) {
+            e.preventDefault();
+            var val = $('#profileList').val();
+            let groupId = vendor_UniversalBulkEditSelectedGroup($("#@GetListId()").DataTable());
+            refreshProfileList('@GetAppType()', '@GetAppTypeState()', groupId);
+            $('#profileList').val('');
+            $('#profileList').val(val);
+        });
+        $('#profileListApply').on('click', function (e) {
+            e.preventDefault();
+            applyProfileToEntries();
+        });
+        $('#profileListCompare').on('click', function (e) {
+            e.preventDefault();
+            hideFieldsNotInProfile(bulkEditor);
+        });
+        $('#profileList').on('change', function (e) {
+            e.stopPropagation();
+            var profileId = $(this).val();
+            populateProfileForm($("#@GetListId()"), profileId);
+        });
+        $(".profilePanel").hide();
+    });
+</script>

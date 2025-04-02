@@ -1,0 +1,55 @@
+﻿@model MyDMVpro.Models.ChatsViewModels.ChatViewModel
+
+@{
+    ViewData["Title"] = "View";
+    var lastCreated = Model.Chats.Select(c => c.Created).DefaultIfEmpty(DateTime.MinValue).Max();
+    var unreadChats = Model.HasUnreadChats ? "1" : "0";
+}
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+<text>
+    <div class="alert alert-primary" role="alert">
+        @Model.ErrorMessage
+    </div>
+</text>
+}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>@if (Model.RequestId != null)
+                    {
+                        Html.DisplayFor(m => m.VehicleYear);
+                        Html.DisplayFor(m => m.VehicleMake);
+                    }</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Chats)
+            {
+                <tr>
+                    @if (item.User == null)
+                    {
+                        <td class="chat-user">
+                            <span class="chat-by">Unknown user</span><br />
+                            <span class="chat-msg">@Html.DisplayFor(modelItem => item.Message)</span>
+                        </td>
+                    }
+                    else if (item.User.IsVendorAgent == null || !item.User.IsVendorAgent.Value)
+                    {
+                        <td class="chat-user">
+                            <span class="chat-by">@Html.DisplayFor(modelItem => item.User.DisplayName) @item.Created.EasternTime()</span><br />
+                            <span class="chat-msg">@Html.DisplayFor(modelItem => item.Message)</span>
+                        </td>
+                    }
+                    else
+                    {
+                        <td class="chat-vendor">
+                            <span class="chat-by">@Html.DisplayFor(modelItem => item.User.DisplayName) @item.Created.EasternTime()</span><br />
+                            <span class="chat-msg">@Html.DisplayFor(modelItem => item.Message)</span>
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+        <tfoot data-unreadchats="@unreadChats" data-lastcreated="@lastCreated.ToString("yyyy-MM-dd HH:mm:ss.fffffff")"></tfoot>
+    </table>

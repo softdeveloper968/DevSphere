@@ -1,0 +1,25 @@
+﻿<div id="modal-receiveFromLH_NotReady" class="modal fade hidden-print" tabindex="-1" role="">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Not Ready For Processing</h4>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="form-group" style="text-align:center;margin:5px 25px 5px 25px">
+                        Applications that are not ready for processing must have a client facing note detailing what is needed
+                    </div>
+                </div>
+                @{
+                    await Html.RenderPartialAsync("_standardCodeNotesChat", "");
+                }
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>

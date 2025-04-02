@@ -1,0 +1,35 @@
+﻿@model MyDMVpro.Models.RequestsViewModels.RequestAttachmentsForPrintingViewModel
+
+
+<div class="row">
+    <div class="col-md-12" id="bulkMergeStep1">
+        @if (Model.AttachmentTypes.Count == 0)
+        {
+            <span>No attachments.</span>
+        }
+        else
+        {
+            <h4 style="text-align: center;">Combine and Print Attachments for <b>@Model.State</b> <b>@Model.AppType</b></h4>
+
+            <hr />
+
+            <h4 style="text-align: center;">Please choose the file  type you would like to print in bulk</h4>
+
+            <hr />
+            <br />
+
+            @foreach (var item in Model.AttachmentTypes)
+            {
+                <input type="radio" name="appType" id="@item.AttachmentTypeId" value="@item.AttachmentTypeId" />
+                <label for="@item.AttachmentTypeId">
+                    @item.Name
+                </label>
+
+                <br />
+            }
+        }
+    </div>
+    <div class="col-md-12" id="bulkMergeStep2" style="display: none;">
+        Your file for <span style="font-weight:bold" id="bulkFileName"></span> is being generated and will be available for printing shortly. Please check the Bulk Attachments for Download List for the file.
+    </div>
+</div>

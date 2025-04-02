@@ -1,0 +1,102 @@
+﻿@{
+    ViewData["Title"] = "Disbursements";
+    string GetUrl(string name)
+    {
+        return MyDMVpro.Controllers.RequestStatusController.GetEndpointUrl(this.Context, name);
+    }
+}
+
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+<div>
+    <h2>Disbursements (Not Yet Cleared)</h2>
+    @{
+        {
+            DisbursementViewModel list = new DisbursementViewModel(VendorViewType.DisbursementPending)
+                {
+                    DataUrl = "/Disbursements/PendingDisbursements",
+                    ListId = "DT_PendingDisbursementsList",
+                    TableVarName = "PendingDisbursementsListTable",
+                    PageLength = 10
+                };
+            list.AllowMove = false;
+            list.EnableAdvancedSearch = true;
+
+            list.Columns.Add_Select();
+            //list.Columns.Add_Links();
+            list.Columns.Add("Date").SetDataField("date").AddClass("rdDate");
+            list.Columns.Add("Check #").SetDataField("checkNumber").AddClass("rdCheckNumber");
+            list.Columns.Add("Amount").SetDataField("amount").AddClass("rdAmount");
+            list.Columns.Add("Pay To").SetDataField("payToName").AddClass("rdPayToName");
+            list.Columns.Add("Created").SetDataField("createdDate").AddClass("rdCreatedDate");
+            //list.Columns.Add("Created By").SetDataField("createdByName");
+            //list.SortColumns.Add("", true);
+
+            await Html.RenderPartialAsync("_disbursementsList", list);
+        }
+    }
+</div>
+<div>
+    <h2>Disbursements (Voided)</h2>
+    @{
+        {
+            DisbursementViewModel list = new DisbursementViewModel(VendorViewType.DisbursementVoided)
+                {
+                    DataUrl = "/Disbursements/VoidedDisbursements",
+                    ListId = "DT_VoidedDisbursementsList",
+                    TableVarName = "VoidedDisbursementsListTable",
+                    PageLength = 10
+                };
+            list.AllowMove = false;
+            list.EnableAdvancedSearch = true;
+
+            list.Columns.Add_Select();
+            // list.Columns.Add_Links();
+            // list.Columns.Add("Voided").SetDataField("voided");
+            list.Columns.Add("Date").SetDataField("date").AddClass("rdDate");
+            list.Columns.Add("Check #").SetDataField("checkNumber").AddClass("rdCheckNumber");
+            list.Columns.Add("Amount").SetDataField("amount").AddClass("rdAmount");
+            list.Columns.Add("Pay To").SetDataField("payToName").AddClass("rdPayToName");
+            list.Columns.Add("Date Created").SetDataField("createdDate").AddClass("rdCreatedDate");
+            list.Columns.Add("Date Voided").SetDataField("voidedDate").AddClass("rdVoidedDate");
+            // list.Columns.Add("Voided By");
+
+            //list.SortColumns.Add("", true);
+
+            await Html.RenderPartialAsync("_disbursementsList", list);
+        }
+    }
+</div>
+<div>
+    <h2>Cleared Disbursements</h2>
+    @{
+        {
+            DisbursementViewModel list = new DisbursementViewModel(VendorViewType.DisbursementCleared)
+                {
+                    DataUrl = "/Disbursements/ClearedDisbursements",
+                    ListId = "DT_ClearedDisbursementsList",
+                    TableVarName = "ClearedDisbursementsListTable",
+                    PageLength = 10
+                };
+            list.AllowMove = false;
+            list.EnableAdvancedSearch = true;
+
+            list.Columns.Add_Select();
+            //list.Columns.Add_Links();
+            //list.Columns.Add("Voided").SetDataField("voided");
+            list.Columns.Add("Date").SetDataField("date").AddClass("rdDate");
+            list.Columns.Add("Check #").SetDataField("checkNumber").AddClass("rdCheckNumber");
+            list.Columns.Add("Amount").SetDataField("amount").AddClass("rdAmount");
+            list.Columns.Add("Pay To").SetDataField("payToName").AddClass("rdPayToName");
+            list.Columns.Add("Date Created").SetDataField("createdDate").AddClass("rdCreatedDate");
+            list.Columns.Add("Date Cleared").SetDataField("clearedDate").AddClass("rdClearedDate");
+            // list.Columns.Add("Voided By").SetDataField("voidedByName");
+            // list.Columns.Add("Cleared Date").SetDataField("clearedDate");
+            // list.Columns.Add("Cleared By").SetDataField("clearedByName");
+
+            //list.SortColumns.Add("reqInvoiceDate", true);
+
+            await Html.RenderPartialAsync("_disbursementsList", list);
+        }
+    }
+</div>

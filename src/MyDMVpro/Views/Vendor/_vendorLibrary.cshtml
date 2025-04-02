@@ -1,0 +1,256 @@
+﻿@model MyDMVpro.Models.VendorViewModels.VendorLibraryModel
+@using MyDMVpro.Common.ViewHelpers;
+@using System.Text;
+
+@{
+    string BuildDOM()
+    {
+        string dom = "";
+        dom = "<'row'<'col-sm-6'l><'col-sm-6'<'#buttonContainer.site-datatable-button-container'C>>>"
+                + "<'row'<'col-sm-12'tr>>"
+                + "<'row'<'col-sm-5'i><'col-sm-7'p>><'col-sm-12'B>";
+        dom = "<'row'<'col-sm-6'l><'col-sm-6'<'#buttonContainer.site-datatable-button-container'>>>" 
+                    + "<'row'<'col-sm-12'tr>>"  
+                    + "<'row'<'col-sm-5'i><'col-sm-7'p>>" 
+                    + "<'alert row'>B"; // Alert row and buttons
+        return dom;
+    }
+    string filterList()
+    {
+        List<string> filterFields = new List<string>();
+        foreach (DatatableColumnInfo col in Model.Columns)
+        {
+            if (!string.IsNullOrEmpty(col.FilterField))
+            {
+                filterFields.Add(col.FilterField);
+            }
+        }
+        return string.Join(",", filterFields);
+    }
+}
+<div class="box box-default">
+    <div class="box-header with-border">
+        <h2 class="box-title">Vendor Library</h2>
+        <div class="box-tools pull-right">
+            <button class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
+        </div>
+    </div>
+    <div class="box-body">
+        <table style="width:100%" class="display stripe dt-responsive" id="@Model.ListId" cellspacing="0" align="left">
+            <thead>
+                <tr id="headerRow-@Model.ListId">
+                    @if (Model.Columns.Count > 0)
+                    {
+                        foreach (var c in Model.Columns)
+                        {
+                            <th class="@c.Class dt-center">@c.Title</th>
+                        }
+                    }
+                </tr>
+                @if (Model.EnableFilter || false)
+
+                {
+                    <tr id="filterRow-@Model.ListId">
+                        @for (var i = 0; i < Model.Columns.Count; i++)
+
+                        {
+                            DatatableColumnInfo c = Model.Columns[i];
+                            string cls = c.Class;
+
+                            if (i == 0)
+                            {
+                                <th class="clearFilter" data-toggle="tooltip" title="Clear filter">&nbsp;</th>
+                            }
+                            else if (i == 1 && Model.EnableAdvancedSearch)
+                            {
+                                <th class="advancedFilter" data-toggle="tooltip" title="Advanced filter"></th>
+                            }
+                            else
+                            {
+                                <th>&nbsp;</th>
+                            }
+
+                        }
+                    </tr>
+                }
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+                <tr id="footerRow-@Model.ListId">
+                    @if (Model.Columns.Count > 0)
+                    {
+                        foreach (var c in Model.Columns)
+                        {
+                            <th></th>
+                        }
+                    }
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+<script asp-add-nonce="true">
+    $(document).ready(function () {
+        $.fn.dataTable.render.shortDate = datatable_render_shortdate;
+        var tblid = '@Model.ListId';
+        var defaultStatusFilterValue = '';
+        var initCompleted = false;
+        var defaultSortOrder = [];
+
+        defaultSortOrder = [
+            [$('#@Model.ListId .colDisplayName').index(), 'asc']
+        ];
+
+        var table = $('#@Model.ListId')
+            .on('preXhr.dt', function (e, settings, data) {
+                data.dropdownFilters = '@filterList()';
+            })
+            .on('xhr.dt', function (e, settings, json, xhr) {
+                if (json == null || typeof json === 'undefined') {
+                    return;
+                }
+                colFilters = json.columnFilters;
+    @if (Model.EnableFilter)
+    {
+        <text>
+                        if (initCompleted && typeof table !== 'undefined') {
+                            if (colFilters && @(Model.RefreshDropdownFiltersOnDraw ? "true" : "false")) {
+                                refreshDropdownFilters($(`#${tblid}`).DataTable(), tblid, colFilters, defaultStatusFilterValue, false);
+                            }
+                        }
+        </text>
+    }
+                })
+            .DataTable(
+            {
+                colReorder: false,
+                scrollX: true,
+                bSortCellsTop: true,
+                select: {
+                    selector: 'td:not(.norowselect)',
+                    items: "row"
+                },
+                searching: true,
+                pageLength: @Model.PageLength,
+                language: {
+                    select: {
+                        rows: "<span class='info_xrowsselected'>%d rows selected</span>"
+                        , selector: 'td:not(.norowselect)'
+                    }
+                },
+                lengthMenu: @Model.LengthMenu,
+                @*fixedColumns: { leftColumns: 2 },*@
+                order: defaultSortOrder,
+                searchDelay: 500,
+                columnDefs: [
+                    {
+                        "targets": "reqChkbx",
+                        "orderable": false,
+                        "className": "select-checkbox nohide iconColumn dt-center noexport",
+                        "autowidth": false,
+                        "width": "40px",
+                        "min-width": "40px",
+                        "max-width": "40px",
+                        "sortable": false,
+                    },
+                    { "targets": "colDisplayName", "visible": true, "sortable": true, "data": "displayName", searchable: true },
+                    { "targets": "reqBlank", "sortable": false, "orderable": false, "autowidth": true, "className": "noexport" },
+                    { "targets": "colDescription", "visible": true, "sortable": false, "data": "description", searchable: true },
+                    { "targets": "advancedFilter", "sortable": false, "orderable": false, "autowidth": true },
+                    { "targets": "colFileName", "visible": true, "className": "dt-left", "searchable": true, "sortable": true, "data": "fileName", "width": "300px", searchable: true },
+                    { "targets": "colAttachmentId", "visible": false, "sortable": false, "data": "vendorAttachmentId" },
+                    { "targets": "colAttachmentTypeId", "visible": false, "className": "dt-left", "searchable": false, "sortable": false, "data": "attachmentTypeId" },
+                    { "targets": "colAttachmentTypeName", "visible": true, "className": "dt-left", "searchable": true, "sortable": true, "data": "attachmentTypeName", "width": "300px" },
+                    { "targets": "colLastModified", "visible": false, "sortable": true, "data": "lastModified" },
+                    { "targets": "colModifiedBy", "visible": false, "sortable": false, "data": "modifiedBy" },
+                    { "targets": "colModifiedByName", "visible": true, "sortable": true, "data": "modifiedByName" },
+                    {
+                        "targets": ["dfilter", "drfilter"],
+                        "sortable": true,
+                        "width": "100px",
+                        "defaultContent": "",
+                        "render": datatable_render_date
+                    },
+                    {
+                        "targets": "_all", "searchable": false, "className": "dt-center", "autowidth": true, "defaultContent": "", "sortable": true
+                        ,render: $.fn.dataTable.render.text()
+                    }
+                ],
+                processing: true,
+                serverSide: true,
+                filter: true,
+                ajax: {
+                    url: "@Model.DataUrl",
+                    type: "POST",
+                    dataType: "JSON",
+                    headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() }
+                },
+                buttons: [
+                    {
+                        extend: 'selectAll',
+                        className: 'selectall',
+                        action: function (e) {
+                            e.preventDefault();
+                            table.rows({ search: 'applied' }).deselect();
+                            table.rows({ search: 'applied' }).select();
+                        }
+                    },
+                    'selectNone',
+                    { text: "Edit", className: "selectOnOff selectOne", action: function (e) { e.preventDefault(); vendorLibrary_show_Edit(table); } },
+                    { text: "Upload", className: "", action: function (e) { e.preventDefault(); vendorLibrary_show_Upload(); } },
+                    { text: "Delete", className: "selectOnOff selectOne", action: function (e) { e.preventDefault(); vendorLibrary_show_Delete(); } },
+                    { text: "", titleAttr: "Refresh", className: "listRefresh", action: function (e) { e.preventDefault(); table.ajax.reload(); vendorLibrary_show_Attachment(); } }
+                ],
+                initComplete: function (settings, json) {
+                    var api = this.api();
+                    var colFilters = json.columnFilters;
+                    var tblid = '@Model.ListId';
+                    api.columns(['.drfilter', '.dfilter']).every(getfn_datatable_drfilter(tblid, false, colFilters));
+                    api.columns(['.afilter']).every(getfn_datatable_afilter(tblid, true, colFilters));
+                    api.columns(['.asearch']).every(getfn_datatable_asearch(tblid));
+                    api.columns(['.dsearch']).every(getfn_datatable_dsearch(tblid));
+                    fixupColumnWidths(this);
+                    vendorProfileResetFilter(this.api());
+                    initCompleted = true;
+                },
+                createdRow: function (row, data, dataIndex) {
+                    //console.log('createdRow: ' + data);
+                }
+                ,dom: "@Html.Raw(BuildDOM())"
+            });
+
+    @Model.TableVarName = table;
+
+    table.on('draw', function () {
+        if (table.rows({ selected: true }).indexes().length === 0) {
+            table.buttons('.selectOnOff').disable();
+        }
+        else if (table.rows({ selected: true }).indexes().length === 1) {
+            table.buttons('.selectOnOff').enable();
+        }
+        else {
+            table.buttons('.selectOnOff').enable();
+            table.buttons('.selectOnOff.selectOne').disable();
+        }
+    });
+    table.on('select deselect', function (e, dt, type, indexes) {
+        if (type === 'row') {
+            var items = table.rows({ selected: true }).data();
+            if (items.length === 0) {
+                table.buttons('.selectOnOff').disable();
+            }
+            else if (items.length === 1) {
+                table.buttons('.selectOnOff').enable();
+            }
+            else {
+                table.buttons('.selectOnOff').enable();
+                table.buttons('.selectOnOff.selectOne').disable();
+            }
+            vendorLibrary_selection_updated(items);
+        }
+    });
+    table.buttons('.selectOnOff').disable();
+
+    datatable_filter_setup(table, '@Model.ListId', true);
+});
+</script>

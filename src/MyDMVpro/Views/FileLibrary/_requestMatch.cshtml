@@ -1,0 +1,520 @@
+﻿@model RequestViewModel
+@using MyDMVpro.Common.ViewHelpers;
+@{
+    var columnCount = 0;
+
+    string getbool(bool f)
+    {
+        if (f) return "true";
+        return "false";
+    }
+    string SortableOption(bool f)
+    {
+        if (Model.EnableFilter && f)
+        {
+            return "true";
+        }
+        return "false";
+    }
+    // TODO: Add last mod columns
+    if (Model.AddLastModified)
+    {
+        Model.Columns.Add_Modified();
+    }
+    if (Model.AddLastModifiedBy)
+    {
+        Model.Columns.Add_ModifiedBy(false);
+    }
+    Model.Columns.Add_RequestId();
+}
+<script asp-add-nonce="true">
+    function isNotBlankOrEmpty(val) {
+        return (val != '' && val != '(empty)' && val != '(not empty)');
+    }
+    function UpdateNotifications() {
+        $('#requestNoticeForm').on('submit', function (e) {
+            e.preventDefault();
+            disableFormSubmit($('#requestNoticeForm'));
+            var succeeded = false;
+            $.ajax({
+                url: '/Requests/UpdateNotices',
+                type: 'POST',
+                async: true,
+                data: $('#requestNoticeForm').serialize(),
+                dataType: 'text',
+                cache: false,
+                contentType: 'application/x-www-form-urlencoded',
+                processData: false,
+                complete: function () {
+                },
+                success: function (data) {
+                    succeeded = true;
+                    enableFormSubmit($('#requestNoticeForm'));
+                },
+                error: function (err) {
+                    succeeded = false;
+                    enableFormSubmit($('#requestNoticeForm'));
+                }
+            });
+            return false;
+        });
+        $("#requestNoticeForm").trigger("submit");
+    }
+</script>
+<style asp-add-nonce="true">
+    .advancedFilter {
+    }
+    .filterToggle .advanced {
+            display: none;
+        }
+    .filterToggle .simple {
+            display: inline-block;
+        }
+    .filterToggle.advancedOn
+        .advanced {
+            display: inline-block;
+        }
+    .filterToggle.advancedOn
+        .simple {
+            display: none;
+        }
+    .mindate {
+        display: block;
+        width: 100%;
+    }
+    .maxdate {
+        display: block;
+        width: 100%;
+    }
+    #@(Model.ListId)_wrapper tfoot {
+        display: table-footer-group;
+        font-weight: bold;
+    }
+    #@(Model.ListId)_wrapper thead {
+        display: table-header-group;
+    }
+    #sec425 {
+        width: 100%;
+        padding: 5px 0 10px;
+    }
+    #sec425:empty {
+        display: none;
+    }
+    .notesview {
+        margin-left: 50px;
+    }
+    .notesview::before {
+        content: 'notes:';
+        margin-right: 5px;
+    }
+</style>
+<table class="display stripe" id="@Model.ListId" cellspacing="0" align="left">
+    <thead>
+        <tr id="headerRow-@Model.ListId">
+            @if (Model.Columns.Count > 0)
+            {
+                foreach (var c in Model.Columns)
+                {
+                    <th class="@c.Class" @Html.Raw(c.GetHoverTextAttribute())>@c.Title</th>
+                }
+                columnCount = Model.Columns.Count;
+            }
+        </tr>
+        <tr id="filterRow-@Model.ListId">
+            <th class="clearFilter" data-toggle="tooltip" title="Clear filter"></th>
+            @if (Model.EnableAdvancedSearch)
+            {
+                <th class="advancedFilter" data-toggle="tooltip" title="Advanced filter"></th>
+            }
+            else
+            {
+                <th>&nbsp;</th>
+            }
+            @for (int i = 2; i < columnCount; i++)
+            {
+                <th>&nbsp;</th>
+            }
+        </tr>
+    </thead>
+    <tbody></tbody>
+    <tfoot>
+        <tr></tr>
+    </tfoot>
+
+</table>
+
+<script asp-add-nonce="true">
+    $(document).ready(function () {
+            var table = $('#@Model.ListId').DataTable(
+                {
+                    @if  (Model.EnableKeyNavigation)
+                    {
+                        @:@Model?.KeyNavigation
+                    }
+                    "colReorder": false,
+                    "scrollX": true,
+                    bSortCellsTop: true,
+                    "select": {
+                        "style": @if (Model.AllowMultiSelect) {
+                                @:"os",
+                            } else {
+                                @:"single",
+                        }
+                        selector: 'td:not(.norowselect)',
+                        "items": "row"
+                    },
+                    "searching": true,
+                    "pageLength": @Model.PageLength,
+                    "language": {
+                        select: {
+                            rows: "<span class='info_xrowsselected'>%d rows selected</span>"
+                            ,selector: 'td:not(.norowselect)'
+                        }
+                    },
+                    "lengthMenu": @Model.LengthMenu,
+                    @*fixedColumns: { leftColumns: 2 },*@
+                    @if (Model.SortColumns.Count > 0)
+                    {
+                        @:order: [
+                        for (var i = 0; i < Model.SortColumns.Count; i++)
+                        {
+                            if (i > 0) { @:,
+                            } @:[$('#@Model.ListId .@Model.SortColumns[i].Name').index(), '@(Model.SortColumns[i].Descending?"desc":"asc")']
+                        }
+                        @:],
+                    }
+                    else {
+                        @:order: [[$('#@Model.ListId .reqType').index(), 'asc'], [$('#@Model.ListId .reqState').index(), 'asc'], [$('#@Model.ListId .reqVIN').index(), 'asc']],
+                    }
+                    searchDelay: 500,
+                    "createdRow": function (row, data, dataIndex) {
+                            if (data.attachmentCount && data.attachmentCount > 0)
+                                $(row).addClass('hasAttachments');
+                        @if (Model.DisplayFullNotesAsChildRow)
+                        {
+                            <text>
+                            if (typeof data.notesAbbrev !== 'undefined' && data.notesAbbrev != null && data.notesAbbrev.length > 0) {
+                                var api = this.api();
+                                var div = $("<div class='notesview'></div>");
+                                div.text(data.notesAbbrev);
+                                api.row(row).child(div[0].outerHTML).show();
+                            }
+                            </text>
+                        }
+                        },
+                    "columnDefs": [
+                        {
+                            "targets": "reqChkbx",
+                            "orderable": false,
+                            "className": "select-checkbox",
+                            "width": "20px"
+                        },
+                        {
+                            "targets": "reqAtt",
+                            "width": "30px",
+                            "searchable": false,
+                            "orderable": false,
+                            "className": "attDD norowselect",
+                            "render": datatable_render_attIcon
+                        },
+                    {
+                        "targets": "reqChat", "width": "30px", "className": "norowselect", "orderable": true, "data": "chatSort","orderSequence": ["desc","asc"],
+                        "render": function (data, type, full, meta) {
+                            var val = 0;
+                            if (full.waitingForUserReply) val = 3;
+                            else if (full.waitingForVendorReply) val = 2;
+                            else if (full.hasActiveChat) val = 1;
+
+                            if (type == "display") {
+                                var chatClass = 'chatIcon';
+                                if (full.waitingForUserReply) {
+                                    chatClass += ' chatAlert';
+                                }
+                                else if (full.waitingForVendorReply) {
+                                    chatClass += ' chatWaiting';
+                                }
+                                else if (data.hasActiveChat) {
+                                    chatClass += ' chatActive';
+                                }
+                                else if (data.hasNewChat) {
+                                    chatClass += ' chatNew';
+                                }
+                                var html = '<a title="Chat" tabIndex="-1" href="#" data-requestid="' + htmlEncode(full.requestId) +'" class="' + chatClass + '" onclick="return showChat(\'' + htmlEncode(full.requestId) + '\', \'' + htmlEncode(full.vin) + '\');"></a>';
+                                return html;
+                            }
+                            if (type == "sort" || type == "type")
+                                return val;
+                            return val;
+                        }
+                    },
+                    {
+                        "targets": "reqDupeCheck",
+                        "orderable": false,
+                        "className": "",
+                        "min-width": "30px",
+                        "sortable": false,
+                        "render": function (data, type, full, meta) {
+                            @*
+                            -1 == NO CALL TO AUTOIMS
+                            0 = SUCCESSFUL AUTOIMS UPDATE
+                            1 = ERROR PROCESSING AUTOIMS
+                            *@
+                            if (type == "display") {
+                                if (full.dupeAppTypeForVin > 0 || full.activeCountForVin > 0) {
+                                    var className = '';
+                                    var dupeMsg = '';
+                                    if (full.dupeAppTypeForVin > 1) {
+                                        className = 'dupeAppTypeForVin';
+                                        dupeMsg = '' + htmlEncode(full.dupeAppTypeForVin) + ' instances found for this vin and application type';
+                                    }
+                                    else if (full.activeCountForVin > 0) {
+                                        className = 'activeCountForVin';
+                                        dupeMsg = '' + htmlEncode(full.activeCountForVin) + ' instances found for this vin for other application types';
+                                    }
+                                    else {
+                                        return '';
+                                    }
+                                    var html = '<div title="' + htmlEncode(dupeMsg) + '" class="' + className + '" />';
+                                    return html;
+                                }
+                                return '';
+                            }
+                            return '';
+                        }
+                    },
+                    { "targets": "reqAutoIMS", "orderable": false, "className": "autoIMS", "min-width": "30px", "sortable": false, "render": datatable_render_group_autoims },
+                    { "targets": "reqViewRequest", "min-width": "32px", "width": "70px", "searchable": false, "orderable": false, "render": datatable_render_group_viewrequest },
+                    @if (Model.EnablePDF)
+                    {
+                        @:{ "targets": "reqViewSign", "width": "40px", "orderable": false, "searchable": false, "render": datatable_render_group_viewsign },
+                    }
+                    @* reqLinks is Deprecated - use more specific (reqNotices, reqViewSign, etc...) *@
+                    @*
+                    reqLinks and ReqNotices are no longer used
+                    { "targets": "reqLinks", "width": "40px", "orderable": false, "searchable": false, "render": datatable_render_group_links },
+                    { "targets": "reqNotices", "width": "40px", "orderable": false, "searchable": false, "render": datatable_render_group_notices },
+                    *@
+                    { "targets": "reqLH", "data": "lienholderName" },
+                    { "targets": "reqAuctioneer", "data": "auction" },
+                    { "targets": "reqVIN", "sortable": true, "width": "120px", "searchable": true, "type": "text-vin", "orderable": true, "data": "vin", "render": datatable_render_vin },
+                    {
+                        "targets": "reqClientRef", "sortable": true, "searchable": true, "orderable": true,
+                        "data": "clientRef", "autowidth": true, "max-width": "120px"
+                    },
+                    { "targets": "reqMake", "sortable": true, "width": "120px", "searchable": true, "data": "vehicleMake" },
+                    { "targets": "reqType", "sortable": true, "searchable": true, "data": "appType", "name": "AppType" },
+                    { "targets": "reqState", "width": "60px", "searchable": true, "data": "state" },
+                    { "targets": "reqYear", "sortable": true, "width": "60px", "searchable": true, "data": "vehicleYear" },
+                    { "targets": "reqDateToVendor", "data": "dateToVendor" },
+                    { "targets": "reqDateFromLH", "data": "dateReceived" },
+                    { "targets": "reqSigned", "data": "dateReceived" },
+                    { "targets": "reqPrinted", "data": "datePrinted" },
+                    { "targets": "reqDateToDMV", "data": "dateToDmv" },
+                    { "targets": "reqDateFromDMV", "data": "dateFromDmv" },
+                    { "targets": "reqLIDateToDMV", "data": "lI_DateToDmv" },
+                    { "targets": "reqLIDateFromDMV", "data": "lI_DateFromDmv" },
+                    { "targets": "reqRejection", "data": "rejectionDate" },
+                    { "targets": "reqFinished", "data": "dateShipped","orderSequence": ["desc","asc"] },
+                    { "targets": "reqLienExpDate", "data": "lienExpDate" },
+                    { "targets": "reqLastModBy", "sortable": true, "data": "lastModifiedBy", "className": "dt-nowrap" },
+                    { "targets": "reqLastMod", "sortable": true, "data": "lastModified", "className": "dt-nowrap", "render": getfn_datatable_render_datetime_short() },
+                    { "targets": "reqRepoDate", "data": "repoDate" },
+                    { "targets": "reqETA", "data": "eta" },
+                        {
+                            "targets": ["dfilter", "drfilter"],
+                            "sortable": true,
+                            "width": "100px",
+                            "defaultContent": "",
+                            "render": datatable_render_date
+                        },
+                        {
+                            "targets": ["reqNotes"], "sortable": false, "className": "lh-details-control",
+                            "orderable": false, "data": "notesAbbrev", "defaultContent": '',
+                            "searchable": false, "autowidth": false, "width": "150px"
+                        },
+                    {
+                        "targets": "reqNo", "visible": true, "sortable": @Html.Raw(SortableOption(true)), "data": "requestNo",
+                        "render": function (data, type, full, meta) {
+                            if (type == 'display') return leftPad(data, 6);
+                            return data;
+                        },"orderSequence": ["desc","asc"]
+                    },
+                        {
+                            "targets": ["reqFullNotes"], "sortable": false,
+                            "orderable": false, "data": "notesAbbrev", "defaultContent": '',
+                            "searchable": false, "autowidth": true, "visible": false
+                        },
+                        { "targets": "reqCourier", "sortable": true, "searchable": true, "data": "courier" },
+                        { "targets": "reqTracking", "sortable": true, "searchable": true, "data": "trackingNumber" },
+                        { "targets": "reqSubmittedBy", "data": "submittedBy", "searchable": true },
+                        { "targets": "reqVendor", "sortable": true, "searchable": true, "data": "vendorCode" },
+                        { "targets": "reqTitleIssued", "data": "dateTitleIssued" },
+                        { "targets": "reqId", "visible": false, "sortable": false, "data": "requestId", "searchable": false },
+                        {
+                            "targets": ["reqBlank"], "defaultContent": "", "sortable": false, "orderable": false,
+                            "autowidth": false,
+                            "width": "30x",
+                            "min-width": "30px",
+                            "max-width": "30px",
+                        },
+                        { "targets": "reqStage", "data": "processStageId", "searchable": true, "sortable": true, "render": datatable_render_stage },
+                        { "targets": "reqStatus", "data": "statusId", "searchable": true, "sortable": true, "render": datatable_render_status },
+                        {
+                            "targets": "_all", "searchable": true, "className": "dt-center", "autowidth": true, "defaultContent": "", "sortable": true,
+                            render: $.fn.dataTable.render.text()
+                        },
+                    ],
+                    "processing": true,
+                    "serverSide": true,
+                    //"filter": true,
+                    "ajax":
+                    {
+                        "url": "@Model.DataUrl",
+                        "type": "POST",
+                        "dataType": "JSON",
+                        "data": function (data) {
+                            var urlvars = getUrlVars();
+                            var all = urlvars["all"];
+                            var notes = urlvars["notes"];
+                            if (all == "1") data.includeArchived = "true";
+                            else data.includeArchived = "false";
+                            if (notes == "1") data.expandNotes = "true";
+                            else data.expandNotes = "false";
+                            SaveViewSettings('@Model.ListId', data);
+                        },
+                        headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() }
+                    },
+                    "buttons": [
+                        {
+                            extend: 'selectAll',
+                            className: 'selectall',
+                            action: function (e) {
+                                e.preventDefault();
+                                table.rows({ search: 'applied' }).deselect();
+                                table.rows({ search: 'applied' }).select();
+                            }
+                        },
+                        'selectNone',
+                        { text: "Attach", className: "selectOnOff selectOne", action: function (e) { e.preventDefault(); fileLibrary_show_AttachToRequest(); } },
+                        { text: "", titleAttr: "Refresh", className: "listRefresh", action: function (e) { e.preventDefault(); table.ajax.reload(); } }
+                    ],
+                    "dom": "<'row'<'col-sm-6'l><'col-sm-6'<'#buttonContainer.site-datatable-button-container'>>><'row'<'col-sm-12'tr>><'row'<'col-sm-5'i><'col-sm-7'p>><'#sec425'><'match_attachmentType row'><'alert row'>B",
+                    "initComplete": function (settings, json) {
+                        var api = this.api();
+                        var colFilters = json.columnFilters;
+                        @if (true) /*add filter enabled check*/
+                        {
+                            @:var tblid = '@Model.ListId';
+                            @:api.columns(['.reqNo']).every(getfn_datatable_reqno_search(tblid)); @* Make all reqNo fields searchable *@
+                            @:api.columns(['.drfilter', '.dfilter']).every(getfn_datatable_drfilter(tblid, false, colFilters));
+                            @:api.columns(['.drofilter']).every(getfn_datatable_drofilter(tblid));
+                            @:api.columns(['.asearch']).every(getfn_datatable_asearch(tblid));
+                            @:api.columns(['.dsearch']).every(getfn_datatable_dsearch(tblid));
+                            @:api.columns(['.afilter']).every(getfn_datatable_afilter(tblid, true, colFilters));
+                            @:api.columns(['.statusFilter']).every(getfn_datatable_statusfilter(tblid, '', false, colFilters));
+                            @:api.columns(['.stageFilter']).every(getfn_datatable_stagefilter(tblid, colFilters));
+                            @:api.columns(['.reqVIN']).every(getfn_datatable_vin(tblid, @getbool(false)));
+                            @:api.columns(['.reqClientRef']).every(getfn_datatable_clientref(tblid));
+                            @:api.columns(['.emptyornot']).every(getfn_datatable_emptyornotfilter(tblid, true));
+                        }
+                        fixupColumnWidths(this);
+                    }
+            });
+
+        @if (Model.EnableKeyNavigation)
+        {
+        <text>
+        table.on('key-focus.dt', function (e, datatable, cell) {
+            table.row(cell.index().row).select();
+        });
+
+        table.on('key-blur.dt', function (e, datatable, cell) {
+            table.row(cell.index().row).deselect();
+        });
+        </text>
+        }
+
+        @Model.TableVarName = table;
+        table.on('draw', function () {
+            fileLibrary_hide_MatchListPanel();
+            if (table.rows({ selected: true }).indexes().length === 0) {
+                table.buttons('.selectOnOff').disable();
+            }
+            else if (table.rows({ selected: true }).indexes().length === 1) {
+                table.buttons('.selectOnOff').enable();
+            }
+            else {
+                table.buttons('.selectOnOff').enable();
+                table.buttons('.selectOnOff.selectOne').disable();
+            }
+        });
+        table.on('select deselect', function (e, dt, type, indexes) {
+            if (type === 'row') {
+                if (e.type === 'select') {
+                    table.buttons('.selectOnOff').enable();
+                    fileLibrary_match_selected();
+                }
+                else {
+                    table.buttons('.selectOnOff').disable();
+                    fileLibrary_match_deselected();
+                }
+            }
+        });
+        table.buttons('.selectOnOff').disable();
+
+        $("div.dataTables_filter input").unbind();
+        $("div.dataTables_filter input").keyup(function (e) {
+            if (e.keyCode == 13) {
+                table.search(this.value).draw();
+            }
+        });
+        $('#@Model.ListId tbody').on('click', 'td.lh-details-control', function (e) {
+            e.preventDefault(); 
+            var tr = $(this).closest('tr');
+            var row = table.row(tr);
+            var data = row.data();
+            var note = data["notesAbbrev"];
+            if (note && note.length > 1 && note.substr(-3) == "...") {
+                if (row.child.isShown()) {
+                    // This row is already open - close it
+                    row.child.hide();
+                    tr.removeClass('shown');
+                }
+                else {
+                    // Open this row
+                    lienholderShowNotes(row.data(), tr, row);
+                }
+            }
+        });
+
+        @*$('#@Model.ListId tbody').on('click', 'td.attDD', function () {
+            var tr = $(this).closest('tr');
+            var row = table.row(tr);
+            var rdata = row.data();
+            showAttachments(rdata.requestId, rdata.vin);
+        });*@
+
+        datatable_filter_setup(table, '@Model.ListId', true);
+        @*datatable_multivin_search_setup(table);*@
+    });
+    function showReqDetails(ctl,vin) {
+        var href = ctl.href;
+
+        var succeeded = false;
+        $.ajax({
+            url: href,
+            type: 'GET',
+            async: true,
+            dataType: 'text',
+            cache: false,
+            contentType: false,
+            processData: false,
+        }).done(function (res) {
+            $mymodal = $("#modal-reqDetails");
+            $mymodal.find("#myModal-label").html("Notifications (VIN " + htmlEncode(vin) + ")");
+            $mymodal.find(".modal-body").html(res);
+            $mymodal.modal("show");
+        });
+        return false;
+    }
+</script>

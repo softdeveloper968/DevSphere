@@ -1,0 +1,124 @@
+﻿@model MultiGroupProfileViewModel
+@using MyDMVpro.Models.VendorViewModels;
+
+@{
+    ViewData["Title"] = "Manage Group Profile Data";
+}
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+<script src="~/js/grouplibrary.js" asp-append-version="true"></script>
+<script src="~/js/vendorlibrary.js" asp-append-version="true"></script>
+
+<link rel="stylesheet" href="~/css/grouplibrary.css" />
+<link rel="stylesheet" href="~/css/filebox.css" />
+<div>
+    <div class="row" style="padding-left:20px">
+        <div class="col-md-3">
+            <div>Select a Group</div>
+            <div class="box">
+                <div class="box-body table-responsive" height="80%">
+                    <select id="vendorGroupId" asp-items="@(Model.Groups)" class="form-control" data-required="required">
+                        <option value=""></option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+    @{
+        foreach (var groupProfileModel in Model.GroupProfileViewModels)
+        {
+            await Html.RenderPartialAsync("_groupProfileData_single", groupProfileModel);
+        }
+    }
+
+    @{
+        await Html.RenderPartialAsync("~/Views/GroupLibrary/_groupLibraryUpload.cshtml");
+    }
+    <div class="col-sm-6">
+        @{
+            {
+                GroupLibraryModel glModel = new GroupLibraryModel()
+                {
+                    DataUrl = "/GroupLibrary/GetLibrary",
+                    ListId = "DT_GroupLibrary",
+                    TableVarName = "table_GroupLibrary",
+                    EnableKeyNavigation = false,
+                    AllowMultilineVin = false,
+                    AllowMultiSelect = false,
+                    EnableFilter = true
+                };
+                glModel.Columns.Add_Select();
+#if DEBUG
+                glModel.Columns.Add("Group", "colGroupName afilter").SetFilterField("groupName");
+#endif
+                glModel.Columns.Add("Display Name", "colDisplayName asearch");
+                glModel.Columns.Add("Type", "colAttachmentTypeName afilter").SetFilterField("attachmentTypeName");
+                glModel.Columns.Add("Description", "colDescription asearch");
+                glModel.Columns.Add("Lienholder Name", "colLienholderName asearch");
+                glModel.Columns.Add("Filename", "colFileName asearch");
+
+                glModel.SortColumns.Add("colDisplayName");
+
+                await Html.RenderPartialAsync("_groupLibrary", glModel);
+            }
+        }
+        @{
+            {
+                VendorLibraryModel vlModel = new VendorLibraryModel()
+                {
+                    DataUrl = "/VendorLibrary/GetLibrary",
+                    ListId = "DT_VendorLibrary",
+                    EnableKeyNavigation = false,
+                    AllowMultilineVin = false,
+                    AllowMultiSelect = false,
+                    EnableFilter = true,
+                    RefreshDropdownFiltersOnDraw = true
+                };
+                vlModel.Columns.Add_Select();
+
+                vlModel.Columns.Add("Display Name", "colDisplayName asearch");
+                vlModel.Columns.Add("Type", "colAttachmentTypeName afilter").SetFilterField("attachmentTypeName");
+                vlModel.Columns.Add("Description", "colDescription asearch");
+                vlModel.Columns.Add("Filename", "colFileName asearch");
+
+                vlModel.SortColumns.Add("colDisplayName");
+
+                await Html.RenderPartialAsync("_vendorLibrary", vlModel);
+            }
+        }
+    </div>
+    <div class="col-sm-6">
+        <div class="box box-default">
+            <div class="box-header with-border">
+                <h2 class="box-title">Document Viewer</h2>
+                <div class="box-tools pull-right">
+                    <button class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
+                </div>
+            </div>
+            <div class="box-body">
+                <div id="docViewPanel" class="docViewPanel"> </div>
+            </div>
+        </div>
+        <div style="display:none">
+            <form id="hiddenform" method="post" action=""></form>
+        </div>
+    </div>
+</div>
+@{
+    await Html.RenderPartialAsync("~/Views/VendorLibrary/_vendorLibraryUpload.cshtml");
+}
+<script type="text/javascript" asp-add-nonce="true">
+    $(document).ready(function () {
+
+        function refreshAllGroupLists() {
+            let groupId = $("#vendorGroupId").val();
+            vendor_initGroupAttachmentNames(groupId);
+            vendor_initVendorAttachmentNames();
+            vendorLoadGroupLibraryData(groupId, $('#DT_GroupLibrary').DataTable());
+        }
+        $("#vendorGroupId").change(function () {
+            refreshAllGroupLists();
+        });
+    });
+</script>
+

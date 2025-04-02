@@ -1,0 +1,671 @@
+﻿@model List<MyDMVpro.Models.AttachmentReviewModels.MissingAttachmentsViewModel>
+
+@{
+    const string PageName = "Missing Attachments";
+    ViewData["Title"] = "Missing Attachments Lookup";
+    var CurrentUserId = MyDMVpro.Common.ClaimsHelpers.GetUserId(User);
+    string GetUrl(string name)
+    {
+        return MyDMVpro.Controllers.RequestStatusController.GetEndpointUrl(this.Context, name);
+    }
+
+}
+
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+
+
+@{
+    await Html.RenderPartialAsync("_Chat", new Chats());
+}
+@{
+    await Html.RenderPartialAsync("_AttachmentList");
+}
+
+
+<style>
+    .edit-icon:hover {
+        color: #0056b3;
+        text-decoration: underline;
+    }
+</style>
+
+<div id="messageContainer" class="alert alert-warning" style="display: none; background-color: #f8f9fa; color: #000;"></div>
+
+<div id="warningContainer_docs" class="warningContainer_docs mb_12" tabindex="-1" style="display: none;">
+    <div id="warningContainer_missingDocs">
+        <div class="panel-body p-0">
+        </div>
+    </div>
+</div>
+
+<div id="missing-uploadDocument" class="uploadDocument mb_12" tabindex="-1" style="display: none;">
+    <div class="white_box p_15">
+        <div id="documentUploaderSection">
+            <div class="panel-body p-0">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="requestDocuments" class="requestDocuments mb_12" tabindex="-1">
+<div class="white_box p_15">
+       <h2>Missing Attachments</h2>
+       @Html.Partial("_DocumentsNeeded")
+</div>
+</div>
+
+<div id="warningContainer_data" class="warningContainer_data mb_12" tabindex="-1" style="display: none;">
+    <div id="warningContainer_missingData">
+        <div class="panel-body p-0">
+        </div>
+    </div>
+</div>
+
+<div id="missing-DataWidget" class="DataWidget mb_12" tabindex="-1" style="display: none;">
+    <div class="white_box p_15">
+        <div id="dataWidgetSection">
+            <div class="panel-body p-0">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="requestCodesPanel" class="requestCodesPanel mb_12" tabindex="-1">
+    <div class="white_box p_15">
+        <h2>Missing fields</h2>
+        <table id="missingDataTable" class="table table-striped" style="width:100%"></table>
+        <div id="export-button-data-needed"></div>
+    </div>
+</div>
+
+@* <div id="MissingDataPanel" class="MissingDataPanelPanel" tabindex="-1">
+    <div class="white_box p_15 mt_15">
+
+    <h2>Missing data</h2>
+    @{
+        RequestViewModel missingDataList = new RequestViewModel(MyServicesViewType.Missing_Data)
+        {
+            DataUrl = "/MyServices/NeededDataRequestCodesFromView",
+            ListId = "DT_Communication_MissingData",
+            TableVarName = "Communication_MissingDataPanelTable",
+        };
+        missingDataList.Columns.Add_Select();
+        missingDataList.Columns.Add("", "reqEditRequest");
+        missingDataList.Columns.Add_AppType();
+        missingDataList.Columns.Add_AppState();
+        missingDataList.Columns.Add_VIN();
+        missingDataList.Columns.Add_StageName();
+        missingDataList.Columns.Add_TagName();
+        missingDataList.Columns.Add_RequestNote();
+        missingDataList.Columns.Add_Resolution();
+        missingDataList.Columns.Add_RequestCode();
+        missingDataList.Columns.Add_DateToVendor();
+        missingDataList.Columns.Add_RequestNumber();
+
+        missingDataList.SortColumns.Add("reqVIN");
+
+
+        await Html.RenderPartialAsync("_MyServicesRequests", missingDataList);
+    }
+    </div>
+</div>
+ *@
+
+<div id="CommunicationChatPanel" class="CommunicationChatPanel" tabindex="-1">
+    <div class="white_box p_15 mt_15">
+        <div class="row flex_row mb_10">
+            <div class="col-md-6 col-lg-8">
+                <h2>Chats</h2>
+            </div>
+
+            <div class="col-md-6 col-lg-4 form-group m-0 text-right">
+                <div class="inline-block text-start">
+                    <label for="filterByClientSwitch" class="d-block mb_5">Show All Chats for the group</label>
+                    <label class="switchBtn">
+                        <input type="checkbox" id="filterByClientSwitch">
+                        <small></small>
+                        <span></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        @{
+            RequestViewModel chatList = new RequestViewModel(MyServicesViewType.Communication_Chat)
+            {
+                DataUrl = "/Chats/GetAllUnreadChats",
+                ListId = "DT_Communication_Chat",
+                TableVarName = "Communication_ChatTable",
+            };
+            chatList.Columns.Add_Select();
+            chatList.Columns.Add_Communication_Chat();
+            chatList.Columns.Add_Attachments();
+            chatList.Columns.Add("", "reqEditRequest");
+            chatList.Columns.Add_VIN();
+            chatList.Columns.Add_Group().SetExportable(false);
+            chatList.Columns.Add_StageName();
+            chatList.Columns.Add_AppState();
+            chatList.Columns.Add_AppType();
+
+            chatList.SortColumns.Add("reqVIN");
+
+
+            await Html.RenderPartialAsync("_MyServicesRequests", chatList);
+        }
+    </div>
+</div>
+
+<div id="clientNotificationPanel" class="clientNotificationPanel" tabindex="-1">
+    <div class="white_box p_15 mt_15">
+        <h2>Client Notifications</h2>
+
+        @{
+            RequestViewModel clientNotificationList = new RequestViewModel(MyServicesViewType.ClientNotifications)
+            {
+                DataUrl = "/Requests/GetNotifiedData",
+                ListId = "DT_ClientNotifications",
+                TableVarName = "Communication_ClientNotifications",
+            };
+            clientNotificationList.Columns.Add_Select();
+            clientNotificationList.Columns.Add("", "reqEditRequest");
+            clientNotificationList.Columns.Add_VIN();
+            clientNotificationList.Columns.Add_Notes();
+            clientNotificationList.Columns.Add_AppState();
+            clientNotificationList.Columns.Add_AppType();
+            clientNotificationList.Columns.Add_RequestNumber();
+
+            clientNotificationList.SortColumns.Add("reqVIN");
+            await Html.RenderPartialAsync("_MyServicesRequests", clientNotificationList);
+        }
+    </div>
+</div>
+
+<div id="DocumentReceivedNoRequestPanel" class="DocumentReceivedNoRequestPanel" tabindex="-1">
+    <div class="white_box p_15 mt_15">
+        <div class="d-flex justify-between">
+            <h2 class="sub_heading">Documents Received – No Request</h2>
+            <div>
+                <a href="#" data-toggle="popover" data-content="Records that are not attached to any active request." data-placement="left">
+                    <span id="helpIcon"
+                          style="font-family:FontAwesome;font-size:large; cursor:pointer; position:relative;"
+                          onclick="showTooltip(event)">
+                        &#x0f05a;
+                    </span>
+                </a>
+
+            </div>
+        </div>     
+@{
+    RequestViewModel activeList = new RequestViewModel(MyServicesViewType.DocumentReceived_NoRequest)
+    {
+        DataUrl = "/DocumentsReceivedNoRequest/Communication_DocumentReceivedNoRequest",
+        ListId = "DT_Communication_DocumentReceivedNoRequest",
+        TableVarName = "Communication_DocumentReceivedNoRequest",
+    };
+    activeList.Columns.Add_Select();
+    activeList.Columns.Add_VIN();
+    activeList.Columns.Add_DateReceivedFromLH();
+    activeList.Columns.Add_NoRequest_Notes();
+    activeList.Columns.Add_NoRequest_Document();
+
+    activeList.SortColumns.Add("reqVIN");
+
+
+    await Html.RenderPartialAsync("_MyServicesRequests", activeList);
+}
+</div>
+</div>
+
+<div id="DocumentShippedNoRequestPanel" class="DocumentShippedNoRequestPanel" tabindex="-1">
+    <div class="white_box p_15 mt_15">
+        <div class="d-flex justify-between">
+            <h2 class="sub_heading">Document Shipped - No Request</h2>
+            <div>
+                <a href="javascript:void(0);" data-toggle="popover" data-content="Records are shipped back for review." data-placement="left">
+                    <span id="helpIcon"
+                          style="font-family:FontAwesome;font-size:large; cursor:pointer; position:relative;"
+                          onclick="showTooltip(event)">
+                        &#x0f05a;
+                    </span>
+                </a>
+
+            </div>
+        </div>
+        @{
+            RequestViewModel shippedList = new RequestViewModel(MyServicesViewType.DocumentShipped_NoRequest)
+            {
+                DataUrl = "/DocumentsReceivedNoRequest/Communication_DocumentShippedNoRequest",
+                ListId = "DT_Communication_DocumentShippedNoRequest",
+                TableVarName = "Communication_DocumentShippedNoRequest",
+            };
+            shippedList.Columns.Add_Select();
+            shippedList.Columns.Add_VIN();
+            shippedList.Columns.Add_DateReceivedFromLH();
+            shippedList.Columns.Add_NoRequest_Notes();
+            shippedList.Columns.Add_NoRequest_Document();
+            shippedList.Columns.Add_Tracking();
+            shippedList.Columns.Add_DateShipped();
+            shippedList.Columns.Add_ShippingNote();
+
+            shippedList.SortColumns.Add("reqVIN");
+
+
+            await Html.RenderPartialAsync("_MyServicesRequests", shippedList);
+        }
+    </div>
+</div>
+
+<script>
+ 
+    $(document).ready(function () {
+        $('[data-toggle="popover"]').popover();
+        loadAttachments()
+        loadData();       
+    });
+
+    var messageParts = {
+        attachments: "",
+        dataRequests: "",
+        chats: ""
+    };
+
+    function updateMessageContainer() {
+        let combinedMessage = "Hello, you currently have ";
+        
+        let allZero = !messageParts.attachments && !messageParts.dataRequests && !messageParts.chats;
+
+        let messageArray = Object.values(messageParts).filter(part => part !== ""); // Remove empty messages
+
+        if (messageArray.length > 0) {
+            combinedMessage += messageArray.join(" and ") + ".";
+        } else {
+            combinedMessage = "Hello, you do not have any current requests for follow-up documents, data, or chat. Please check back here later! Thank you!";
+        }
+
+        $('#messageContainer').html(combinedMessage).show();
+    }
+
+    function loadAttachments(){
+       
+        $.ajax({
+            url: '/MyServices/GetMissingAttachmentsListOptimized',
+            type: 'POST', 
+            async: true,
+            dataType: 'html',
+            cache: false,
+            contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+            processData: true, 
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            success: function (response) {
+                var data = JSON.parse(response)
+
+                messageParts.attachments = (data && data.length > 0) ? `${data.length} attachment requests` : "";
+                updateMessageContainer();
+              
+
+                if ($.fn.DataTable.isDataTable('#missingAttachmentsTable')) {
+                    $('#missingAttachmentsTable').DataTable().destroy();
+                }
+
+                var table = $('#missingAttachmentsTable').DataTable({
+                     data: data,
+                    "paging": true,
+                    "pageLength": 10,
+                    "scrollX": true,
+                    "scrollY": "400px",
+                    "scrollCollapse": true,
+                    "searching": true,
+                    "info": true,
+                    "lengthChange": true,
+                    "ordering": true,
+                    "language": {
+                        emptyTable: "No missing attachments available"
+                    },
+                    "buttons": [
+                        {
+                            extend: 'collection',
+                            className: 'btn-export-auditlookup',
+                            text: 'Export',
+                            buttons: [
+                                {
+                                    extend: 'copy',
+                                    text: 'Copy',
+                                    exportOptions: {
+                                        columns: ':visible'
+                                    }
+                                },
+                                {
+                                    extend: 'excelHtml5',
+                                    text: 'Excel',
+                                    autoFilter: true,
+                                    sheetName: 'myDMV.pro',
+                                    exportOptions: {
+                                        columns: ':visible'
+                                    }
+                                },
+                                {
+                                    extend: 'pdfHtml5',
+                                    text: 'PDF',
+                                    orientation: 'landscape',
+                                    pageSize: 'LEGAL',
+                                    exportOptions: {
+                                        columns: ':visible'
+                                    }
+                                },
+                                {
+                                    extend: 'print',
+                                    text: 'Print',
+                                    exportOptions: {
+                                        columns: ':visible'
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                     columns: [
+                        { data: 'requestNumber', render: function (data) { return `<input type="checkbox" class="selectRow" value="${data}" data-id="${data}" />`; } },
+                        { data: null, render: getfn_datatable_render_group_editrequest() },
+                        { data: 'attachmentType' },
+                        { data: 'hardcopyOrDigital', render: function (data) { return data ? "Hardcopy" : "Digital"; } },
+                        { data: 'attachmentDescription' },
+                        { data: 'processStageId', render: function (data) { return getProcessstageName(data); } },
+                        { data: 'vin' },
+                        { data: 'state' },
+                        { data: 'type' },
+                        { data: 'dateToVendor', render: function (data) { return data ? formatDateForDisplay(data) : ''; } },
+                        { data: 'requestNumber' }
+                    ]
+                });                
+
+                function formatDateForDisplay(date) {
+                    return new Date(date).toLocaleDateString();  // Customize as needed
+                }
+
+                function getProcessstageName(id) {
+                    switch (id) {
+                        case 2:
+                            return "Incoming";
+                            break;
+                        case 12:
+                            return "Not Ready To Process";
+                            break;
+                        case 99:
+                            return "Hold";
+                            break;
+                        default:
+                            return "";
+                    }
+                }
+
+                table.buttons().container().appendTo('#export-button-audit');
+
+                table.columns.adjust();
+
+                const uploadDocumentSection = document.getElementById('missing-uploadDocument');
+
+                $('#missingAttachmentsTable').on('click', '.selectRow', function () {
+                    $('.selectRow').not(this).prop('checked', false);
+                    $('.selectRow').not(this).closest('tr').removeClass('selected');
+
+                    var isChecked = $(this).prop('checked');
+                    var id = $(this).prop("data-id");
+
+                    if (isChecked) {
+                        $(this).closest('tr').addClass('selected');
+                        var selectedRow = $(this).closest('tr');
+                        const rowData = table.row(selectedRow).data(); // Use DataTable API to get the data
+                        updateSelectAllCheckbox(rowData.requestId, rowData.attachmentTypeId);
+                       
+                    }
+                    else {
+                        $(this).closest('tr').removeClass('selected');
+                        uploadDocumentSection.style.display = 'none'; // Hide the div
+                        const warningSection = document.getElementById('warningContainer');
+                        warningSection.style.display = 'none'; // Show the div
+
+                    }
+
+                });
+
+                function updateSelectAllCheckbox(dataId, attachmentId) {
+                    var totalRows = $('.selectRow').length;
+                    var selectedRows = $('.selectRow:checked').length;
+                    $('#selectAll').prop('checked', totalRows === selectedRows);
+                    fetchAttachmentData(dataId, attachmentId)
+                }
+            },
+            error: function (xhr, status, error) {
+                $('#loadingSkeleton').show();
+            }
+        });
+
+    }
+
+    function loadData() {
+
+        $.ajax({
+            url: "/MyServices/NeededDataRequestCodes",
+            type: 'POST', 
+            async: true,
+            dataType: 'html', 
+            cache: false,
+            contentType: 'application/x-www-form-urlencoded; charset=UTF-8', 
+            processData: true, 
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            success: function (response) {
+
+                var data = JSON.parse(response)
+                messageParts.dataRequests = (data && data.length > 0) ? `${data.length} data requests` : "";
+                updateMessageContainer();
+
+                if ($.fn.DataTable.isDataTable('#missingDataTable')) {
+                    $('#missingDataTable').DataTable().clear().destroy();
+                    $('#missingDataTable tbody').empty();
+                }
+              
+                var table = $('#missingDataTable').DataTable({
+                    data: data,
+                    "autoWidth": false,
+                    "paging": true,
+                    "pageLength": 10,
+                    "scrollX": true,
+                    "scrollY": "400px",
+                    "scrollCollapse": true,
+                    "searching": true,
+                    "info": true,
+                    "lengthChange": true,
+                    "ordering": true,
+                    "language": {
+                        emptyTable: "No missing attachments available"
+                    },
+                    "buttons": [
+                        {
+                            extend: 'collection',
+                            className: 'btn-export-auditlookup',
+                            text: 'Export',
+                            buttons: [
+                                {
+                                    extend: 'copy',
+                                    text: 'Copy',
+                                    exportOptions: {
+                                        columns: ':visible'
+                                    }
+                                },
+                                {
+                                    extend: 'excelHtml5',
+                                    text: 'Excel',
+                                    autoFilter: true,
+                                    sheetName: 'myDMV.pro',
+                                    exportOptions: {
+                                        columns: ':visible'
+                                    }
+                                },
+                                {
+                                    extend: 'pdfHtml5',
+                                    text: 'PDF',
+                                    orientation: 'landscape',
+                                    pageSize: 'LEGAL',
+                                    exportOptions: {
+                                        columns: ':visible'
+                                    }
+                                },
+                                {
+                                    extend: 'print',
+                                    text: 'Print',
+                                    exportOptions: {
+                                        columns: ':visible'
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    columns: [
+                        { data: 'requestNumber', title: '', render: function (data) { return `<input type="checkbox" class="selectRow" value="${data}" data-id="${data}" />`; } },
+                        { data: null, title: '', render: getfn_datatable_render_group_editrequest() }, 
+                        { data: 'tagName', title: 'Tag Name' },
+                        { data: 'note',title: 'Note' },
+                        { data: 'resolution', title: 'Resolution' },
+                        { data: 'processStageId', title: 'Process Stage Name', render: function (data) { return getProcessstageName(data); } },
+                        { data: 'vin', title: 'VIN' },
+                        { data: 'state', title: 'State' },
+                        { data: 'type', title: 'Type' },
+                        { data: 'dateToVendor', title: 'Date To Vendor', render: function (data) { return data ? formatDateForDisplay(data) : ''; } },
+                        { data: 'requestNumber', title: 'Request Number' }
+                    ]
+                });
+
+                function formatDateForDisplay(date) {
+                    return new Date(date).toLocaleDateString();
+                }
+
+                function getProcessstageName(id) {
+                    switch (id) {
+                        case 2:
+                            return "Incoming";
+                            break;
+                        case 12:
+                            return "Not Ready To Process";
+                            break;
+                        case 99:
+                            return "Hold";
+                            break;
+                        default:
+                            return "";
+                    }
+                }
+
+                table.buttons().container().appendTo('#export-button-data-needed');
+
+                table.columns.adjust();
+
+                const uploadDocumentSection = document.getElementById('missing-DataWidget');
+
+                $('#missingDataTable').on('click', '.selectRow', function () {
+                    $('.selectRow').not(this).prop('checked', false);
+                    $('.selectRow').not(this).closest('tr').removeClass('selected');
+
+                    var isChecked = $(this).prop('checked');
+                    var id = $(this).prop("data-id");
+
+                    if (isChecked) {
+                        $(this).closest('tr').addClass('selected');
+                        var selectedRow = $(this).closest('tr');
+                        const rowData = table.row(selectedRow).data();
+                        updateSelectAllCheckbox(rowData.requestCodeId, rowData.fieldId);
+
+                    }
+                    else {
+                        $(this).closest('tr').removeClass('selected');
+                        uploadDocumentSection.style.display = 'none'; 
+                        const warningSection = document.getElementById('warningContainer');
+                        warningSection.style.display = 'none';
+
+                    }
+
+                });
+                
+                function updateSelectAllCheckbox(checkboxValue, dataFieldId) {
+                    var totalRows = $('.selectRow').length;
+                    var selectedRows = $('.selectRow:checked').length;
+                    $('#selectAll').prop('checked', totalRows === selectedRows);
+
+                    fetchRequestFieldData(checkboxValue, dataFieldId)
+                }
+                
+            },
+            error: function (xhr, status, error) {
+                container.html("<div class='error'>Failed to load data. Please try again.</div>");
+                console.error("Error loading partial view:", error);
+            }
+        });
+    }
+
+    function fetchAttachmentData(requestId, attachmentId) {
+        $.ajax({
+            url: '@Url.Action("GetAttachmentForUpload", "Requests")' +'?attachmentId=' + attachmentId + '&requestId=' + requestId,
+            type: 'GET',
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            cache: false,
+            contentType: false,
+            processData: false,
+            data: {
+                attachmentId: attachmentId,
+                requestId: requestId
+            },
+            success: function (response) {
+                const warningSection = document.getElementById('warningContainer_docs');
+                warningSection.style.display = 'none'; 
+
+                const uploadDocumentSection = document.getElementById('missing-uploadDocument');
+                uploadDocumentSection.style.display = 'block'; 
+
+                $('#documentUploaderSection').find('.panel-body').html(response);
+
+            },
+            error: function () {
+                alert("An error occurred while fetching the data.");
+            }
+        });
+    }
+
+    function fetchRequestFieldData(requestCodeId, fieldId) {
+        $.ajax({
+            url: '@Url.Action("EditMissingRequestFields", "MyServices")' + '?requestCodeId=' + requestCodeId + '&fieldId=' + fieldId,
+            type: 'GET',
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            cache: false,
+            contentType: false,
+            processData: false,
+            data: {
+                requestCodeId: requestCodeId,
+            },
+            success: function (response) {
+                const warningSection = document.getElementById('warningContainer_data');
+                warningSection.style.display = 'none'; // Show the div
+
+                const uploadDataSection = document.getElementById('missing-DataWidget');
+                uploadDataSection.style.display = 'block'; // Show the div
+
+                $('#dataWidgetSection').find('.panel-body').html(response);
+
+            },
+            error: function () {
+                alert("An error occurred while fetching the data.");
+            }
+        });
+    }
+
+    function getfn_datatable_render_group_editrequest() {
+        return function (data, type, full, meta) {
+            if (type == "display") {
+                var url = `/MyServices/RequestLookup/${encodeURIComponent(full.vin)}/${encodeURIComponent(full.requestNumber)}`;
+                var html = `<a class="editForm" tabIndex="-1" title="Edit" href="${url}" target="_blank"></a>`;
+                return html;
+            }
+            return '';
+        }
+    }
+
+    function showTooltip(event) {
+        event.preventDefault(); 
+    }
+</script> 

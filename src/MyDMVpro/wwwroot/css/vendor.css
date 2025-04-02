@@ -1,0 +1,56 @@
+﻿.content-wrapper {
+    background-color: #c2d6d6;
+}
+.editable {
+    font-weight: bold;
+}
+
+.DTE_Inline div.controls
+{
+    width: 100% !important;
+}
+tr.rowchanged td {
+    background-color: #00ffff !important;
+    padding: 10px !important;
+}
+.cellchanged {
+    background-color: #ffd800 !important;
+}
+
+div.dtalert {
+    display:none;
+    background-color: crimson;
+    color: white;
+    margin: 10px;
+    padding: 10px;
+}
+div.alert {
+    display: none;
+    margin: 10px;
+    padding: 10px;
+}
+
+/* maggard filled */
+table.colorize .bulkEditRequired-M {
+    background-color: #FFFACD !important; /* Lemon Chiffon */
+}
+/* client filled */
+table.colorize .bulkEditRequired-C {
+    background-color: lightblue !important;
+}
+/* if applicable */
+table.colorize .bulkEditRequired-A {
+    background-color: lightgreen !important;
+}
+
+th.bulkEditRequired-M {
+    background-color: #FFFACD !important; /* Lemon Chiffon */
+}
+/* client filled */
+th.bulkEditRequired-C {
+    background-color: lightblue !important;
+}
+/* if applicable */
+th.bulkEditRequired-A {
+    background-color: lightgreen !important;
+}

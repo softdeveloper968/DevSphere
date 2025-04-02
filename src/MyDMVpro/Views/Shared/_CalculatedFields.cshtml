@@ -1,0 +1,18 @@
+﻿@model MyDMVpro.Models.RequestsViewModels.CalculatedFieldsSummaryViewModal
+
+<h5>Calculated Fields Summary</h5>
+
+<table class="table">
+    <tr>
+        <th>Total Due to Maggard:</th>
+        <td>@Model.TotalDueToMaggard.ToString("C")</td>
+    </tr>
+    <tr>
+        <th>Total Paid to Maggard:</th>
+        <td>@Model.TotalPaidToMaggard.ToString("C")</td>
+    </tr>
+    <tr>
+        <th>Balance Due:</th>
+        <td>@Model.BalanceDue.ToString("C")</td>
+    </tr>
+</table>

@@ -1,0 +1,222 @@
+﻿<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>MyDMVpro</title>
+    @*<!-- Tell the browser to be responsive to screen width --> *@
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+
+    @* CSS *@
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" type="text/css" href="/lib/Editor-2.1.3/css/editor.dataTables.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap.min.css" integrity="sha384-qexMCFRJNqMjhI40+r+560EwwLlYwnPk9OAofnocGPG0yIRQxK619IGnsdHwdvC0" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap.min.css" integrity="sha384-hqUsfmmzNyu5qA3Q65kr30PYmGwHfS9LMKdjc4jGYQVBS/rb7WE33REj2vlRZi+a" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/colreorder/1.6.2/css/colReorder.bootstrap.min.css" integrity="sha384-A1vql60IstHBCtuOCwQcSk3rKr+SXEe1FFwlDGbBRg0YypOkHMdNlk0/dGTl3obQ" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/datetime/1.4.1/css/dataTables.dateTime.min.css" integrity="sha384-3dWPJf0Gn9Xu0luHiJUPiamnz/NQRe9llnnWD97QPIvHgNWgxvwcjng8FqfOYHik" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/fixedheader/3.3.2/css/fixedHeader.bootstrap.min.css" integrity="sha384-pIOFlJxmApgH4WVvKX9zTWj1q+ysdo2JftUkPWs/ZKzfjQnnP7LJzTw7cdC4DI8C" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/fixedcolumns/4.3.0/css/fixedColumns.bootstrap.min.css" integrity="sha384-XRLFaM4dsRg3sbwDJLsxmidMmfPJ2zsTKTJelzARFqABtTCTzLshzqM1nQV8DIbN" referrerpolicy="no-referrer" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap.min.css" integrity="sha384-yeqtDRnzRLecfhe1TzrbgNOTB74vG/UQ0vsFfHPCXe5rnFfjTj3GIfBHCMlUGCh5" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/scroller/2.1.1/css/scroller.bootstrap.min.css" integrity="sha384-mga5tWbQw+iIb5wer5gM2JGkpawSO9orK2S0WcuOK1N4wh91s5I6NoGASlxyt3WY" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/select/1.6.2/css/select.bootstrap.min.css" integrity="sha384-p19kYvfMdIhIFkGDGHVheP7nUPXviiT2d1BJhamN8xS7WYb5C6ff72BSf42SEFQp" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" type="text/css" href="~/lib/font-awesome/css/font-awesome.min.css" asp-append-version="true" />
+    <link rel="stylesheet" type="text/css" href="~/lib/Ionicons/css/ionicons.min.css" asp-append-version="true" />
+    <link rel="stylesheet" type="text/css" href="~/css/AdminLTE.min.css" asp-append-version="true" />
+    <link rel="stylesheet" type="text/css" href="~/css/skins/skin-blue.min.css" asp-append-version="true" />
+    <link rel="stylesheet" type="text/css" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" type="text/css" href="~/css/easy-autocomplete.min.css" asp-append-version="true" />
+    <link rel="stylesheet" type="text/css" href="~/css/fontFamily.css" asp-append-version="true" />
+    <link rel="stylesheet" type="text/css" href="~/css/style.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/chat.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dmv.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js-bootstrap-css/1.2.1/typeaheadjs.min.css" integrity="sha384-3w6F1fikWHJInwk2GfFXj7W0f9TfEH7m4+oO9ELGAUk9K3DLcusFN7+5Fhrm7jjD" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.css" integrity="sha384-lx9AxLpuD91SYbCdrLgVL96ux/eca8GfCtRgmyO7/pQkI4vmKmwuYt3kkTtZCL81" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.18/css/bootstrap-select.min.css" integrity="sha384-dTqTc7d5t+FKhTIaMmda32pZNoXY/Y0ui0hRl5GzDQp4aARfEzbP1jzX6+KRuGKg" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="text/javascript" src="~/js/adminlte.min.js" asp-append-version="true"></script>
+
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.6.0/umd/popper.min.js" integrity="sha384-KsvD1yqQ1/1+IA7gi3P0tyJcT3vR+NdBTt13hSJ2lnve8agRGXTTyNaBYmCR/Nwi" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+@*     <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd" crossorigin="anonymous" referrerpolicy="no-referrer"></script> *@
+    @* <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js" integrity="sha384-1PH7loFe9aVDAyHgsXQly6QE1ATOEHvmQt4vAuu6ppdeL5lm9vqAczXV0R6sbJkJ" crossorigin="anonymous" referrerpolicy="no-referrer"></script> *@
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha512-r22gChDnGvBylk90+2e/ycr3RVrDi8DIOkIGNhJlKfuyQM4tIRAI062MaV8sfjQKYVGjOBaZBOA87z+IhZE9DA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+     
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js" integrity="sha384-wj2H3JPCraDV2eZ/vqVPAvEIkFv7WCZAac4WV7Gt/hfpso4sCcOuARI3O2rRqFV0" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.2/pdfmake.min.js" integrity="sha384-OY3Bfkno/F3SlTtmccfZDqYf741yijSgg9opeVhdsK0k0V4ElX228BlyDNqgGDUG" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.2/vfs_fonts.js" integrity="sha384-2mHbAFDjKc6a54znF3sf2B7VJAvygMgdkeLaXfWVfWAx7OoZPn0X8Puo/mAbWeGT" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js" integrity="sha384-edQnMujp90eoACbp4sS9zj/0dMW+mjTJFxCNeW0hM7rVy4OutMVBq6ec4axiLP9U" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap.min.js" integrity="sha384-0RnMI6CITN7y3xUhlfsU2vgmDYIKPW6/CDaHRTY/316NihW7GmboA8gbjMGz0M8J" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="text/javascript" src="/lib/Editor-2.1.3/js/dataTables.editor.js"></script>
+    <script type="text/javascript" src="/lib/Editor-2.1.3/js/editor.bootstrap.js"></script>
+    <script type="text/javascript" src="~/js/datatables/dataTables.buttons.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap.min.js" integrity="sha384-90oeA8KN/iwn/tUuwk5eMRo4SPOx3lDpRyb4GR8IcY/NF7MVo15Mk+Qo+EdGUc1r" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.colVis.min.js" integrity="sha384-h/SRPFzc2+BE+XfOqlAqiHb43fnY8jzXhQ0fI1JBfgrjbxUokMr9To2eLbSWEt1g" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js" integrity="sha384-HTrhO6m5QbXzKQm/28HT6tYIdf/GeCK8xucgDpUbyrlqDwVh5AN5il4gcRxyIF51" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js" integrity="sha384-m1bkDRTx51kIl1OC2S24Tnj0vEwit7u2Be60VaV392LbUhm9qrm5GBlraC3S2U/l" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/colreorder/1.6.2/js/dataTables.colReorder.min.js" integrity="sha384-ybQjFPoRhQXT6T4k7mf0OW3Ekpe6S+2uxceRFKnB286uo9JwTKpvOm2srAFezO0V" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/datetime/1.4.1/js/dataTables.dateTime.min.js" integrity="sha384-kpofuauZZR+DtF2m3CCdjNGdh5la1iIOAXxKK5w0xQqB9oDXU4UoaP3ukINYtxhi" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/fixedheader/3.3.2/js/dataTables.fixedHeader.min.js" integrity="sha384-B1WL0aHY4unxqNvFM2XebGFdY36Kh7OZoIGIvulE6GoAA1052rvNJ70WW6EiX+kd" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.datatables.net/fixedcolumns/4.3.0/js/dataTables.fixedColumns.min.js" integrity="sha384-oy+aI0ZjNvzBhXO/M3chZtFBnOxe0qzuacHTxZWDbolJkCYzsArnLUq6PlFfO1i7" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <script type="text/javascript" src="https://cdn.datatables.net/keytable/2.6.4/js/dataTables.keyTable.min.js" integrity="sha384-xL8ckfMz3XUE9JE6fwM2udEsGu8lVoPD6ydFcLs8ZQ0bZeZPsHFfUv99vTY+yPMq" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.4.1/js/dataTables.responsive.min.js" integrity="sha384-PY2wFFZbq7kCYodfBP408z2yXR7heditX+7fcNGW1QlNvoNReFROjc2e+gETYS2J" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.4.1/js/responsive.bootstrap.min.js" integrity="sha384-hbR08dlBDAQNPVOj6vPt1yhmWgR4VFaQbTTM6DvuNaijIIMM+b8b6BySxBjWt/XI" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/scroller/2.1.1/js/dataTables.scroller.min.js" integrity="sha384-YDIS/vF89FnwuRMg8JaqClUxKPXchJ5GZT+w42opzWkr6/mNTV5bGeCeWUssT61k" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/select/1.6.2/js/dataTables.select.min.js" integrity="sha384-tHL6qO8lU6tsmdw/MrhPoT30kdJHIssB2J5otgkMQOSru0r/0/fXeiYKDuiunz4i" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+@*     <script type="text/javascript" src="~/js/adminlte.min.js" asp-append-version="true"></script>*@
+    <script type="text/javascript" src="~/lib/PACE/pace.min.js" asp-append-version="true"></script>
+    <script type="text/javascript" src="~/js/site.min.js" asp-append-version="true"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js" integrity="sha384-VCGDSwGwLWkVOK5vAWSaY38KZ4oKJ0whHjpJQhjqrMlWadpf2dUVKLgOLBdEaLvZ" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="/js/jquery.easy-autocomplete.min.js" asp-append-version="true"></script>
+    <script src="/js/requestsearch.js" asp-append-version="true"></script>
+
+    <script type="text/javascript" src="~/js/chat.js" asp-append-version="true"></script>
+    <script type="text/javascript" src="~/js/utility.js" asp-append-version="true"></script>
+    <script type="text/javascript" src="~/js/vin.js" asp-append-version="true"></script>
+    <script type="text/javascript" src="~/js/formfill.js" asp-append-version="true"></script>
+    <script type="text/javascript" src="~/js/ajaxerror.js" asp-append-version="true"></script>
+    <script type="text/javascript" src="~/js/followups.js" asp-append-version="true"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/5.3.2/bootbox.min.js" integrity="sha384-V28YnxpYm0C2DaTVepgnlvLx/iijdx1mMpZe58jRYXxrfnkp6yjsoBzdc97ElgX/" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.11.1/typeahead.bundle.js" integrity="sha512-OrFi/o1Q/S2pE3BW4onymzI8UXBwYLwaM64Dsp9Oe1LzC23Nh4pC8c8cJ1M8SmjErNEgMBrK5z5PNyIPxSiirg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.js" integrity="sha384-TT6qgdAmpkD2ArHradY686MDYWOZEtzz9wZ+afqZduLcMEKEh2SbFgE6LBev1yoq" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.18/js/bootstrap-select.min.js" integrity="sha512-yDlE7vpGDP7o2eftkCiPZ+yuUyEcaBwoJoIhdXv71KZWugFqEphIS3PU60lEkFaz8RxaVsMpSvQxMBaKVwA5xg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js" integrity="sha512-rstIgDs0xPgmG6RX1Aba4KV5cWJbAMcvRCVmglpam9SoHZiUCyQVDdH2LPlxoHtrv17XWblE/V/PP+Tr04hbtA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js" integrity="sha512-o6XqxgrUsKmchwy9G5VRNWSSxTS4Urr4loO6/0hYdpWmFUfHqGzawGxeQGMDqYzxjY9sbktPbNlkIQJWagVZQg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+@*<!--
+BODY TAG OPTIONS:
+=================
+Apply one or more of the following classes to get the
+desired effect
+|---------------------------------------------------------|
+| SKINS         | skin-blue                               |
+|               | skin-black                              |
+|               | skin-purple                             |
+|               | skin-yellow                             |
+|               | skin-red                                |
+|               | skin-green                              |
+|---------------------------------------------------------|
+|LAYOUT OPTIONS | fixed                                   |
+|               | layout-boxed                            |
+|               | layout-top-nav                          |
+|               | sidebar-collapse                        |
+|               | sidebar-mini                            |
+|---------------------------------------------------------|
+-->*@
+<body class="hold-transition skin-blue sidebar-mini">
+    <style asp-add-nonce="true">
+        #uploadsDiv {
+            width: 100%;
+        }
+    </style>
+    <div class="wrapper">
+        @await Component.InvokeAsync("Header")
+        @await Component.InvokeAsync("Sidebar")
+        <div class="content-wrapper">
+            <section class="content-header text-center">
+                @await Component.InvokeAsync("PageHeader")
+                @await Component.InvokeAsync("VinSearch")
+                @await Component.InvokeAsync("Breadcrumb")
+                @*                @await Component.InvokeAsync("PageAlert")*@
+            </section>
+            <section class="content">
+                <div class="page_style">
+                    @RenderBody()
+                </div>
+            </section>
+            <section class="content-rightpanel">
+            </section>
+        </div>
+        @await Component.InvokeAsync("Footer")
+        @await Component.InvokeAsync("ControlSidebar")
+        <div class="control-sidebar-bg"></div>
+    </div>
+    <div class="toast-container"></div>
+
+
+    @*  <!-- Optionally, you can add Slimscroll and FastClick plugins.
+    Both of these plugins are recommended to enhance the
+    user experience. Slimscroll is required when using the
+    fixed layout. -->*@
+    @RenderSection("scripts", required: false)
+    <script asp-add-nonce="true">
+        $(document).ready(function () {
+            (function (e, t, n) { var r = e.querySelectorAll("html")[0]; r.className = r.className.replace(/(^|\s)no-js(\s|$)/, "$1js$2"); })(document, window, 0);
+            moment.suppressDeprecationWarnings = true;
+            initGlobalAutoComplete($("#globalRequestSearch"), '@User.GetUserProperty(MyDmvProClaims.GroupId)');
+        });
+
+
+        var jqToast = (function ($) {
+            var $toastContainer = $('.toast-container');
+            if ($toastContainer.length === 0) {
+                $('body').append($('<div>').addClass('toast-container'));
+            }
+
+            var getOptions = function (opts) {
+                return $.extend({}, {
+                    displayTime: 3000,
+                    fadeTime: 2000,
+                    text: ''
+                }, opts);
+            };
+
+            var closeToast = function ($toast, fadeTime) {
+                $toast.addClass('fading').off('click');
+                $toast.fadeOut(fadeTime, function () {
+                    $toast.remove();
+                });
+            };
+
+            var addToast = function (type, options) {
+                var iconName = '';
+                switch (type) {
+                    case 'success':
+                        iconName = 'fa-check';
+                        break;
+                    case 'error':
+                        iconName = 'fa-times';
+                        break;
+                }
+
+                var $icon = $('<div>').addClass('icon').append($('<i>').addClass('fa ' + iconName));
+                var $toast = $('<div>').addClass('toast ' + type).append($icon).append($('<div>').addClass('text').text(options.text));
+
+                $toastContainer.append($toast);
+
+                $toast.on('click', function () {
+                    closeToast($toast, options.fadeTime);
+                });
+
+                setTimeout(function () {
+                    closeToast($toast, options.fadeTime);
+                }, options.displayTime);
+            };
+
+            var successToast = function (opts) {
+                var options = getOptions(opts);
+                addToast('success', options);
+            };
+
+            var errorToast = function (opts) {
+                var options = getOptions(opts);
+                addToast('error', options);
+            };
+
+            return {
+                success: function (opts) {
+                    successToast(opts);
+                },
+                error: function (opts) {
+                    errorToast(opts);
+                }
+            };
+            
+        })(jQuery);
+
+    </script>
+</body>
+</html>

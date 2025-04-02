@@ -1,0 +1,212 @@
+﻿@model MyDMVpro.Models.VendorViewModels.InvoiceListViewModel
+
+@{
+    Layout = "_layoutInvoice";
+
+    string ToShortDateString(DateTime? dt)
+    {
+        if (dt == null)
+            return "";
+        return dt.Value.ToString("M/d/yyyy");
+    }
+    string ToCurrencyString(Decimal? dec)
+    {
+        if (dec == null) return "";
+        return dec.Value.ToString("C");
+    }
+    string ToZeroPaddedInt(int? val, int decimals)
+    {
+        if (val == null) return "";
+        return val.Value.ToString("D6");
+    }
+    bool IsBlank(object o)
+    {
+        if (o == null)
+            return true;
+        if ((o as string) != null)
+            return string.IsNullOrWhiteSpace(o as string);
+        string s = null;
+        if ((o as Newtonsoft.Json.Linq.JValue) != null)
+            s = (o as Newtonsoft.Json.Linq.JValue).Value as string;
+        else
+            s = o.ToString();
+        return string.IsNullOrWhiteSpace(s);
+    }
+}
+<style asp-add-nonce="true">
+    .svccode-col {
+        text-align: center;
+        width: 25px;
+    }
+    .state-col {
+        text-align: center;
+    }
+    .vin-col {
+    }
+    .submit-col {
+        text-align: right;
+    }
+    .shipped-col {
+        text-align: right;
+    }
+    .clientref-col {
+    }
+    .svcfee-col {
+        text-align: right;
+    }
+    .dmvfee-col {
+        text-align: right;
+    }
+    .otherfee-col {
+        text-align: right;
+    }
+    .otherdesc-col {
+        text-align: left;
+    }
+    .balance-col {
+        text-align: right;
+    }
+</style>
+
+
+@foreach (var _invoice in Model.InvoiceList)
+{
+<div class="invoice-box">
+    <div class="space-before-header"></div>
+    <div class="invoice-header-box">
+        <div class="invoice-header">
+            <span class="invoice-no">Invoice# @_invoice.Invoice.InvoiceNo</span>
+            <span class="invoice-date">Invoice date: @ToShortDateString(_invoice.Invoice.InvoiceDate)</span>
+        </div>
+        <div class="space-before-vendor-info"></div>
+        <div class="vendor-info">
+            <div class="vendor-name">@_invoice.VendorSettings.Invoice.CompanyName</div>
+            <div class="vendor-address">
+                <span class="vendor-street">
+                    @_invoice.VendorSettings.Invoice.AddressLine1 - @_invoice.VendorSettings.Invoice.City @_invoice.VendorSettings.Invoice.State @_invoice.VendorSettings.Invoice.ZipCode
+                </span>
+                <span class="vendor-phone">@_invoice.VendorSettings.Invoice.Phone</span>
+                <span class="vendor-fax">@_invoice.VendorSettings.Invoice.Fax</span>
+                <span class="vendor-email">@_invoice.VendorSettings.Invoice.Email</span>
+            </div>
+        </div>
+        <div class="space-before-table"></div>
+        <div id="lienholder" class="client-info">
+            <div>
+                @if (string.IsNullOrEmpty(@_invoice.Invoice.CustName))
+                {
+                    <span class="client-name">@_invoice.Settings.BillingAddress.CompanyName</span><br />
+                    <span class="client-address">@_invoice.Settings.BillingAddress.AddressLine1</span><br />
+                    @if (!IsBlank(@_invoice.Settings.BillingAddress.AddressLine2))
+                    {
+                        <span class="client-address">@_invoice.Settings.BillingAddress.AddressLine2</span><br />
+                    }
+                    <span class="client-city">@_invoice.Settings.BillingAddress.City,</span>
+                    <span class="client-state">@_invoice.Settings.BillingAddress.State</span>
+                    <span class="client-zipcode">@_invoice.Settings.BillingAddress.ZipCode</span><br />
+                    @if (!IsBlank(@_invoice.Settings.BillingAddress.Attn))
+                    {
+                        <div class="client-attn">Attn: @_invoice.Settings.BillingAddress.Attn</div>
+                    }
+                    else
+                    {
+                        <div class="client-attn">Attn: Accounts Payable</div>
+                    }
+                }
+                else
+                {
+                    <span class="client-name">@_invoice.Invoice.CustName</span><br />
+                    <span class="client-address">@_invoice.Invoice.CustAddr1</span><br />
+                    @if (!IsBlank(@_invoice.Invoice.CustAddr2))
+                    {
+                        <span class="client-address">@_invoice.Invoice.CustAddr2</span><br />
+                    }
+                    <span class="client-city">@_invoice.Invoice.CustCity,</span>
+                    <span class="client-state">@_invoice.Invoice.CustState</span>
+                    <span class="client-zipcode">@_invoice.Invoice.CustZip</span><br />
+                    <br />
+                    @if (!IsBlank(_invoice.Invoice.CustAttn))
+                    {
+                        <div class="client-attn">Attn: @_invoice.Invoice.CustAttn</div>
+                    }
+                    else
+                    {
+                        <div class="client-attn">Attn: Accounts Payable</div>
+                    }
+                }
+            </div>
+        </div>
+        <div class="payment-info">
+            @if (!IsBlank(_invoice.VendorSettings.Invoice.TaxID))
+            {
+                <div class="invoice-taxid">Federal Tax ID #: <span>@_invoice.VendorSettings.Invoice.TaxID</span></div>
+            }
+            @if (!IsBlank(_invoice.Settings.Terms))
+            {
+                <div class="invoice-terms">@_invoice.Settings.Terms</div>
+            }
+            else
+            {
+                <div class="invoice-terms">Payment Due Upon Receipt</div>
+            }
+        </div>
+        <div class="summary-info-box">
+            <div class="summary-info-space">&nbsp;</div>
+            <div class="summary-info">
+                <div class="invoice-totaldue">Total Amount Due: <span>@_invoice.Invoice.InvoiceAmount.Value.ToString("C")</span></div>
+                <div class="invoice-recordcount"># of Records: <span>@_invoice.Details.Count.ToString()</span></div>
+            </div>
+        </div>
+    </div>
+    <div class="space-before-table"></div>
+    <div class="invoice-details-box">
+        <table class="invoice-details">
+            <thead>
+                <tr>
+                    <th class="reqno-col">R#</th>
+                    <th class="glcode-col">GL Code</th>
+                    <th class="svccode-col">Svc Code</th>
+                    <th class="state-col">State</th>
+                    <th class="vin-col">VIN</th>
+                    <th class="submit-col">Submit Date</th>
+                    <th class="shipped-col">Date Shipped</th>
+                    <th class="clientref-col">Client Ref #</th>
+                    <th class="svcfee-col">Service Fee</th>
+                    <th class="dmvfee-col">DMV Fee</th>
+                    <th class="otherfee-col">Other Fee</th>
+                    <th class="otherdesc-col">Other Desc</th>
+                    <th class="balance-col">Balance Due</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    foreach (var detail in _invoice.Details)
+                    {
+                        <tr>
+                            <td class="reqno-col">@ToZeroPaddedInt(detail.RequestNo, 6)</td>
+                            <td class="glcode-col">@detail.GlCode</td>
+                            <td class="svccode-col">@detail.SvcCode</td>
+                            <td class="state-col">@detail.State</td>
+                            <td class="vin-col">@detail.VIN</td>
+                            <td class="submit-col">@ToShortDateString(detail.DateSubmitted)</td>
+                            <td class="shipped-col">@ToShortDateString(detail.DateShipped)</td>
+                            <td class="clientref-col">@detail.ClientRefNo</td>
+                            <td class="svcfee-col">@ToCurrencyString(detail.ServiceFee)</td>
+                            <td class="dmvfee-col">@ToCurrencyString(detail.DmvFee)</td>
+                            <td class="otherfee-col">@ToCurrencyString(detail.OtherFee)</td>
+                            <td class="otherdesc-col">@detail.OtherDesc</td>
+                            <td class="balance-col">@ToCurrencyString(detail.TotalDue)</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+            <tfoot>
+
+            </tfoot>
+        </table>
+    </div>
+    <div class="footer" style="page-break-after: always;">
+
+    </div>
+</div>
+}

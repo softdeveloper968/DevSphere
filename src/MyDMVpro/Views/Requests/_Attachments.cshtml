@@ -1,0 +1,702 @@
+﻿@using System.Net;
+@using System.Text;
+@model MyDMVpro.Models.SharedViews.AttachmentsViewModel
+
+@{
+
+    const string c_extraRequestAttachmentTypeName = "Extra";
+    string GetApprovalStatusTitle(RequestAttachments attachment)
+    {
+        if (attachment is null)
+            return "";
+        var attachmentType = attachment.AttachmentType;
+        if (attachmentType != null)
+        {
+            if (attachmentType.HardcopyOnly
+                || attachmentType.InternalFromVendor
+                || attachmentType.InternalFromClient)
+            {
+                return "";
+            }
+            if (attachmentType.NoReviewRequired)
+            {
+                return "No review required";
+            }
+        }
+        if (attachment.Approved == null)
+        {
+            return "Needs review";
+        }
+        else if (attachment.Approved == true)
+        {
+            return "Attachment approved";
+        }
+        else
+        {
+            return "Attachment rejected";
+        }
+    }
+    string GetApprovalStatusClass(RequestAttachments attachment)
+    {
+        if (attachment is null)
+            return "";
+        var attachmentType = attachment.AttachmentType;
+        if (attachmentType != null)
+        {
+            if (attachmentType.HardcopyOnly
+                || attachmentType.InternalFromVendor
+                || attachmentType.InternalFromClient)
+            {
+                return "";
+            }
+            if (attachmentType.NoReviewRequired)
+            {
+                return "attachmentNoReviewRequired";
+            }
+        }
+        if (attachment.Approved == null)
+        {
+            return "attachmentNotReviewed";
+        }
+        else if (attachment.Approved == true)
+        {
+            return "attachmentApproved";
+        }
+        else 
+        {
+            return "attachmentRejected";
+        }
+    }
+    List<RequestAttachments> GetExtraAttachments()
+    {
+        // return all attachments that are not in the requested AppTypeAttachmentTypes
+        List<RequestAttachments> extraAttachments = Model.Attachments.Where(x => x.AttachmentTypeName == c_extraRequestAttachmentTypeName || !Model.AppTypeAttachmentTypes.Any(a => a.AttachmentTypeId == x.AttachmentTypeId)).ToList();
+        return extraAttachments;
+    }
+    bool isExtraAttachment(MdpAttachmentTypes attachmentType)
+    {
+        if (attachmentType?.Name == null) return true;
+        return attachmentType.Name.Equals(c_extraRequestAttachmentTypeName);
+    }
+    bool hasExtraAttachmentType(List<MdpAttachmentTypes> attachmentTypes)
+    {
+        return attachmentTypes.Any(x => x.Name.Equals(c_extraRequestAttachmentTypeName));
+    }
+    string GetAppTypeLabelForAttachment(RequestAttachments attachment)
+    {
+        if (attachment is null)
+            return "";
+        var appTypeAttachmentType = Model.AppTypeAttachmentTypes.SingleOrDefault(x => x.AttachmentTypeId == attachment.AttachmentTypeId);
+
+        return appTypeAttachmentType.IsRequired ? "(R)" : "(O)";
+    }
+
+    string GetAppTypeLabelForAppTypeAttachmentType(MdpAppTypeAttachmentTypes appTypeAttachmentType)
+    {
+        if (appTypeAttachmentType is null)
+            return "";
+        return appTypeAttachmentType.IsRequired ? "(R)" : "(O)";
+    }
+
+    string GetHardcopyOptions(RequestAttachments attachment)
+    {
+        string output = "";
+        bool hardcopyWasReceived = attachment.HardcopyReceived ?? false;
+
+        output += $"<option value='0' {(hardcopyWasReceived == false ? "selected" : "")}>Not Received</option>";
+        output += $"<option value='1' {(hardcopyWasReceived == true ? "selected" : "")}>Received</option>";
+
+        return output;
+    }
+    string GetHardcopyOptionsNotYetUploaded()
+    {
+        string output = "";
+        output += $"<option value='0' selected>Not Received</option>";
+        output += $"<option value='1'>Received</option>";
+        return output;
+    }
+
+    string GetMiscRequestAttachmentTypes()
+    {
+        StringBuilder sbOutput = new();
+        foreach (var item in Model.MiscAttachmentTypes)
+        {
+            var selectedAttr = "";
+            sbOutput.Append($"<option value='{item.AttachmentTypeId}' {selectedAttr}>{WebUtility.HtmlEncode(item.Name)}</option>");
+        }
+        return sbOutput.ToString();
+    }
+    string GetAllRequestAttachmentTypes(List<RequestAttachments> existingAttachments, List<MdpAttachmentTypes> attachmentTypes, MdpAttachmentTypes currentAttachmentType, bool excludeExistingTypes = true)
+    {
+        StringBuilder sbOutput = new();
+
+        List<Guid?> alreadyAssignedAttachmentTypeIds = new();
+        List<MdpAttachmentTypes> availableAttachmentTypes = new();
+
+        alreadyAssignedAttachmentTypeIds.AddRange(existingAttachments.Where(x => x.AttachmentTypeId != null).Select(x => x.AttachmentTypeId).ToList());
+        if (excludeExistingTypes)
+        {
+            availableAttachmentTypes.AddRange(attachmentTypes.Where(x => !alreadyAssignedAttachmentTypeIds.Contains(x.AttachmentTypeId)).ToList());
+        }
+        else {
+            availableAttachmentTypes.AddRange(attachmentTypes);
+        }
+
+
+        if ((!isExtraAttachment(currentAttachmentType)
+                && !hasExtraAttachmentType(availableAttachmentTypes)))
+        {
+            MdpAttachmentTypes extraRequestAttachmentType = attachmentTypes.SingleOrDefault(x => x.Name.Equals(c_extraRequestAttachmentTypeName));
+            if (extraRequestAttachmentType != null)
+                availableAttachmentTypes.Add(extraRequestAttachmentType);
+        }
+
+        foreach (var item in availableAttachmentTypes)
+        {
+            var selectedAttr = "";
+            if (item.HardcopyOnly || item.InternalFromVendor || item.InternalFromClient)
+            {
+                continue;
+            }
+            if (excludeExistingTypes && currentAttachmentType != null && item.AttachmentTypeId == currentAttachmentType.AttachmentTypeId)
+            {
+                continue;
+            }
+            // if (currentAttachmentType != null currentAttachmentType.AttachmentTypeId == item.AttachmentTypeId)
+            // {
+            //     selectedAttr = "selected";
+            // } 
+            sbOutput.Append($"<option value='{item.AttachmentTypeId}' {selectedAttr}>{WebUtility.HtmlEncode(item.Name)}</option>");
+        }
+        return sbOutput.ToString();
+    }
+}
+<template id="attachmentTypeOptionsTemplate">
+    @* gets the option values for use in the attachment upload dialog *@
+    <option value="">Select Attachment Type</option>
+    @Html.Raw(GetAllRequestAttachmentTypes(Model.Attachments, Model.AttachmentTypes, null, false))
+</template>
+<template id="miscAttachmentTypeOptionsTemplate">
+    <option value="">Select Attachment Type</option>
+    @Html.Raw(GetMiscRequestAttachmentTypes())
+</template>
+<div class="row">
+    <div class="col-md-12">
+        @{
+            // var requestedAppTypeAttachmentTypes = Model.AppTypeAttachmentTypes.Where(x => x.AttachmentType.Name != c_extraRequestAttachmentTypeName).ToList();
+           
+            var requestedAppTypeAttachmentTypes = Model.AppTypeAttachmentTypes
+                .Where(x => x.AttachmentType.Name != c_extraRequestAttachmentTypeName)
+                .OrderBy(x => 
+                {
+                    var existingAttachment = Model.Attachments.FirstOrDefault(a => a.AttachmentTypeId == x.AttachmentTypeId);
+                    if (existingAttachment == null)
+                        return 0;
+
+                    if (!existingAttachment.AttachmentType.HardcopyOnly || (existingAttachment.HardcopyReceived ?? false))
+                        return 2; 
+
+                    return 1; 
+                })
+                .ToList();
+
+
+            <p class="attachmentNotes">@Model.AttachmentNotes</p>
+            <span><b>Requested Attachments:</b></span>
+            if (requestedAppTypeAttachmentTypes.Count == 0)
+            {
+                <span>No attachments.</span>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="attachmentList table">
+                        <tbody>
+                            @{
+                            bool specialAttachmentRequest = false;
+                            foreach (var appTypeAttachmentType in requestedAppTypeAttachmentTypes)
+                            {
+                                // For each requested attachment, see if there is a document uploaded with that attachment type
+                                // it is possible that there are multiple attachments with the same attachment type
+                                // so we need to handle that case without throwing an error.  
+                                // TBD: What do we do if there are multiple attachments with the same attachment type?
+                                var existingAttachments = Model.Attachments.Where(x => x.AttachmentTypeId == appTypeAttachmentType.AttachmentTypeId).ToList();
+                                var existingAttachment = existingAttachments.FirstOrDefault();
+                                string className = "AttachmentMissing"; // default to not received or uploaded
+                                if (!specialAttachmentRequest && appTypeAttachmentType.IsSpecialRequirement){
+                                    <tr><td colspan="2">Special Requests</td></tr>
+                                    specialAttachmentRequest = true;
+                                }
+                                <tr>
+                                    <td style="width:60%">
+                                        @if (existingAttachment != null)
+                                        {
+                                            if (!existingAttachment.AttachmentType.HardcopyOnly || (existingAttachment.HardcopyReceived ?? false)) className = "AttachmentReceived";
+
+                                            
+                                            // If the attachment is required, and it exists, color it green, if hardcopy, color green if received, red if not
+                                            <span title="@GetApprovalStatusTitle(existingAttachment)" class="@className @GetApprovalStatusClass(existingAttachment)">@GetAppTypeLabelForAttachment(@existingAttachment) @appTypeAttachmentType.AttachmentType.Description - </span>
+                                            @if (appTypeAttachmentType.AttachmentType.HardcopyOnly == false)
+                                            {
+                                                    <a href="/Requests/GetAttachment/@(existingAttachment.AttachmentId)">@existingAttachment.Filename</a>
+                                                    if (existingAttachment.Filename != null && !string.IsNullOrEmpty(existingAttachment.Filename))
+                                                    {
+                                                        // <button id="generateUploadLink" data-requestid="@existingAttachment.RequestId" data-attachment-type="@existingAttachment.AttachmentId" data-attachment-typeId="@existingAttachment.AttachmentTypeId">
+                                                        //     Generate Upload Link
+                                                        // </button>
+                                                    }
+                                            }
+                                            else if (appTypeAttachmentType.AttachmentType.HardcopyOnly == true)
+                                            {
+                                                @if (Model.IsVendorAgent)
+                                                {
+                                                    <select class="form-control" hardcopyHandler data-requestid="@Model.RequestId" data-attid="@existingAttachment.AttachmentId" data-atttypeid="@appTypeAttachmentType.AttachmentTypeId">
+                                                        @Html.Raw(GetHardcopyOptions(existingAttachment))
+                                                    </select>
+                                                    @if (existingAttachment.MD5Hash != null)
+                                                    {
+                                                        <span style="color: green;"><a href="/Requests/GetAttachment/@(existingAttachment.AttachmentId)">(scanned)</a></span>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    string hardcopyStatus = (existingAttachment.HardcopyReceived == true) ? "Received" : "Not Received";
+
+                                                    <span>@hardcopyStatus</span>
+                                                }
+                                            }
+                                        }
+                                        else
+                                        {
+                                            // If the attachment is required, and it does not exist, color it red
+                                            <span class="@className @GetApprovalStatusClass(existingAttachment)">@GetAppTypeLabelForAppTypeAttachmentType(appTypeAttachmentType) @appTypeAttachmentType.AttachmentType.Description - </span>
+                                            <button class="generateUploadLink"
+                                                    data-requestid="@Model.RequestId"
+                                                    data-attachment-type="@appTypeAttachmentType.AttachmentTypeId"
+                                                    data-atttypeid="@appTypeAttachmentType.AttachmentTypeId">
+                                                    Generate Upload Link
+                                            </button>
+                                            if (appTypeAttachmentType.AttachmentType.HardcopyOnly == true)
+                                            {
+                                                @if (Model.IsVendorAgent)
+                                                {
+                                                    <select class="form-control" hardcopyHandler data-requestid="@Model.RequestId" data-atttypeid="@appTypeAttachmentType.AttachmentTypeId">
+                                                        @Html.Raw(GetHardcopyOptionsNotYetUploaded())
+                                                    </select>
+                                                }
+                                                else
+                                                {
+                                                    @* existingAttachment is null here and should always be "Not Received" 
+                                                       but leaving as a check in case something changes in the future
+                                                    *@
+                                                    string hardcopyStatus = ((existingAttachment?.HardcopyReceived ?? false) == true) ? "Received" : "Not Received";
+                                                    <span>@hardcopyStatus</span>
+                                                }
+                                            }
+                                            else @if (appTypeAttachmentType.AttachmentType.HardcopyOnly == false)
+                                            {
+                                                @* no attachment matching this type uploaded yet, so don't show *@
+                                            }
+                                        }
+                                    </td>
+                                    <td style="width:30%">
+                                        <div class="d-flex">
+                                        @if (existingAttachment != null && !existingAttachment.AttachmentType.HardcopyOnly)
+                                        {
+                                            if (Model.IsVendorAgent == true)
+                                            {
+                                            @* Current user is a vendor agent, so they can delete or change attachment types *@
+                                                    <button class="attachmentAction btn" data-requestid="@Model.RequestId" data-attid="@existingAttachment.AttachmentId">Change&nbsp;Type</button>
+                                                    <button class="btn btn-danger" onclick="removeAttachment('@(Model.RequestId)','@(existingAttachment.AttachmentId)')">Delete</button>
+                                            }
+                                            else
+                                            {
+                                                if (existingAttachment.Approved ?? false)
+                                                {
+                                                        <button onclick="btn" class="attachmentAction" data-requestid="@Model.RequestId" data-attid="@existingAttachment.AttachmentId">Change&nbsp;Type</button>
+                                                }
+                                                else {
+                                                        <button class="btn" onclick="return false;" title="Approved uploads cannot be changed" disabled>Change&nbsp;Type</button>
+                                                }
+                                                if (existingAttachment.UploadedByNavigation != null &&
+                                                    existingAttachment.UploadedByNavigation.IsVendorAgent.HasValue &&
+                                                        existingAttachment.UploadedByNavigation.IsVendorAgent.Value == true)
+                                                {
+                                                        <button class="btn btn-danger" onclick="return false;" title="Vendor uploads cannot be deleted" disabled>Delete</button>
+                                                }
+                                                else
+                                                {
+                                                        <button class="btn btn-danger" onclick="removeAttachment('@(Model.RequestId)','@(existingAttachment.AttachmentId)')">Delete</button>
+                                                }
+                                            }
+                                        }
+                                        </div>
+                                    </td>
+                                </tr>
+                                @if (!string.IsNullOrWhiteSpace(appTypeAttachmentType.Description))
+                                {
+                                    <text>
+                                    <tr>
+                                        <td colspan="2">
+                                            <p class="appTypeAttachmentDescription">@appTypeAttachmentType.Description</p>
+                                        </td>
+                                    </tr>
+                                    </text>
+                                }
+                                @if (existingAttachment != null)
+                                {
+                                    <tr class="actionButtons" data-requestid="@Model.RequestId" data-attid="@existingAttachment.AttachmentId" style="display: none;">
+                                        <td>
+                                            <select class="form-control" data-requestid="@Model.RequestId" data-attid="@existingAttachment.AttachmentId" attachmentData>
+                                                @if (existingAttachment != null)
+                                                {
+                                                    @Html.Raw(GetAllRequestAttachmentTypes(Model.Attachments, Model.AttachmentTypes, existingAttachment.AttachmentType))
+                                                }
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex">
+                                                <button class="saveAttachmentEdit btn btn-primary" data-requestid="@Model.RequestId" data-attid="@existingAttachment.AttachmentId" style="margin-right: 5px;">Save</button>
+                                                <button class="cancelAttachmentEdit btn" data-requestid="@Model.RequestId" data-attid="@existingAttachment.AttachmentId">Cancel</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        }
+                        </tbody>
+                    </table>
+                </div>
+                @if (Model.IsVendorAgent)
+                {
+                }
+                @if (Model.IsVendorAgent)
+                {
+                    <div><a class="font-600" href="/AttachmentReview/Review/@Model.RequestNo" target="_blank">Review Attachments</a></div>
+                }
+            }
+
+            var extraAttachments = GetExtraAttachments();
+
+            <hr style="border:1px solid #ccc;"/>
+
+            <span><b>Extra Attachments:</b></span>
+            @if (extraAttachments.Count == 0)
+            {
+                <span>No extra attachments.</span>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="attachmentList table">
+                        <tbody>
+                            @foreach (var attachment in extraAttachments)
+                            {
+                                <tr>
+                                    <td style="width:60%">
+                                        <span>@attachment.AttachmentType?.Name - @attachment.Description</span>
+                                        <a href="/Requests/GetAttachment/@(attachment.AttachmentId)">@attachment.Filename</a>
+                                    </td>
+
+                                    <td style="width:30%">
+                                        <div class="d-flex">
+                                        @if (Model.IsVendorAgent == true)
+                                        {
+                                                <button class="attachmentAction btn" data-requestid="@Model.RequestId" data-attid="@attachment.AttachmentId">Change&nbsp;Type</button>
+                                                <button class="btn-danger btn" onclick="removeAttachment('@(Model.RequestId)','@(attachment.AttachmentId)')">Delete</button>
+                                        }
+                                        else
+                                        {
+                                                <button class="attachmentAction btn" data-requestid="@Model.RequestId" data-attid="@attachment.AttachmentId" >Change&nbsp;Type</button>
+                                            if (attachment.UploadedByNavigation != null &&
+                                                    attachment.UploadedByNavigation.IsVendorAgent.HasValue &&
+                                                    attachment.UploadedByNavigation.IsVendorAgent.Value == true)
+                                            {
+                                                    <button class="btn btn-danger" onclick="return false;" title="Vendor uploads cannot be deleted" disabled>Delete</button>
+                                            }
+                                            else
+                                            {
+                                                    <button class="btn btn-danger" onclick="removeAttachment('@(Model.RequestId)','@(attachment.AttachmentId)')">Delete</button>
+                                            }
+                                        }
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="actionButtons" data-requestid="@Model.RequestId" data-attid="@attachment.AttachmentId" style="display: none;">
+                                    @{
+                                        var availableTypes = GetAllRequestAttachmentTypes(Model.Attachments, Model.AttachmentTypes, attachment.AttachmentType);
+                                        <td>
+                                            @if (availableTypes == "")
+                                            {
+                                                <span>Types have already been filled.</span>
+                                            }
+                                            else
+                                            {
+                                                <select class="form-control" data-requestid="@Model.RequestId" data-attid="@attachment.AttachmentId" attachmentData>
+                                                    @Html.Raw(availableTypes)
+                                                </select>
+                                            }
+
+                                        </td>
+                                        <td>
+                                            <div class="d-flex">
+                                                @if (availableTypes != "")
+                                                {
+                                                    <button class="saveAttachmentEdit btn btn-primary" data-requestid="@Model.RequestId" data-attid="@attachment.AttachmentId" style="margin-right: 5px;">Save</button>
+                                                }
+                                                <button class="cancelAttachmentEdit btn" data-requestid="@Model.RequestId" data-attid="@attachment.AttachmentId">Cancel</button>
+                                            </div>
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+            ////////////////////////////
+            @if (Model.InstructionPacket != null)
+            {
+                <hr style="border:1px solid #ccc;" />
+                <div id="instructionPacketContainer" style="">
+                    <span><b>Instruction Packet:</b></span>
+                    <div class="table-responsive">
+                        <table class="attachmentList table">
+                            <tbody>
+                                <tr>
+                                    <td style="width:60%">
+                                        <span>@Model.InstructionPacket.AttachmentType?.Name - @Model.InstructionPacket.Description</span>
+                                        <a href="/Requests/GetInstructionPacket?requestId=@(Model.RequestId)&templateId=@(Model.InstructionPacket.AttachmentId)">@Model.InstructionPacket.Filename</a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        }
+        @if (Model.IsVendorAgent && (Model.InternalAttachments.Count > 0))
+        {
+            <hr style="border:1px solid #ccc;" />
+            <div id="internalAttachments" style="">
+                <span><b>Internal Attachments:</b></span>
+                @if (Model.InternalAttachments.Any(x => x.InternalFromClient))
+                {
+                    @foreach (var attachment in Model.InternalAttachments.FindAll(x => x.InternalFromClient))
+                    {
+                        <div width="100%">@attachment.AttachmentTypeName: <span style="font-weight:bold">@attachment.DisplayName</span> </div>
+                    }
+                }
+                @if (Model.InternalAttachments.Any(x => !x.InternalFromClient))
+                {
+                    @foreach (var attachment in Model.InternalAttachments.FindAll(x => !x.InternalFromClient))
+                    {
+                        <div width="100%">@attachment.AttachmentTypeName: <span style="font-weight:bold">@attachment.DisplayName</span> </div>
+                    }
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modal Structure -->
+<div class="modal fade" id="uploadLinkModal" tabindex="-1" role="dialog" aria-labelledby="uploadLinkModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadLinkModalLabel">Upload Link</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="uploadLinkText">Your upload link will appear here.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="copyLinkButton">Copy to Clipboard</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script asp-add-nonce="true">
+
+    var uploadStructure = "";
+    function nullIfBlank(str) {
+        if (str == '') {
+            return null;
+        }
+        return str;
+    }
+    $('document').ready(function () {
+        var uploadDOM = $('#attUploadPanel').find("#attachmentType");
+
+        uploadDOM.html(@Json.Serialize(Model.GetRequestAttachmentTypesForUpload()));
+
+        $("button.attachmentAction").click(function () {
+            var attachmentId = $(this).data('attid');
+            $(`tr[data-attid='${attachmentId}']`).fadeIn();
+        });
+
+        $("button.cancelAttachmentEdit").click(function () {
+            var attachmentId = $(this).data('attid');
+            closeAttachmentEditRow(attachmentId);
+        });
+
+        $("button.saveAttachmentEdit").click(function () {
+            var attachmentId = $(this).data('attid');
+            var requestId = $(this).data('requestid');
+
+            var formData = new FormData();
+
+            var select = $(`select[data-attid='${attachmentId}']`);
+            var newAttachmentTypeId = select.find('option:selected').val();
+
+            formData.append('requestId', requestId);
+            formData.append('attachmentId', attachmentId);
+            formData.append('newAttachmentTypeId', newAttachmentTypeId);
+
+            $.ajax({
+                url: '/Requests/UpdateAttachmentType',
+                type: 'POST',
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                data: formData,
+                dataType: 'text',
+                cache: false,
+                contentType: false,
+                processData: false,
+            }).done(function (data) {
+                jqToast.success({
+                    text: `Attachment type updated successfully!`
+                });
+                
+                //vendor_show_alert($('#attUploadPanel'),"Updated successfully!");
+                closeAttachmentEditRow(attachmentId);
+                refreshAttachments(requestId, $("#att-VIN").val());
+                refreshAttachmentStatus(requestId);
+            });
+        });
+
+        function closeAttachmentEditRow(attachmentId) {
+            $(`tr[data-attid='${attachmentId}']`).fadeOut();
+        }
+
+        $("select[hardcopyHandler]").change(function () {
+            var requestId = $(this).data('requestid');
+            var attachmentId = $(this).data('attid');
+            var attachmentTypeId = $(this).data('atttypeid');
+            var received = $(this).find('option:selected').val() == "1";
+
+            var formData = new FormData();
+
+            formData.append('requestId', nullIfBlank(requestId));
+            formData.append('attachmentTypeId', nullIfBlank(attachmentTypeId));
+            formData.append('attachmentId', nullIfBlank(attachmentId));
+            formData.append('received', received);
+
+            $.ajax({
+                url: '/Requests/UpdateHardcopyReceived',
+                type: 'POST',
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                data: formData,
+                dataType: 'text',
+                cache: false,
+                contentType: false,
+                processData: false,
+            }).done(function (data) {
+                //alert("Updated successfully!");
+                closeAttachmentEditRow(attachmentId);
+                refreshAttachments($("#att-RequestId").val(), $("#att-VIN").val());
+                refreshAttachmentStatus(requestId);
+            });
+        });
+
+        $(".generateUploadLink").click(function () {
+            const requestId = $(this).data('requestid');
+            const attachmentId = $(this).data('attachment-type');
+            const attachmentTypeId = $(this).data('atttypeid');
+
+
+            // Construct FormData
+            const formData = new FormData();
+            formData.append("requestId", requestId);
+            formData.append("attachmentTypeId", attachmentId);
+
+            // AJAX Call
+            $.ajax({
+                url: '/Requests/GenerateUploadLink',
+                type: 'POST',
+                async: true,
+                data: formData, // Pass FormData
+                dataType: 'json',
+                cache: false,
+                contentType: false,
+                processData: false,
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            }).done(function (obj) {
+                if (obj.success) {
+                    // Display the upload link in the modal
+                    $('#uploadLinkText').text(obj.uploadLink);
+
+                    // Show the modal
+                    $('#uploadLinkModal').modal('show');
+
+                    // Enable copy-to-clipboard functionality
+                    // Enable copy-to-clipboard functionality
+                    $('#copyLinkButton').on('click', function () {
+                        const uploadLink = obj.uploadLink;
+
+                        if (!uploadLink) {
+                            alert("No link available to copy!");
+                            return;
+                        }
+
+                        // Use modern clipboard API
+                        if (navigator.clipboard && navigator.clipboard.writeText) {
+                            navigator.clipboard.writeText(uploadLink)
+                                .then(() => {
+                                    jqToast.success({
+                                        text: 'Link copied to clipboard!'
+                                    });
+                                })
+                                .catch((err) => {
+                                    console.error("Failed to copy text: ", err);
+                                    jqToast.error({
+                                        text: 'Failed to copy the link. Please try again.'
+                                    });
+                                });
+                        } else {
+                            // Fallback for older browsers
+                            const tempInput = document.createElement('input');
+                            tempInput.value = uploadLink;
+                            document.body.appendChild(tempInput);
+                            tempInput.select();
+                            try {
+                                document.execCommand('copy'); // Copy the text
+                                jqToast.success({
+                                    text: 'Link copied to clipboard!'
+                                });
+                            } catch (err) {
+                                console.error("Fallback: Failed to copy text: ", err);
+                                jqToast.error({
+                                    text: 'Failed to copy the link. Please try again.'
+                                });
+                            }
+                            document.body.removeChild(tempInput);
+                        }
+                    });
+
+                } else {
+                    alert("Error generating upload link.");
+                }
+            }).fail(function (xhr, status, error) {
+                console.error("Error:", error);
+                alert("An error occurred while generating the upload link.");
+            });
+        });
+
+    });
+
+</script>

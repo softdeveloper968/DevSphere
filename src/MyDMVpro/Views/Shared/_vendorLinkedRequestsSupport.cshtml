@@ -1,0 +1,106 @@
+﻿@{
+    string GetUrl(string name)
+    {
+        return MyDMVpro.Controllers.RequestStatusController.GetEndpointUrl(this.Context, name);
+    }
+}
+    
+<div id="modal-LinkRequests" class="modal fade hidden-print" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <div class="modal-title h4" style="margin-right:20px" id="REQ_VIN_RNO_HEADER">Link Records</div>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="LinkRequests_SearchReqNo" class="control-label">Link Record Number:</label>
+                    <div class="search_box">
+                        <input class="form-control" type="number" width="150" id="LinkRequests_SearchReqNo" required />
+                        <button class="search_btn" onclick="return vendor_linkSearch_reqno();" id="LinkRequests_SearchReqNo_btn"><i class="fa fa-search"></i></button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="LinkRequests_SearchVIN" class="control-label">Search by VIN:</label>
+                    <div class="search_box">
+                        <input class="form-control" type="text" width="150" maxlength="17" id="LinkRequests_SearchVIN" />
+                        <button class="search_btn" onclick="return vendor_linkSearch_vin();" id="LinkRequests_SearchVIN_btn"><i class="fa fa-search"></i></button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div id="linkSearchTableDiv">
+                        @{
+                            {
+                                VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.LinkSearch)
+                                {
+                                    QueueTitle = "Link Search",
+                                    QueueName = "LinkSearchVin",
+                                    DataUrl = GetUrl("LinkSearchVin"),
+                                    ListId = "DT_LinkSearch",
+                                    AllowMove = false,
+                                    TableVarName = "vendorLinkSearchTable",
+                                    EnableFilter = false,
+                                    EnableExport = false,
+                                    EnableAdvancedSearch = false,
+                                    EnablePresets = false,
+                                    EnableReportBuilder = false,
+                                    AllowSort = false,
+                                    AddLastModified = false,
+                                    AddLastModifiedBy = false,
+                                    AllowDirectToBilling = false,
+                                    AddExpandNotesOption = false,
+                                    AddIncludeArchivedOption = false,
+                                    AddSelectDeselectButtons = false,
+                                    AllowRefresh = false
+                                };
+                                list.Columns.Add_Select();
+                                list.Columns.Add_Blank();
+                                list.Columns.Add_Blank();
+                                list.Columns.Add_RNo();
+                                list.Columns.Add_VIN();
+                                list.Columns.Add_AppType(true);
+                                list.Columns.Add_AppState();
+
+                                list.SortColumns.Add("reqNo");
+
+                                await Html.RenderPartialAsync("_VendorRequestList", list);
+                            }
+                        }
+                    </div>
+                </div>
+                <div class="alert alert-danger m-0" style="display:none" role="alert"></div>
+            </div>
+
+            <div class="modal-footer">
+                <label id="LinkRequests_error" style="float:left;" class="text-danger"></label>
+                <button type="button" class="btn btn-success" id="okButton">Link Record</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="modal-UnlinkRequests" class="modal fade hidden-print" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <div class="modal-title h4" style="margin-right:20px" id="REQ_VIN_RNO_HEADER">Unlink Request</div>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <div class="form-control">
+                        <label class="control-label">Unlink R# <span id="UnlinkRequests_LinkedRequestNo"></span> from R# <span id="UnlinkRequests_RequestNo"></span></label>
+                    </div>
+                </div>
+                <div class="alert alert-danger m-0" style="display:none" role="alert"></div>
+            </div>
+            <div class="modal-footer">
+                <label id="UnlinkRequests_error" style="float:left;" class="text-danger"></label>
+                <button type="button" class="btn btn-success" id="okButton">Unlink</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+

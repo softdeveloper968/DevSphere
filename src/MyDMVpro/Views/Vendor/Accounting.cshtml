@@ -1,0 +1,143 @@
+﻿@{
+    const string PageName = VendorPageNames.Accounting;
+    ViewData["Title"] = "Accounting";
+    string GetUrl(string name)
+    {
+        return MyDMVpro.Controllers.RequestStatusController.GetEndpointUrl(this.Context, name);
+    }
+}
+
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+@{
+    await Html.RenderPartialAsync("_Chat", new Chats());
+    await Html.RenderPartialAsync("_AttachmentList");
+    await Html.RenderPartialAsync("_EditDetails");
+    await Html.RenderPartialAsync("_invoiceDialog");
+    await Html.RenderPartialAsync("_invoicePaidDialog");
+    await Html.RenderPartialAsync("_invoiceBulkPaidDialog");
+    await Html.RenderPartialAsync("_invoiceDelete");
+    await Html.RenderPartialAsync("_ExportItems");
+    await Html.RenderPartialAsync("_ExportInvoices");
+}
+<div>
+    <h2 class="sub_heading">Unbilled</h2>
+    @{
+        VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.UnbilledList, PageName)
+            {
+                QueueTitle = "Unbilled",
+                DataUrl = GetUrl("Unbilled"),
+                ListId = "DT_UnbilledRequests",
+                TableVarName = "UnbilledRequestsTable",
+                PageLength = 10,
+                AllowDirectToBilling = false /* already in billing */
+            };
+        list.AllowMove = false;
+        list.EnableAdvancedSearch = true;
+        list.AllowAddToInvoice = true;
+
+        list.Columns.Add_Select();
+        list.Columns.Add_Chat();
+        list.Columns.Add_Attachments();
+        list.Columns.Add_Links();
+        list.Columns.Add_DupeCheck();
+        list.Columns.Add_SpecialBilling();
+        list.Columns.Add_AppType(true);
+        list.Columns.Add_AppState();
+        list.Columns.Add_RequestDate();
+        list.Columns.Add_FinishDate();
+        list.Columns.Add_ELT();
+        list.Columns.Add_RT_LH();
+        list.Columns.Add_DT_LH();
+        list.Columns.Add_VIN();
+        list.Columns.Add_RNo();
+        list.Columns.Add_Code();
+        list.Columns.Add_SubmittedBy();
+        list.Columns.Add_Notes();
+        list.Columns.Add_ClientRef();
+        list.Columns.Add_RNo();
+        list.Columns.Add_Group();
+
+        list.SortColumns.Add("reqFinished");
+        list.SortColumns.Add("reqGroup");
+
+        await Html.RenderPartialAsync("_VendorRequestList", list);
+    }
+</div>
+
+@{
+    await Html.RenderPartialAsync("_invoiceBuilder");
+}
+
+<div>
+    <h2 class="sub_heading">Unpaid Invoices</h2>
+    @{
+        VendorInvoiceViewModel invoiceList = new VendorInvoiceViewModel(VendorViewType.InvoiceList)
+            {
+                DataUrl = "/Invoice/VendorUnpaidInvoices",
+                ListId = "DT_InvoiceList",
+                TableVarName = "InvoiceListTable",
+                PageLength = 10
+            };
+        invoiceList.AllowMove = false;
+        invoiceList.EnableAdvancedSearch = true;
+
+        invoiceList.Columns.Add_Select();
+        invoiceList.Columns.Add_Links();
+        invoiceList.Columns.Add("", "reqPdf");
+        invoiceList.Columns.Add_Group();
+        invoiceList.Columns.Add("Bill To", "reqBillTo afilter");
+        invoiceList.Columns.Add("Invoice #", "reqInvoiceNo asearch");
+        invoiceList.Columns.Add("Invoice Date", "reqInvoiceDate datefmt asearch");
+        invoiceList.Columns.Add("Service Fees", "reqServiceFees currency sum");
+        invoiceList.Columns.Add("DMV Fees", "reqDmvFees currency sum");
+        invoiceList.Columns.Add("Other Fees", "reqOtherFees currency sum");
+        invoiceList.Columns.Add("Invoice Amt", "reqInvoiceAmount currency sum asearch");
+        // invoiceList.Columns.Add("Invoice Paid", "reqInvoiceDatePaid  drfilter");
+        // invoiceList.Columns.Add("Invoice Note", "reqInvoiceNote");
+        invoiceList.Columns.Add("InvoiceId", "reqInvoiceId");
+
+        invoiceList.SortColumns.Add("reqInvoiceDate", true);
+
+        await Html.RenderPartialAsync("_InvoiceList", invoiceList);
+    }
+</div>
+
+@{
+    await Html.RenderPartialAsync("_bulkPayInvoicesBuilder");
+}
+
+
+<div>
+    <h2 class="sub_heading">Paid Invoices</h2>
+    @{
+        VendorInvoiceViewModel paidInvoiceList = new VendorInvoiceViewModel(VendorViewType.PaidInvoiceList)
+            {
+                DataUrl = "/Invoice/VendorPaidInvoices",
+                ListId = "DT_PaidInvoiceList",
+                TableVarName = "PaidInvoiceListTable",
+                PageLength = 10
+            };
+        paidInvoiceList.AllowMove = false;
+        paidInvoiceList.EnableAdvancedSearch = true;
+
+        paidInvoiceList.Columns.Add_Select();
+        paidInvoiceList.Columns.Add_Links();
+        paidInvoiceList.Columns.Add("", "reqPdf");
+        paidInvoiceList.Columns.Add_Group();
+        paidInvoiceList.Columns.Add("Bill To", "reqBillTo afilter");
+        paidInvoiceList.Columns.Add("Invoice #", "reqInvoiceNo asearch");
+        paidInvoiceList.Columns.Add("Invoice Date", "reqInvoiceDate datefmt asearch");
+        paidInvoiceList.Columns.Add("Service Fees", "reqServiceFees currency sum");
+        paidInvoiceList.Columns.Add("DMV Fees", "reqDmvFees currency sum");
+        paidInvoiceList.Columns.Add("Other Fees", "reqOtherFees currency sum");
+        paidInvoiceList.Columns.Add("Invoice Amt", "reqInvoiceAmount currency sum asearch");
+        paidInvoiceList.Columns.Add("Invoice Paid", "reqInvoiceDatePaid datefmt asearch");
+        paidInvoiceList.Columns.Add("Invoice Note", "reqInvoiceNote");
+        paidInvoiceList.Columns.Add("InvoiceId", "reqInvoiceId");
+
+        paidInvoiceList.SortColumns.Add("reqInvoiceDate", true);
+
+        await Html.RenderPartialAsync("_PaidInvoiceList", paidInvoiceList);
+    }
+</div>

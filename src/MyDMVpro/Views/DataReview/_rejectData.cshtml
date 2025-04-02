@@ -1,0 +1,75 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+<div id="modal-rejectAttachment" class="modal fade hidden-print" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title dt-center" id="myModal-label">Reject Attachment</h4>
+                <div class="dt-center" style="font-weight:500;">Please note, code and chat this record with specific details about why this attachment was rejected.</div>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" id="REQ_VIN_RNO_HEADER"></div>
+                <div class="row" id="info_other" style="display:none">
+                    <div class="form-group" style="text-align:center;margin:5px 25px 5px 25px">
+                        A note or remark is required for this move.  Please send chat if client action required.
+                    </div>
+                </div>
+                <div class="row gap_15">
+                    <div class="col-lg-6">
+                        <input type="hidden" id="requestId" name="requestId" />
+                        <input type="hidden" id="fieldId" name="attachmentId" />
+                        <input type="hidden" id="proposedUpdateId" name="attachmentTypeId" />
+                        @*                         <div class="form-group" id="predefinedReasonDiv">
+                        <label for="predefinedReason" class="control-label required">Reason Rejected</label>
+                        <input id="predefinedReason" name="predefinedReason" maxlength="10" class="form-control" required="required" />
+                        </div>
+                        *@                        <div class="form-group">
+                            <label for="code" class="control-label required">Code</label>
+                            <input id="code" name="code" maxlength="10" class="form-control" required="required" />
+                            <div class="checkbox" style="margin-right:10px">
+                                <label>
+                                    <input type="checkbox" id="codeNotRequired" name="codeNotRequired" />
+                                    Code not required
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="Note" class="required">Note</label>
+                            <textarea id="note" name="note" cols="80" placeholder="" required="required" class="form-control"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="Remark">Internal remarks</label>
+                            <textarea id="remark" name="remark" cols="80" placeholder="" class="form-control"></textarea>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="chatsEditPanel" tabindex="-1">
+                            <h2 id="myModal-label">Chat</h2>
+                            <div class="panel-body chat-body"></div>
+                            <div class="panel-footer mt_10">
+                                <form asp-controller="Chats" asp-action="Create" method="post" class="chatform">
+                                    <input type="hidden" name="RequestId" id="chat-RequestId" />
+                                    <textarea class="form-control" name="Message" id="chat-newMsg" rows="4" width="100%" placeholder="Type message" style="resize:none;"></textarea>
+                                    <div class="mt_10">
+                                        <input type="submit" value="Send" class="btn btn-primary custom_btn" />
+                                        <button type="button" id="chatMarkAsRead" class="btn btn-default custom_btn">Mark As Read</button>
+                                        <button type="button" id="chatRefreshBtn" class="btn custom_btn">Refresh</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="alert alert-danger" style="display:none">Code and client facing note are required</div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>

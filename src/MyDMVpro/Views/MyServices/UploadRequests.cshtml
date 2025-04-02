@@ -1,0 +1,289 @@
+﻿@using System.Collections.Generic
+@using Microsoft.AspNetCore.Http
+@{
+    ViewData["Title"] = "Pending";
+    string GetUrl(string name)
+    {
+        return MyDMVpro.Controllers.RequestStatusController.GetEndpointUrl(this.Context, name);
+    }
+}
+
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+<script asp-add-nonce="true">
+    function signBatch(idList) {
+
+    }
+    function createBatch(idList) {
+        var formData = new FormData();
+
+        if (idList == undefined)
+            return;
+
+        if (!Array.isArray(idList) || idList.length == 0)
+            return;
+
+        idList.forEach(function (id) {
+            formData.append("ids[]", id);
+        });
+
+        var succeeded = false;
+        $.ajax({
+            url: '/Forms/CreateBackgroundBatch',
+            type: 'POST',
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            async: true,
+            data: formData,
+            dataType: 'json',
+            cache: false,
+            contentType: false,
+            processData: false,
+            complete: function () {
+            },
+            success: function (data) {
+                if (data.error) {
+                    if (data.error !== '') {
+                        alert(data.error);
+                        return;
+                    }
+                }
+                window.location = "/Forms/SignBatch/" + data.batchId;
+            },
+            error: function () {
+                succeeded = false;
+            }
+        });
+    }
+</script>
+
+@{ await Html.RenderPartialAsync("_Chat", new Chats()); }
+@{ await Html.RenderPartialAsync("_AttachmentList"); }
+@{ await Html.RenderPartialAsync("_EditDetails"); }
+@{
+    RequestViewModel pendingList = new RequestViewModel(MyServicesViewType.Pending)
+    {
+        DataUrl = GetUrl("Pending"),
+        ListId = "DT_PendingRequests",
+        TableVarName = "PendingRequests",
+        FilterOnCurrentUser = false,
+        PageLength = 500, /* Allow all uploads to show so user can send all to vendor */
+        EnableAdvancedSearch = true
+    };
+    pendingList.Columns.Add_Select();
+    pendingList.Columns.Add_Chat();
+    pendingList.Columns.Add_Attachments();
+    if (pendingList.EnablePDF)
+    {
+        pendingList.Columns.Add("", "reqViewSign dfilter");
+    }
+    pendingList.Columns.Add("", "reqEditRequest");
+    pendingList.Columns.Add_AutoIMS();
+    pendingList.Columns.Add_DupeCheck();
+
+    pendingList.Columns.Add_AppType();
+    pendingList.Columns.Add_AppState();
+    pendingList.Columns.Add_VIN();
+    pendingList.Columns.Add_LH();
+    pendingList.Columns.Add_Auction();
+    pendingList.Columns.Add_Make();
+    pendingList.Columns.Add_Year();
+    pendingList.Columns.Add_SubmittedBy();
+    pendingList.Columns.Add_ClientRef();
+    pendingList.Columns.Add_Vendor();
+
+    pendingList.SortColumns.Add("reqType");
+    pendingList.SortColumns.Add("reqState");
+    pendingList.SortColumns.Add("reqVIN");
+
+    await Html.RenderPartialAsync("_MyServicesRequests", pendingList);
+}
+@{ await Html.RenderPartialAsync("_FileUploads"); }
+<div class="panel-group mb_5 accordion_tab" id="accordion" role="tablist" aria-multiselectable="true">
+    <div class="panel panel-default no_bg">
+        <div class="panel-heading accordion mb_5" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" role="tab" id="headingOne">
+            <h4 class="panel-title">
+                New Application
+                <i class="fa fa-chevron-down"></i>
+            </h4>
+        </div>
+        <div class="panel no_bg">
+            @{
+                await Html.RenderPartialAsync("_NewAppType", ViewData["AppFormData"]);
+            }
+        </div>
+    </div>
+</div>
+<script asp-add-nonce="true">
+    $(document).ready(() => {
+        var acc = document.getElementsByClassName("accordion");
+        var i;
+
+        for (i = 0; i < acc.length; i++) {
+            acc[i].addEventListener("click", function () {
+                this.classList.toggle("active");
+                var panel = this.nextElementSibling;
+                if (panel.style.display === "block") {
+                    panel.style.display = "none";
+                } else {
+                    panel.style.display = "block";
+                }
+            });
+        }
+    });
+</script>
+<script asp-add-nonce="true">
+    var pendingTable;
+    var pendingTable_Items;
+    function ShowRemovePending(t) {
+        pendingTable = t;
+        pendingTable_Items = lhGetSelectedItems(t);
+        var html = "No items selected";
+        var disabled = true;
+        if (pendingTable_Items.length != 0) {
+            html = "Operation will remove the " + pendingTable_Items.length + " selected requests.";
+            disabled = false;
+        }
+        $("#modal-removePendingItems").find("#selectedCount").html(html);
+        $("#modal-removePendingItems").modal("show");
+    }
+    function RemovePendingItems() {
+        var formData = new FormData();
+
+        if (pendingTable_Items) {
+            $.each(pendingTable_Items, function (i, id) {
+                formData.append('ids', id);
+            });
+            var succeeded = false;
+            $.ajax({
+                url: '@Url.Action("RemovePending", "MyServices")',
+                type: 'POST',
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                async: true,
+                data: formData,
+                dataType: 'text',
+                cache: false,
+                contentType: false,
+                processData: false,
+                complete: function () {
+                    // refresh list
+                    if (typeof PendingRequests !== 'undefined')
+                        PendingRequests.ajax.reload(null, false);
+                },
+                success: function (data) {
+                    succeeded = true;
+                },
+                error: function () {
+                    succeeded = false;
+                }
+            });
+        }
+    }
+</script>
+<script asp-add-nonce="true">
+    var lhShipTable;
+    var lhShipTable_Items;
+
+    function ShowDirectToVendor(t) {
+        lhShipTable = t;
+        lhShipTable_Items = lhGetSelectedItems(t);
+        var html = "No items selected";
+        var disabled = true;
+        if (lhShipTable_Items.length != 0) {
+            html = "Operation will submit the " + lhShipTable_Items.length + " selected items for processing.";
+            disabled = false;
+        }
+        $("#modal-directShip").find("#vendVendorName").prop('disabled', disabled);
+        $("#modal-directShip").find("#selectedCount").html(html);
+        $("#modal-directShip").modal("show");
+    }
+    function DirectItemsToVendor() {
+        var formData = new FormData();
+
+        if (lhShipTable_Items) {
+            $.each(lhShipTable_Items, function (i, id) {
+                formData.append('ids', id);
+            });
+            var succeeded = false;
+            $.ajax({
+                url: '@Url.Action("DirectToVendor", "MyServices")',
+                type: 'POST',
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                async: true,
+                data: formData,
+                dataType: 'text',
+                cache: false,
+                contentType: false,
+                processData: false,
+                complete: function () {
+                    // refresh list
+                    if (typeof PendingRequests !== 'undefined')
+                        PendingRequests.ajax.reload(null, false);
+                },
+                success: function (data) {
+                    succeeded = true;
+                },
+                error: function () {
+                    succeeded = false;
+                }
+            });
+        }
+    }
+    function ShowShipToVendor(t) {
+        lhShipTable = t;
+        lhShipTable_Items = lhGetSelectedItems(t);
+        var html = "No items selected";
+        var disabled = true;
+        if (lhShipTable_Items.length != 0) {
+            html = "Operation will mark the " + lhShipTable_Items.length + " selected items as shipped today, " + moment().format('MM-DD-YYYY');
+            disabled = false;
+        }
+        $("#modal-ship").find("#vendCourierName").prop('disabled', disabled);
+        $("#modal-ship").find("#vendTrackingNumber").prop('disabled', disabled);
+        $("#modal-ship").find("#selectedCount").html(html);
+        $("#modal-ship").modal("show");
+    }
+    function ShipItemsToVendor() {
+        var formData = new FormData();
+
+        if (lhShipTable_Items) {
+            var courierName = $("#vendCourierName").val();
+            var trackingNumber = $("#vendTrackingNumber").val();
+            formData.append('courierName', courierName);
+            formData.append('trackingNumber', trackingNumber);
+            $.each(lhShipTable_Items, function (i, id) {
+                formData.append('ids', id);
+            });
+            var succeeded = false;
+            $.ajax({
+                url: '@Url.Action("ShipItems", "MyServices")',
+                type: 'POST',
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                async: true,
+                data: formData,
+                dataType: 'text',
+                cache: false,
+                contentType: false,
+                processData: false,
+                complete: function () {
+                    // refresh list
+                    if (typeof PendingRequests !== 'undefined')
+                        PendingRequests.ajax.reload(null, false);
+                },
+                success: function (data) {
+                    succeeded = true;
+                },
+                error: function () {
+                    succeeded = false;
+                }
+            });
+        }
+    }
+    function lhGetSelectedItems(t) {
+        var a = [];
+        $.each(t.rows({ selected: true }).data(), function () {
+            a.push(this["requestId"]);
+        });
+        return a;
+    }
+
+</script>
+

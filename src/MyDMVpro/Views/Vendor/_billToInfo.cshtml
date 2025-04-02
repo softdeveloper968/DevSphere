@@ -1,0 +1,44 @@
+﻿<div id="modal-billToInfo" class="modal fade hidden-print" tabindex="-1">
+    <div class="container vertical-alignment-helper">
+        <div class="row vertical-align-center">
+            <div class="col-sm-4"></div>
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="myModal-label">Billing Details</h4>
+                    </div>
+                    <div class="modal-body">
+                        <label for="shortName" class="control-label">Short Name (for selection list only)</label>
+                        <input type="text" width="150" id="shortName" name="shortName" class="form-control" />
+                        <label for="custName" class="control-label">Billing Name</label>
+                        <input type="text" width="150" id="custName" name="custName" class="form-control" />
+                        <label for="custAddr1" class="control-label">Address</label>
+                        <input type="text" width="150" id="custAddr1" name="custAddr1" class="form-control" />
+                        <input type="text" width="150" id="custAddr2" name="custAddr2" class="form-control" />
+                        <label for="custCity" class="control-label">City</label>
+                        <input type="text" width="150" id="custCity" name="custCity"  class="form-control" />
+                        <label for="custState" class="control-label">State</label>
+                        <input type="text" width="150" id="custState" name="custState" class="form-control" />
+                        <label for="custZip" class="control-label">Zip Code</label>
+                        <input type="text" width="150" id="custZip" name="custZip" class="form-control" />
+                        <label for="custAttn" class="control-label">Attention</label>
+                        <input type="text" width="150" id="custAttn" name="custAttn" class="form-control" />
+                        <label for="custNote" class="control-label">Note</label>
+                        <input type="text" width="150" id="custNote" name="custNote" class="form-control" />
+                    </div>
+                    <div class="alert alert-danger" style="display:none" role="alert"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-success" id="okButton">OK</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+    });
+</script>

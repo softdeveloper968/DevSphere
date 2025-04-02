@@ -1,0 +1,52 @@
+﻿@{
+    string PageName = "Cancelled";
+    ViewData["Title"] = "Cancelled";
+    UserInfo ui = UserInfo.GetCurrentUser(User, false);
+    string GetUrl(string name)
+    {
+        return MyDMVpro.Controllers.RequestStatusController.GetEndpointUrl(this.Context, name);
+    }
+}
+
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+
+@* <h2>Cancelled Requests</h2> *@
+<div class="white_box p_15">
+@{ await Html.RenderPartialAsync("_Chat", new Chats()); }
+@{ await Html.RenderPartialAsync("_AttachmentList"); }
+@{ await Html.RenderPartialAsync("_MoveDialog"); }
+@{ await Html.RenderPartialAsync("_BulkDialog"); }
+@{ await Html.RenderPartialAsync("_EditDetails"); }
+@{ await Html.RenderPartialAsync("_ExportItems"); }
+@{ await Html.RenderPartialAsync("_DeleteRequest"); }
+@{
+    VendorRequestViewModel list = new VendorRequestViewModel(VendorViewType.Cancelled, PageName)
+    {
+        QueueName = "Cancelled",
+        AllowMove = true,
+        AllowDelete = true,
+        AllowAddToInvoice = false,
+        AllowDirectToBilling = false,
+        AllowStatusEdit = true,
+        AllowCancel = true
+    };
+    list.Columns.Add_Select();
+    list.Columns.Add_Chat();
+    list.Columns.Add_Attachments();
+    list.Columns.Add_Links();
+    list.Columns.Add_DupeCheck();
+    list.Columns.Add("", "reqEditStatus");
+    list.Columns.Add_AppType(true);
+    list.Columns.Add_AppState();
+    list.Columns.Add_VIN();
+    list.Columns.Add_RNo();
+    list.Columns.Add("Reason Cancelled", "reqReasonCancelled asearch");
+    list.Columns.Add_Group();
+    list.Columns.Add_SubmittedBy();
+    list.Columns.Add_Notes();
+    list.Columns.Add_Code();
+    await Html.RenderPartialAsync("_VendorRequestList", list);
+}
+</div>
+

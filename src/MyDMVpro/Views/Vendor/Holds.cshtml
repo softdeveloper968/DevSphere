@@ -1,0 +1,110 @@
+﻿@{
+    string PageName = "Holds";
+    ViewData["Title"] = "Holding";
+    UserInfo ui = UserInfo.GetCurrentUser(User, false);
+    string GetUrl(string name)
+    {
+        return MyDMVpro.Controllers.RequestStatusController.GetEndpointUrl(this.Context, name);
+    }
+}
+
+<script src="~/js/vendor.js" asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/vendor.css" asp-append-version="true" />
+
+<h2 class="sub_heading">Hold Items</h2>
+<div class="white_box p_15 mb_20">
+@{ await Html.RenderPartialAsync("_Chat", new Chats()); }
+@{ await Html.RenderPartialAsync("_AttachmentList"); }
+@{ await Html.RenderPartialAsync("_MoveDialog"); }
+@{ await Html.RenderPartialAsync("_BulkDialog"); }
+@{ await Html.RenderPartialAsync("_EditDetails"); }
+@{ await Html.RenderPartialAsync("_ExportItems"); }
+@{ await Html.RenderPartialAsync("_DeleteRequest"); }
+@{
+    VendorRequestViewModel holdList = new VendorRequestViewModel(VendorViewType.Holds, PageName)
+    {
+        QueueName = "Holds",
+        AllowMove = true,
+        AllowDelete = true
+    };
+    holdList.Columns.Add_Select();
+    holdList.Columns.Add_Chat();
+    holdList.Columns.Add_Attachments();
+    holdList.Columns.Add_Links();
+    holdList.Columns.Add_DupeCheck();
+    //holdList.Columns.Add("", "reqEditStatus");
+    holdList.Columns.Add_AppType(true);
+    holdList.Columns.Add_AppState();
+    holdList.Columns.Add_VIN();
+    holdList.Columns.Add_RNo();
+    holdList.Columns.Add_Group();
+    holdList.Columns.Add_SubmittedBy();
+    holdList.Columns.Add_Make();
+    holdList.Columns.Add_Year();
+    holdList.Columns.Add_ETA();
+    holdList.Columns.Add_DateToVendor();
+    holdList.Columns.Add_FromLHCourier();
+    holdList.Columns.Add_FromLHTracking();
+    holdList.Columns.Add_Notes();
+    holdList.Columns.Add_Code();
+    await Html.RenderPartialAsync("_VendorRequestList", holdList);
+}
+</div>
+<h2 class="sub_heading">Pending Deletes</h2>
+<div class="white_box p_15">
+@{
+    VendorRequestViewModel masterList = new VendorRequestViewModel(VendorViewType.Deletes, PageName)
+    {
+        QueueTitle = "Pending Deletes",
+        QueueName = "DeletePending",
+        UserIsVendorAdmin = ui.IsVendorAdmin
+    };
+    masterList.Columns.Add_Select();
+    masterList.Columns.Add_Chat();
+    masterList.Columns.Add_Attachments();
+    masterList.Columns.Add_Links();
+    masterList.Columns.Add_EditStatus();// ("", "reqEditStatus");
+    masterList.Columns.Add_DupeCheck();
+    masterList.Columns.Add_Stage();//("Stage", "reqStage stageFilter");
+    masterList.Columns.Add_Status();//("Status", "reqStatus statusFilter");
+    masterList.Columns.Add_AppType(true);
+    masterList.Columns.Add_AppState();
+    masterList.Columns.Add_VIN();
+    masterList.Columns.Add_RNo();
+    masterList.Columns.Add_FinishDate();//("Finish Date", "reqFinished drfilter");
+    masterList.Columns.Add_Auction();
+    masterList.Columns.Add_Group();
+    masterList.Columns.Add_SubmittedBy();
+    masterList.Columns.Add_Courier();
+    masterList.Columns.Add_Tracking();
+    masterList.Columns.Add_Make();
+    masterList.Columns.Add_Year();
+    masterList.Columns.Add_ETA();//("ETA", "reqETA drfilter");
+    masterList.Columns.Add_ReceivedFromDMV();//("Received From DMV", "reqDateFromDMV drfilter");
+    masterList.Columns.Add_SentToDMV();// ("Sent to DMV", "reqDateToDMV drfilter");
+    masterList.Columns.Add_ReceivedFromLH();//("Received From LH", "reqDateFromLH drfilter");
+    masterList.Columns.Add_LHShippedToVendor();//("LH Shipped to Vendor", "reqDateToVendor drfilter");
+    masterList.Columns.Add_FromLHCourier();
+    masterList.Columns.Add_FromLHTracking();
+    masterList.Columns.Add_PrintDate(); // ("Print Date", "reqPrinted drfilter");
+    masterList.Columns.Add_DateSigned();//("Date Signed", "reqSigned drfilter");
+    masterList.Columns.Add_Notes();
+    masterList.Columns.Add_Code();
+
+    masterList.Columns.Add_InvNumber(); //("Inv #", "reqInvNo asearch");
+    masterList.Columns.Add_InvDate();//("Inv Date", "reqInvDate drfilter");
+    masterList.Columns.Add_InvPaid();//("Inv Paid", "reqInvPaid drfilter");
+    masterList.Columns.Add_SvcFee();//("Svc Fee", "reqInvSvcFee currency");
+    masterList.Columns.Add_DmvFee(); // ("Dmv Fee ", "reqInvDmvFee currency");
+    masterList.Columns.Add_OtherFee();//("Other Fee", "reqInvOthFee currency");
+    masterList.Columns.Add_OtherDesc();//("Other Desc", "reqInvOthDesc");
+    masterList.Columns.Add_TotalDue();//("Total Due", "reqInvTtlDue currency");
+
+
+    masterList.SortColumns.Add("reqType");
+    masterList.SortColumns.Add("reqState");
+    masterList.SortColumns.Add("reqVIN");
+
+    await Html.RenderPartialAsync("_VendorRequestList", masterList);
+}
+</div>

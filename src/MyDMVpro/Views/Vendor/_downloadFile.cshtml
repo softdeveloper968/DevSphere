@@ -1,0 +1,92 @@
+﻿@using Newtonsoft.Json
+@using System.Collections.Generic;
+
+@model VendorRequestViewModel
+
+@{
+    string GetCsvColumns()
+    {
+        List<CsvColumn> columns = new();
+        foreach (var column in Model.Columns)
+        {
+            if (!column.Hidden)// && column.Exportable /* tbd, causes issue with columns in list */)
+            {
+                string field = column.FilterField;
+                if (string.IsNullOrWhiteSpace(field)) field = column.DataField;
+                if (string.IsNullOrWhiteSpace(field)) continue;
+                CsvColumn col = new() { Title = column.Title, DataName = field };
+                columns.Add(col);
+            }
+        }
+        return JsonConvert.SerializeObject(columns);
+    }
+    string GetIncludeArchived()
+    {
+        return Model.IncludeArchivedOnCsvDownload.ToString().ToLower();
+    }
+    string GetColumnIndex(string dataField)
+    {
+        if (dataField == "reqType") dataField = "appType";
+        else if (dataField == "reqState") dataField = "state";
+
+        for (int i = 0; i < Model.Columns.Count; i++)
+        {
+            if (Model.Columns[i].DataField == dataField 
+                || Model.Columns[i].FilterField == dataField)
+            {
+                return i.ToString();
+            }
+        }
+        return "";
+    }
+    string GetColumnDataOrIndex(MyDMVpro.Common.ViewHelpers.DatatableColumnInfo column, int index)
+    {
+        if (!string.IsNullOrWhiteSpace(column.DataField))
+        {
+            return column.DataField;
+        }
+        if (!string.IsNullOrWhiteSpace(column.FilterField))
+        {
+            return column.FilterField;
+        }
+        return index.ToString();
+    }
+}
+<form id="download_@Model.ListId" action="@Model.DataUrl" method="post">
+    <input type="hidden" name="draw" value="1" />
+    <input type="hidden" name="start" value="0" />
+    <input type="hidden" name="length" value="0" />
+    <input type="hidden" name="skip" value="0" />
+    <input type="hidden" name="pageSize" value="5000" />
+    <input type="hidden" name="globalSearch" value="" />
+    <input type="hidden" name="globalSearchRegex" value="" />
+    <input type="hidden" name="jsonFilter" value="" />
+    <input type="hidden" name="downloadCSV" value="true" />
+    <input type="hidden" name="downloadFilename" value="" />
+    <input type="hidden" name="jsonColumns" value="@GetCsvColumns()" />
+    <input type="hidden" name="includeArchived" value="@GetIncludeArchived()" />
+
+    @for (int i = 0; i < Model.Columns.Count; i++)
+    {
+        var column = Model.Columns[i];
+        <input type="hidden" name="columns[@i][data]" value="@GetColumnDataOrIndex(column,i)" />
+        <input type="hidden" name="columns[@i][name]" value="" />
+        <input type="hidden" name="columns[@i][searchable]" value="true" />
+        <input type="hidden" name="columns[@i][orderable]" value="true" />
+        <input type="hidden" name="columns[@i][search][value]" value="" />
+        <input type="hidden" name="columns[@i][search][regex]" value="false" />
+    }
+    @for (int i = 0; i < Model.SortColumns.Count; i++)
+    {
+        var sort = Model.SortColumns[i];
+        <input type="hidden" name="order[@i][column]" value="@GetColumnIndex(sort.Name)" />
+        @if (sort.Descending) 
+        {
+            <input type="hidden" name="order[@i][dir]" value="desc" />
+        }
+        else
+        {
+            <input type="hidden" name="order[@i][dir]" value="asc" />
+        }
+    }
+</form>

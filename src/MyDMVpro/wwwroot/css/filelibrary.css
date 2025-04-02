@@ -1,0 +1,141 @@
+﻿body {
+    font-family: sans-serif;
+}
+
+a {
+    color: #369;
+}
+
+.note {
+    width: 500px;
+    margin: 50px auto;
+    font-size: 1.1em;
+    color: #333;
+    text-align: justify;
+}
+
+#drop-area {
+    border: 2px dashed #ccc;
+    border-radius: 10px;
+    width: 100%;
+    margin: 5px auto;
+    padding: 5px;
+}
+
+    #drop-area.highlight {
+        border-color: purple;
+    }
+
+p {
+    margin-top: 0;
+}
+
+.my-form {
+    margin-bottom: 10px;
+}
+
+#gallery {
+    margin-top: 10px;
+}
+
+    #gallery img {
+        width: 150px;
+        margin-bottom: 10px;
+        margin-right: 10px;
+        vertical-align: middle;
+    }
+
+.button {
+    display: inline-block;
+    padding: 10px;
+    background: #ccc;
+    cursor: pointer;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+    .button:hover {
+        background: #ddd;
+    }
+
+#fileElem {
+    display: none;
+}
+
+progress[value] {
+    width: 100%;
+    height: 20px;
+}
+
+.detailsViewPanel, .applyToListPanel {
+    padding: 10px;
+}
+
+.analyzerDropZonePanel {
+    padding: 5px;
+}
+
+.docViewPanel {
+    display: block;
+    height: 900px;
+}
+
+.fullwidth {
+    width: 100%;
+}
+
+#pdfFrame {
+    position: relative;
+    height: 100%;
+    width: 100%;
+    border: 1px solid #d9d9d9;
+}
+
+.formListPanel {
+    display: block;
+}
+
+.formscan_changed {
+    background-color: yellow;
+}
+
+.vinUpdater {
+}
+
+.fileLibrary_vinUpdater {
+    width: 200px;
+}
+
+.fl_noAttachment a:before {
+    content: "\f040";
+    display: inline-block;
+    font-family: FontAwesome;
+    background-color: red;
+    margin-right: 5px;
+}
+.fl_hasAttachment a:before {
+    /*    content: "\f375";*/
+    /*font-family: FontAwesome;*/
+    width: 16px;
+    display: inline-block;
+    margin-right: 5px;
+    background-image: url(/images/circle-check-green.svg)
+}
+/*
+.fl_typeSelection {
+    width: 50%;
+    padding-left: 25%;
+    padding-right: 25%;
+}*/
+.fl_ConfirmTypePanel {
+    font-size: x-large;
+}
+.fl_typeNotNeeded {
+    color: red;
+    font-weight: bold;
+}
+.fl_ConfirmTypeAlert {
+    color: red;
+    font-weight: bold;
+    font-size: medium;
+}

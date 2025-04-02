@@ -1,0 +1,200 @@
+﻿<div id="modal-reqAtt" class="modal fade hidden-print" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Attachments</h4>
+            </div>
+            <div class="modal-body">
+                <div class="attachmentContent">
+                </div>
+                <form id="att-addAttachment" asp-controller="Requests" asp-action="UploadAttachment" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="id" id="att-RequestId" />
+                    <input type="hidden" name="vin" id="att-VIN" />
+                    <div id="attUploadPanel">
+                        <h4 class="hrheader">Upload Attachments</h4>
+                        <div class="form-group">
+                            <input type="file" name="file" class="form-control" required />
+                        </div>
+                        <div class="form-group" id="attachmentTypePanel">
+                            <label for="attachmentTypeId">Type:</label>
+                            <select name="attachmentTypeId" id="attachmentTypeId" class="form-control" required>
+                            </select>
+                            <span style="font-size:small">Please confirm the type of document you are attaching. If you do not see an option that describes your document, choose the “extra” type</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="att-FileDesc" class="control-label">Description (optional): </label>
+                            <input type="text" class="form-control" name="filedesc" id="att-FileDesc" />
+                        </div>
+                        <div class="form-group mb-0">
+                            <button type="submit" class="btn btn-success custom_btn">Upload File</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" id="btnAttUpload">Upload&nbsp;<span style="font-family:FontAwesome;">&#x0F078;</span></button>
+                <button type="button" style="display:none" class="btn btn-default" id="btnAttUploadClose"><span style="font-family:FontAwesome;">&#x0F077;</span></button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script asp-add-nonce="true">
+    var $modalForm;
+    var $attForm;
+
+    function uploadBtnClick() {
+        let content = $("#attachmentTypeOptionsTemplate").html();
+        $modalForm = $("#modal-reqAtt");
+        $modalForm.find("#attachmentTypeId").html(content);
+        $modalForm.find('#attUploadPanel').show();
+        $modalForm.find('#btnAttUpload').hide();
+        $modalForm.find('#btnAttUploadClose').show();
+    }
+    function removeAttachment(requestid,id) {
+        var formData = new FormData();
+        formData.append("id", id);
+
+        if (!confirm("Are you sure?"))
+            return;
+
+        $modalForm = $("#modal-reqAtt");
+
+        var succeeded = false;
+        $.ajax({
+            url: '/Requests/RemoveAttachment',
+            type: 'POST',
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            data: formData,
+            dataType: 'text',
+            cache: false,
+            contentType: false,
+            processData: false,
+        }).done(function (data) {
+            showAttachments(requestid, $modalForm.find("#att-VIN").val());
+        });
+        return false;
+    }
+    function refreshAttachmentStatus(reqid) {
+        $.ajax({
+            url: '/Requests/AttachmentStatus/' + reqid,
+            type: 'GET',
+            async: true,
+            dataType: 'json',
+            cache: false,
+            contentType: false,
+            processData: false,
+        }).done(function (data) {
+            if (data == null) return;
+            let $linkElement = $("a[attIcon][data-requestid='" + reqid + "']");
+            $linkElement.removeClass("missingAllAttachments missingSomeAttachments hasAllAttachments noAttachmentsRequired");
+            switch (data.attachmentStatus) {
+                case 0: $linkElement.addClass('hasAllAttachments'); break;
+                case 1: $linkElement.addClass('missingSomeAttachments'); break;
+                case 2: $linkElement.addClass('missingAllAttachments'); break;
+                default:
+                    $linkElement.addClass('noAttachmentsRequired');
+                    break;
+            }
+        });
+        return false;
+    } 
+    function refreshAttachments(requestId, vin) {
+        
+        showAttachments(requestId, vin, true);
+        return false;
+    }
+    function showAttachments(requestId, vin, disableShow) {
+        disableShow = disableShow || false;
+        var formData = new FormData();
+        formData.append("id", requestId);
+
+        var succeeded = false;
+        $.ajax({
+            url: '/Requests/Attachments',
+            type: 'POST',
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            data: formData,
+            dataType: 'text',
+            cache: false,
+            contentType: false,
+            processData: false,
+        }).done(function (data) {
+            $modalForm = $("#modal-reqAtt");
+            $modalForm.find('#attUploadPanel').hide();
+            $modalForm.find('#btnAttUpload').show();
+            $modalForm.find('#btnAttUploadClose').hide();
+            $modalForm.find("#myModal-label").html("Attachments: <span class='att-vin'>" + vin + "</span>");
+            $modalForm.find("#att-RequestId").val(requestId);
+            $modalForm.find("#att-VIN").val(vin);
+            $modalForm.find("div.attachmentContent").html(data);
+            if (!disableShow) {
+                $modalForm.modal("show");
+            }
+        });
+        return false;
+    }
+
+	 $(document).ready(function () {
+        $modalForm = $("#modal-reqAtt");
+        $attForm = $modalForm.find("#att-addAttachment");
+
+        $attForm.submit(function (e) {
+             e.preventDefault();
+
+             var formData = new FormData();
+             var id = $attForm.find("#att-RequestId").val();
+            var desc = $attForm.find("#att-FileDesc").val();
+            var attachmentTypeId = $attForm.find("#attachmentTypeId").val();
+
+            if (attachmentTypeId == null || attachmentTypeId == "") {
+                alert("Please select a type for the attachment");
+                return;
+            }
+            formData.append("id", id);
+            formData.append("filedesc", desc);
+            formData.append("attachmentTypeId", attachmentTypeId);
+
+            var $file = $attForm.find("input[type='file']")[0];
+            if ($file.length == 0) {
+                alert("Please select a file for upload");
+                return;
+            }
+            formData.append("file", $file.files[0]);
+
+             $.ajax({
+                 url: $attForm.attr('action'),
+                 type: 'POST',
+                 headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                 processData: false,
+                 contentType: false,
+                 data: formData
+             }).done(function (data) {
+                 var $input = $attForm.find("input[type='file']");
+                 $input.replaceWith($input.val('').clone(true));
+                 $attForm.find('#attUploadPanel').hide();
+                 $attForm.find("#att-FileDesc").val('');
+
+                 $modalForm.find('#btnAttUpload').show();
+                $modalForm.find('#btnAttUploadClose').hide();
+                //$modalForm.modal("hide");
+                showAttachments(id, $modalForm.find("#att-VIN").val());
+            });
+             return false;
+         });
+        
+         $modalForm.find("#btnAttUpload").off('click').on('click', function (e) {
+             e.preventDefault();
+            uploadBtnClick($modalForm);
+         });
+        $modalForm.find("#btnAttUploadClose").off('click').on('click', function (e) {
+            e.preventDefault();
+            $modalForm = $("#modal-reqAtt");
+            $modalForm.find('#attUploadPanel').hide();
+            $modalForm.find('#btnAttUpload').show();
+            $modalForm.find('#btnAttUploadClose').hide();
+        });
+    });
+</script>

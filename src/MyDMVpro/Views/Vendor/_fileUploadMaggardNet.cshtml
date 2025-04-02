@@ -1,0 +1,483 @@
+﻿@model MyDMVpro.Models.VendorViewModels.VendorFileUploadModel
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.13.5/xlsx.full.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.13.5/jszip.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.0.2/papaparse.js"></script>
+<style asp-add-nonce="true">
+    #excelFileUploadTableId {
+        width: auto;
+    }
+    .cellClass {
+        padding: 2px 5px 2px 5px;
+    }
+</style>
+<div class="box">
+    <div class="box-body table-responsive">
+        <div class="box-body">
+            <form asp-controller="Vendor" asp-action="UploadFile" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="DateToVendor" val="" />
+                <div class="form-group">
+                    <label for="GroupId" class="control-label text-left">Group</label>
+                    <div class="col-md-3">
+                        <select id="vendorUploadGroupId" name="GroupId" asp-items="@(Model.GetGroups())" class="form-control" data-required="required">
+                            <option value=""></option>
+                        </select>
+                        <span class="field-validation-valid text-danger" data-valmsg-for="GroupId" data-valmsg-replace="true"></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="UserId" class="control-label text-left">On behalf of</label>
+                    <div class="col-md-3">
+                        <select id="vendorUploadUserId" name="UserId" class="form-control" data-required="required">
+                            <option value=""></option>
+                        </select>
+                        <span class="field-validation-valid text-danger" data-valmsg-for="UserId" data-valmsg-replace="true"></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="DateToVendor" class="control-label text-left">Date Sent to Vendor</label>
+                    <div class="col-md-3">
+                        <input type="date" name="DateToVendor" class="form-control" data-required="required" />
+                        <span class="field-validation-valid text-danger" data-valmsg-for="DateToVendor" data-valmsg-replace="true"></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-2">
+                        <input type="file" name="file" multple class="form-control" accept=".xls,.xlsx" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-2">
+                        <button type="submit" class="form-control btn btn-default">Upload File</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="box-body">
+            <h4>Upload</h4>
+            <div>
+                <input type="file" id="fileUpload" name="exfile" class="form-control" accept=".xls,.xlsx,.csv" />
+                <input type="button" value="Load" onclick="return loadMaggardNetFile();" />
+            </div>
+            <table class="display stripe table-hover" id="DT_excelFileUploadTableId" cellspacing="0" align="center">
+                <thead><tr></tr></thead>
+                <tbody></tbody>
+                <tfoot></tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script asp-add-nonce="true">
+    $(document).ready(function () {
+    });
+
+    function loadMaggardNetFile() {
+        //Reference the FileUpload element.
+        var fileUpload = document.getElementById("fileUpload");
+
+        //Validate whether File is valid Excel file. (NOT USED BECAUSE DOESN'T WORK FOR files with periods in the name and .xlsx extension)
+        var regex = /^([a-zA-Z0-9\s_\\.\-:])+(.xls|.xlsx)$/;
+        if (true) //regex.test(fileUpload.value.toLowerCase()))
+        {
+            if (typeof (FileReader) != "undefined") {
+                var reader = new FileReader();
+
+                if (fileUpload.value.toLowerCase().substr(-4) == '.csv') {
+                    Papa.parse(fileUpload.files[0], {
+                        header: true,
+                        skipEmptyLines: "greedy",
+                        complete: function (results) {
+                            ProcessData(results.data);
+                        }
+                    });
+                }
+                else {
+                    //For Browsers other than IE.
+                    if (reader.readAsBinaryString) {
+                        reader.onload = function (e) {
+                            ProcessExcel(e.target.result);
+                        };
+                        reader.readAsBinaryString(fileUpload.files[0]);
+                    } else {
+                        //For IE Browser.
+                        reader.onload = function (e) {
+                            var data = "";
+                            var bytes = new Uint8Array(e.target.result);
+                            for (var i = 0; i < bytes.byteLength; i++) {
+                                data += String.fromCharCode(bytes[i]);
+                            }
+                            ProcessExcel(data);
+                        };
+                        reader.readAsArrayBuffer(fileUpload.files[0]);
+                    }
+                }
+            } else {
+                alert("This browser does not support HTML5.");
+            }
+        } else {
+            alert("Please upload a valid Excel file.");
+        }
+        return false;
+    };
+    var maggardNetColumns = [
+        //{
+        //    title: "Type", data: "AppType", defaultContent: ""
+        //},
+        {
+            title: "Type", data: "Form_Type_ID", defaultContent: "",
+            render: function (data, type, full, meta) {
+                if (type == 'display') {
+                    var typeid = data;
+                    var found = $.grep(formTypes, function (item) {
+                        return item.Form_Type_ID == typeid;
+                    });
+                    if (found.length > 0) {
+                        return found[0].AppType;
+                    }
+                }
+                return data;
+            }
+        },
+        {
+            title: "State", data: "Form_Type_ID", defaultContent: "",
+            render: function (data, type, full, meta) {
+                if (type == 'display') {
+                    var typeid = data;
+                    var found = $.grep(formTypes, function (item) {
+                        return item.Form_Type_ID == typeid;
+                    });
+                    if (found.length > 0) {
+                        return found[0].State;
+                    }
+                }
+                return data;
+            }
+        },
+//        { title: "Sub Type", data: "Form_Sub_Type_ID", defaultContent: "" },
+        { title: "VIN", data: "Vin", defaultContent: "" },
+        { title: "Year", data: "Year", defaultContent: "" },
+        { title: "Make", data: "Make", defaultContent: "" },
+        { title: "LH Name", data: "Lienholder_Name", defaultContent: "" },
+        { title: "LH Addr", data: "Lienholder_Address", defaultContent: "" },
+        { title: "LH City", data: "Lienholder_City", defaultContent: "" },
+        { title: "LH State", data: "Lienholder_State", defaultContent: "" },
+        { title: "LH Zip", data: "LienHolder_Zip", defaultContent: "" },
+        { title: "LH County", data: "LienHolder_County", defaultContent: "" },
+        { title: "LH Phone", data: "LienHolder_Phone", defaultContent: "" },
+        { title: "LH Email", data: "LienHolder_Email", defaultContent: "" },
+        { title: "Borrower Name", data: "Borrower_Name", defaultContent: "" },
+        { title: "Borrower Addr", data: "Borrower_Address", defaultContent: "" },
+        { title: "Borrower City", data: "Borrower_City", defaultContent: "" },
+        { title: "Borrower State", data: "Borrower_State", defaultContent: "" },
+        { title: "Borrower Zip", data: "Borrower_Zip", defaultContent: "" },
+        { title: "State Last Reg", data: "State_Last_Registered", defaultContent: "" },
+        { title: "State Last Titled", data: "State_Last_Titled", defaultContent: "" },
+        { title: "Repo State", data: "Repossession_State", defaultContent: "" },
+        { title: "Repo Date", data: "Repossession_Date", defaultContent: "" },
+        { title: "Contract Date", data: "Contract_Default_Date", defaultContent: "" },
+        { title: "Police Agency", data: "Police_Agency", defaultContent: "" },
+        { title: "Police Agency Date", data: "Police_Agency_Date", defaultContent: "" },
+        { title: "DMV Notified", data: "Commissioner_Motor_Vehicles", defaultContent: "" },
+        { title: "DMV Notified Date", data: "Commissioner_Date", defaultContent: "" },
+        { title: "Owner Notified", data: "Owner_Notified", defaultContent: "" },
+        { title: "Owner Notified Date", data: "Owner_Notified_Date", defaultContent: "" },
+        { title: "CoBorrower Notified", data: "CoBuyer_Notified", defaultContent: "" },
+        { title: "CoBorroder Notified Date", data: "CoBuyer_Notified_Date", defaultContent: "" },
+        {
+            title: "Section 425", data: "Section425", defaultContent: "",
+            render: function (data, type, full, meta) {
+                @*
+                    Section 425(1) -
+                    1 Affirmed
+                    2 NOT affirmed
+                *@
+                if (type == 'display') {
+                    if (data == 'False') {
+                        return "NOT affirmed";
+                    }
+                    if (data == 'True') {
+                        return "Affirmed";
+                    }
+                }
+                return data;
+            }
+        },
+        {
+            title: "Damage Disclosure", data: "Damage_Disclosure", defaultContent: "",
+            render: function (data, type, full, meta) {
+                @*
+                    Damage disclosure
+                    0	Has NOT been
+                    1	Has been
+                *@
+                if (type == 'display') {
+                    if (data < 0 || data > 1) {
+                        return data;
+                    }
+                    var values = ["Has NOT been", "Has been"];
+                    return values[data];
+                }
+                return data;
+            }
+        },
+        { title: "Client Ref#", data: "Reference_Number", defaultContent: "" },
+        { title: "Person Submitting", data: "Name_Person_Submitting", defaultContent: "" },
+        { title: "Daytime phone", data: "Daytime_Phone", defaultContent: "" },
+        { title: "Email", data: "Email_Address", defaultContent: "" },
+        { title: "Auction", data: "Auction", defaultContent: "" },
+        { title: "LH Legal Addr", data: "LienholderLegal_Address", defaultContent: "" },
+        { title: "LH Legal City", data: "LienholderLegal_City", defaultContent: "" },
+        { title: "LH Legal State", data: "LienholderLegal_State", defaultContent: "" },
+        { title: "LH Legal Zip", data: "LienHolderLegal_Zip", defaultContent: "" },
+        { title: "LH Legal County", data: "LienHolderLegal_County", defaultContent: "" },
+        { title: "Model", data: "Model", defaultContent: "" },
+        { title: "Cyl", data: "Cylinder_QTY", defaultContent: "" },
+        { title: "Doors", data: "Doors", defaultContent: "" },
+        { title: "Fuel Type", data: "Fuel_Type", defaultContent: "" },
+        { title: "Curb Weight", data: "Curb_Weight", defaultContent: "" },
+        { title: "Color", data: "Color", defaultContent: "" },
+        { title: "Odometer Digits", data: "Odometer_Length", defaultContent: "" },
+        { title: "Odometer Reading", data: "Odometer_Reading", defaultContent: "" },
+        {
+            title: "Mileage Brand", data: "Mileage_Brand", defaultContent: "",
+            render: function (data, type, full, meta) {
+                @*
+                    Mileage_Brand_ID	Mileage_Brand
+                    1	Actual
+                    2	NOT Actual
+                    3	Exceeds
+                    4	Exempt
+                *@
+                if (type == 'display') {
+                    if (data < 1 || data > 4) {
+                        return data;
+                    }
+                    var values = ["", "Actual", "NOT Actual", "Exceeds", "Exempt"];
+                    return values[data];
+                }
+                return data;
+            }
+        },
+        { title: "Veh Sub Type", data: "Vehicle_Sub_Type_ID", defaultContent: "" },
+        {
+            title: "Abstract", data: "Registration_Abstract_Checked", defaultContent: "",
+            render: function (data, type, full, meta) { return RenderBoolean(data, type, full, meta); }
+        },
+        {
+            title: "License Abstract", data: "License_Abstract_Checked", defaultContent: "",
+            render: function (data, type, full, meta) { return RenderBoolean(data, type, full, meta); }
+        },
+        { title: "Subject Name", data: "Subject_Name", defaultContent: "" },
+        { title: "Subject DOB", data: "Subject_DOB", defaultContent: "" },
+        { title: "LIC PLATE", data: "License_Plate_Number", defaultContent: "" },
+        { title: "LIC Subject Name", data: "Lic_Subject_Name", defaultContent: "" },
+        { title: "LIC Subject DOB", data: "Lic_Subject_DOB", defaultContent: "" },
+        {
+            title: "Certified", data: "Certified", defaultContent: "",
+            render: function (data, type, full, meta) { return RenderBoolean(data, type, full, meta); }
+        },
+        { title: "Results", data: "Results", defaultContent: "" },
+        { title: "Company Name", data: "Company_Name", defaultContent: "" },
+        { title: "REQ Name", data: "Name", defaultContent: "" },
+        { title: "REQ Address", data: "Address", defaultContent: "" },
+        { title: "REQ City", data: "City", defaultContent: "" },
+        { title: "REQ State", data: "State", defaultContent: "" },
+        { title: "REQ County", data: "County", defaultContent: "" },
+        { title: "REQ Fax", data: "Fax_Number", defaultContent: "" },
+        { title: "Lessor Phone", data: "Leasing_Company_Phone", defaultContent: "" },
+        { title: "Lessor Email", data: "Leasing_Company_Email", defaultContent: "" },
+    ];
+    function ProcessCSV(csvText) {
+        var data = csvJSON(csvText);
+        ProcessData(data);
+    }
+    function RenderBoolean(data, type, full, meta) {
+        if (type == 'display') {
+            if (data == 'True') {
+                return 'Yes';
+            }
+            return data;
+        }
+        return data;
+    }
+    function csvJSON(csv) {
+    }
+    function ProcessExcel(data) {
+        //Read the Excel FilOdometer_Readinge data.
+        var workbook = XLSX.read(data, { type: 'binary' });
+
+        //Fetch the name of First Sheet.
+        var firstSheet = workbook.SheetNames[0];
+
+        //Read all rows from First Sheet into an JSON array.
+        excelRows = XLSX.utils.sheet_to_row_object_array(workbook.Sheets[firstSheet]);
+        ProcessData(excelRows);
+    }
+    var formTypes =
+        [{
+            "Form_Type_ID": 1,
+            "Form_Type": "NY Vehicle Repossession"
+            , AppType: "RT"
+            , State: "NY"
+        },
+        {
+            "Form_Type_ID": 2,
+            "Form_Type": "Vehicle Duplicate Title"
+            , AppType: "DT"
+            , State: "NY"
+        },
+        {
+            "Form_Type_ID": 3,
+            "Form_Type": "Vehicle Transfer"
+            , AppType: "VT"
+            , State: "NY"
+        },
+        {
+            "Form_Type_ID": 4,
+            "Form_Type": "Vehicle Abstract"
+            , AppType: "LI"
+            , State: "NY"
+        },
+        {
+            "Form_Type_ID": 5,
+            "Form_Type": "Fleet Registration"
+            , AppType: "FR"
+            , State: "NY"
+        },
+        {
+            "Form_Type_ID": 6,
+            "Form_Type": "Service Bureau Title Pending"
+            , AppType: "TP"
+            , State: "NY"
+        },
+        {
+            "Form_Type_ID": 7,
+            "Form_Type": "Police Report"
+            , AppType: "PR"
+            , State: "NY"
+        },
+        {
+            "Form_Type_ID": 8,
+            "Form_Type": "Redemption"
+            , AppType: "RED"
+            , State: "NY"
+        },
+        {
+            "Form_Type_ID": 9,
+            "Form_Type": "Mileage Correction"
+            , AppType: "MC"
+            , State: "NY"
+        },
+        {
+            "Form_Type_ID": 10,
+            "Form_Type": "Service Bureau Repo Title"
+            , AppType: "RT"
+            , State: "NY"
+        },
+        {
+            "Form_Type_ID": 11,
+            "Form_Type": "Repossessor Compliance"
+            , AppType: "RC"
+        },
+        {
+            "Form_Type_ID": 12,
+            "Form_Type": "Request for Certified Copy of Last Title Issued"
+            , AppType: "CCT"
+        },
+        {
+            "Form_Type_ID": 13,
+            "Form_Type": "PA Repossession Request"
+            , AppType: "RR"
+            , State: "PA"
+        },
+        {
+            "Form_Type_ID": 14,
+            "Form_Type": "PA Duplicate Title Application (Lienholder)"
+            , AppType: "DT"
+            , State: "PA"
+        },
+        {
+            "Form_Type_ID": 17,
+            "Form_Type": "PA Duplicate Title Application (Owner with No Liens)"
+            , AppType: "DT"
+            , State: "PA"
+        },
+        {
+            "Form_Type_ID": 18,
+            "Form_Type": "PA Duplicate Title Application (Lien Inquiry)"
+            , AppType: "DT"
+            , State: "PA"
+        },
+        {
+            "Form_Type_ID": 19,
+            "Form_Type": "PA Request for Certified Documents"
+            , AppType: "RCD"
+            , State: "PA"
+        },
+        {
+            "Form_Type_ID": 20,
+            "Form_Type": "NJ Repossession Request"
+            , AppType: "RT"
+            , State: "NJ"
+        },
+        {
+            "Form_Type_ID": 21,
+            "Form_Type": "NJ Duplicate Title Application (Lienholder)"
+            , AppType: "DT"
+            , State: "NJ"
+        },
+        {
+            "Form_Type_ID": 22,
+            "Form_Type": "VA Repossession Request"
+            , AppType: "RR"
+            , State: "VA"
+        },
+        {
+            "Form_Type_ID": 23,
+            "Form_Type": "VA Duplicate Title Application (Lienholder)"
+            , AppType: "DT"
+            , State: "VA"
+        },
+        {
+            "Form_Type_ID": 24,
+            "Form_Type": "VA Duplicate Title Application (Owner with No Liens)"
+            , AppType: "DT"
+            , State: "VA"
+        },
+        {
+            "Form_Type_ID": 25,
+            "Form_Type": "Service Bureau Repossession Title"
+            , AppType: "RT"
+            , State: "NY"
+        },
+        {
+            "Form_Type_ID": 26,
+            "Form_Type": "Service Bureau Abstract"
+            , AppType: "LI"
+        },
+        {
+            "Form_Type_ID": 27,
+            "Form_Type": "NJ Duplicate Title Application (Owner with No Liens)"
+            , AppType: "DT"
+            , State: "NJ"
+        }];
+    function ProcessData(data) {
+        if ($.fn.DataTable.isDataTable('#DT_excelFileUploadTableId')) {
+            $("#DT_excelFileUploadTableId").DataTable().destroy();
+        }
+        var table = $("#DT_excelFileUploadTableId").DataTable({
+            data: data,
+            columns: maggardNetColumns,
+            "scrollX": true,
+            columnDefs: [
+                {
+                    targets: "_all", searchable: true, className: "cellClass dt-center", autowidth: true, defaultContent: "", sortable: true,
+                    render: $.fn.dataTable.render.text()
+                }
+            ],
+            hideEmptyCols: true
+        });
+        table.columns.adjust().draw();
+        $("#DT_excelFileUploadTableId").width('100%');
+    };
+</script>

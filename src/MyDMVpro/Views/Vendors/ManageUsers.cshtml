@@ -1,0 +1,663 @@
+﻿@model MyDMVpro.Models.Vendors
+
+@{
+    ViewData["Title"] = "Manage Agents";
+    var CurrentUserId = new Guid(MyDMVpro.Common.ClaimsHelpers.GetUserId(User));
+    ICollection<MyDMVpro.Models.VendorInvite> invites = (ICollection<MyDMVpro.Models.VendorInvite>)ViewData["Invites"];
+}
+<hr />
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="groupTitle">
+            @Html.DisplayFor(model => model.VendorName)
+        </div>
+        <div>
+            <div class="activeUsers">Active Agents</div>
+            <div style="margin-left:20px">
+                <table class="table" id="DT_activeAgents" cellpadding="2" cellspacing="2">
+                    <thead>
+                        <tr>
+                            <th class="reqChkbx"></th>
+                            <th>User ID</th>
+                            <th>Display Name</th>
+                            <th class="checksort">Admin</th>
+                            <th class="checkInvoicing">Invoicing Access</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.VendorAgent.Where(va => va.Agent.Active == true).ToList())
+                        {
+                            <tr data-vendorid='@item.VendorId'  data-agentid='@item.AgentId'  data-isadmin="@item.IsVendorAdmin"
+@if (item.AgentId == CurrentUserId) {<text>data-disable='True'</text>}>
+                                <td></td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.Agent.UserPrincipalName)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.Agent.DisplayName)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.IsVendorAdmin)
+                                </td>
+                                <td>
+                                    <input type="checkbox" class="invoicing-checkbox" disabled="disabled" />
+                                    <span class="invoicing-access"></span>
+                                </td>
+                                </tr>
+                            }
+                        </tbody>
+                </table>
+            </div>
+        </div>
+        <div>
+            <div class="inactiveUsers mt_10">Inactive Agents</div>
+            <div style="margin-left:20px">
+                <table class="table" id="DT_inactiveAgents" cellpadding="2" cellspacing="2">
+                    <thead>
+                        <tr>
+                            <th class="reqChkbx"></th>
+                            <th>User ID</th>
+                            <th>Display Name</th>
+                            <th class="checksort">Admin</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.VendorAgent.Where(va => va.Agent.Active == false).ToList())
+                        {
+                            <tr data-vendorid='@item.VendorId' data-agentid='@item.AgentId'
+@if (item.AgentId == CurrentUserId) {<text>data-disable='True'</text>}>
+                                <td></td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.Agent.UserPrincipalName)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.Agent.DisplayName)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.IsVendorAdmin)
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div>
+            <div class="pendingInvites">Pending Invites</div>
+            <div style="margin-left:20px">
+                <table class="table" id="DT_pendingInvites" cellpadding="2" cellspacing="2">
+                    <thead>
+                        <tr>
+                            <th class="reqChkbx"></th>
+                            <th style="width:auto">Created</th>
+                            <th style="width:auto">User Email</th>
+                            <th class="checksort">Admin</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var invite in invites)
+                        {
+                        <tr data-inviteid='@invite.Id' data-email="@invite.UserEmail">
+                            <td></td>
+                            <td>@DateTimeHelpers.EasternDateTime(invite.DateCreated, "MM/dd/yyyy h:mm tt")</td>
+                            <td><span>@invite.UserEmail</span></td>
+                            <td>@Html.DisplayFor(modelItem => invite.MakeVendorAdmin)</td>
+                        </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<form class="invisible" method="post"></form>
+<script asp-add-nonce="true">
+    /* Create an array with the values of all the checkboxes in a column */
+    $.fn.dataTable.ext.order['dom-checkbox'] = function (settings, col) {
+        return this.api().column(col, { order: 'index' }).nodes().map(function (td, i) {
+            return $('input', td).prop('checked') ? '1' : '0';
+        });
+    }
+    function yesnoconfirm(msg, callbackfn) {
+        var dlg = bootbox.confirm({
+            message: msg,
+            swapButtonOrder: true,
+            buttons: {
+                confirm: {
+                    label: 'Yes',
+                    className: 'btn-success'
+                },
+                cancel: {
+                    label: 'No',
+                    className: 'btn-default'
+                }
+            },
+            callback: function (result) {
+                if (typeof result === 'unknown')
+                    result = false;
+                callbackfn(result);
+            }
+        });
+        @* to resize dialog:
+            dlg.find("div.modal-dialog").addClass("modal-sm");*@
+        dlg.find('.modal-content').css({
+            'margin-top': function () {
+                var w = $(window).height();
+                var b = $(this).height();
+                var h = (w - b) / 2;
+                return h + "px";
+            }
+        });
+    }
+    function vuserActivate(vendorId, agentId, flag) {
+        if (typeof flag === 'undefined')
+            return;
+
+        var msg = "Activate user?"
+        if (flag == false) {
+            msg = "Deactivate user?";
+        }
+        var r = yesnoconfirm(msg, function (r) {
+            if (r == false) {
+                return false;
+            }
+            var url = "@Url.Action("EnableAgent")"
+            if (flag == false) {
+                url = "@Url.Action("DisableAgent")"
+            }
+            var formData = new FormData();
+            formData.append("vendorId", vendorId);
+            formData.append("agentId", agentId);
+
+            var succeeded = false;
+            $.ajax({
+                url: url,
+                type: 'POST',
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                async: true,
+                cache: false,
+                dataType: 'text',
+                contentType: false,
+                processData: false,
+                data: formData
+            }).done(function (data) {
+                succeeded = true;
+                location.reload();
+            }).fail(function (jqXHR, textStatus) {
+                // do nothing?
+                succeeded = false;
+            });
+        });
+    }
+    function removeAgent(vendorId, agentId) {
+        var r = yesnoconfirm("Remove user from vendor?", function (r) {
+            if (r == false) {
+                return false;
+            }
+            var formData = new FormData();
+            formData.append("vendorId", vendorId);
+            formData.append("agentId", agentId);
+
+            var succeeded = false;
+            $.ajax({
+                url: "@Url.Action("RemoveAgent")",
+                type: 'POST',
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                async: true,
+                cache: false,
+                dataType: 'text',
+                contentType: false,
+                processData: false,
+                data: formData
+            }).done(function (data) {
+                succeeded = true;
+                location.reload();
+            }).fail(function (jqXHR, textStatus) {
+                // do nothing?
+                succeeded = false;
+            });
+        });
+    }
+    function setAdminRole(vendorid, userid, flg) {
+        var msg = "Grant user administrative permissions?";
+        if (flg == false)
+            msg = "Remove administrative permissions for user?";
+        var r = yesnoconfirm(msg, function (r) {
+            if (r == false) {
+                return false;
+            }
+            var formData = new FormData();
+            formData.append("vendorid", vendorid);
+            formData.append("agentid", userid);
+            var isAdmin = flg ? "true" : "false";
+            formData.append("isAdmin", isAdmin);
+
+            var succeeded = false;
+            $.ajax({
+                url: "@Url.Action("SetAdminRole")",
+                type: 'POST',
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                async: true,
+                cache: false,
+                dataType: 'text',
+                contentType: false,
+                processData: false,
+                data: formData
+            }).done(function (data) {
+                // do nothing
+                succeeded = true;
+                location.reload();
+            }).fail(function (jqXHR, textStatus) {
+                // do nothing
+                succeeded = false;
+            });
+        });
+    }
+
+    function resendInvite(inviteid) {
+        var r = yesnoconfirm("Resend user invite?", function (r) {
+            if (r == false) {
+                return false;
+            }
+            var formData = new FormData();
+            formData.append("inviteId", inviteid);
+
+            var succeeded = false;
+            $.ajax({
+                url: "@Url.Action("ResendInvite")",
+                type: 'POST',
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                async: true,
+                cache: false,
+                dataType: 'text',
+                contentType: false,
+                processData: false,
+                data: formData
+            }).done(function (data) {
+                // do nothing
+                succeeded = true;
+            }).fail(function (jqXHR, textStatus) {
+                // do nothing
+                succeeded = false;
+            });
+        });
+    }
+    function removeInvite(inviteid) {
+        var r = yesnoconfirm("Are you sure you want to remove the user invite?", function (r) {
+            if (r == false) {
+                return false;
+            }
+            var formData = new FormData();
+            formData.append("inviteId", inviteid);
+
+            var succeeded = false;
+            $.ajax({
+                url: "@Url.Action("RemoveInvite")",
+                type: 'POST',
+                headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+                async: true,
+                cache: false,
+                dataType: 'text',
+                contentType: false,
+                processData: false,
+                data: formData
+            }).done(function (data) {
+                // do nothing
+                succeeded = true;
+                location.reload();
+            }).fail(function (jqXHR, textStatus) {
+                // do nothing
+                succeeded = false;
+            });
+        });
+    }
+    function copyInviteLink(inviteid,email) {
+        var inviteLink = window.location.protocol + "//" + window.location.host + "/Vendors/Register/" + inviteid;
+        var msg = 'Invitation link for ' + email + ' : ' + inviteLink;
+        copyStringToClipboard(msg);
+    }
+    function copyStringToClipboard(string) {
+        function handler(event) {
+            event.clipboardData.setData('text/plain', string);
+            event.preventDefault();
+            document.removeEventListener('copy', handler, true);
+        }
+        document.addEventListener('copy', handler, true);
+        document.execCommand('copy');
+    }
+
+    function setBillingAccess(agentid) {
+        // Remove existing modal if it exists
+        $("#invoicingAccessModal").remove();
+
+        var modalHtml = `
+            <div id="invoicingAccessModal" class="modal fade" tabindex="-1" role="dialog">
+                   <div class="modal-dialog modal-dialog-centered modal_md" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                                <h5 class="modal-title">Set Invoicing Access</h5>
+                        </div>
+
+                        <div class="modal-body">
+                            <label for="accessLevel" class="label-text">Select Access Level:</label>
+                            <select id="accessLevel" class="styled-select form-control">
+                                <option value="0">No Access</option>
+                                <option value="1">Read-Only Access</option>
+                                <option value="2">Full Edit Access</option>
+                            </select>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button onclick="saveAccess('${agentid}')" class="btn btn-primary">Save</button>
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        $("body").append(modalHtml);
+        $("#invoicingAccessModal").modal('show');
+    }
+
+    function closeModal() {
+        $("#invoicingAccessModal").remove();
+    }
+
+    function saveAccess(agentid) {
+        var accessLevel = $("#accessLevel").val(); // Get selected value
+
+        var formData = new FormData();
+        formData.append("agentid", agentid);
+        formData.append("accessLevel", accessLevel);
+
+        $.ajax({
+            url: "@Url.Action("SaveFeaturePermission")",
+            type: 'POST',
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            async: true,
+            cache: false,
+            contentType: false,
+            processData: false,
+            data: formData
+        }).done(function (data) {
+            jqToast.success({ text: 'Access updated successfully!' });
+            closeModal();
+            location.reload();
+        }).fail(function () {
+            jqToast.error({ text: 'Failed to update access.' });
+        });
+    }
+
+    function GetBillinAccessDataByAgentId(agentid) {
+        var formData = new FormData();
+        formData.append("agentid", agentid);
+
+        $.ajax({
+            url: "@Url.Action("GetFeaturePermission")",
+            type: 'POST',
+            headers: { 'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val() },
+            async: true,
+            cache: false,
+            contentType: false,
+            processData: false,
+            data: formData
+        }).done(function (response) {
+
+            if (response.data) {
+                var row = $('#DT_activeAgents tbody tr').filter(function () {
+                    return $(this).data('agentid') == agentid;
+                });
+
+                if (row.length) {
+                    var checkbox = row.find(".invoicing-checkbox");
+                    checkbox.prop("checked", response.data.readState || response.data.writeState);
+
+                    var accessType = "";
+                    if (response.data.readState && response.data.writeState) {
+                        accessType = "Full edit access";
+                    } else if (response.data.readState) {
+                        accessType = "Read only access";
+                    } else {
+                        accessType = " ";
+                    }
+
+                    row.find(".invoicing-access").text(accessType);
+                }
+            }
+
+        }).fail(function () {
+            alert("Failed to update access.");
+        });
+    }
+
+    function showSpinner(ctl) {
+        $(ctl).find('span').removeClass('collapse');
+    }
+    function hideSpinner(ctl) {
+        $(ctl).find('span').addClass('collapse');
+    }
+    $(document).ready(function () {
+        var inviteTable = $("#DT_pendingInvites").DataTable({
+            "select": { style: 'single' },
+            "columnDefs": [
+                {
+                    "targets": "nosort",
+                    "orderable": false
+                },
+                {
+                    targets: "checksort",
+                    orderDataType: 'dom-checkbox'
+                },
+                {
+                    "targets": "reqChkbx",
+                    "orderable": false,
+                    "className": "select-checkbox",
+                    "min-width": "40px",
+                    "max-width": "40px",
+                    "sortable": false,
+                },
+            ],
+            dom: "lfr<'row'tipB>",
+            buttons: [
+                {
+                    text: 'New Invite',
+                    action: function (e, dt, node, config) {
+                        e.preventDefault();
+                        window.location.href = '/Vendors/Invite';
+                    }
+                },
+                {
+                    text: 'Resend',
+                    className: "selectOnOff",
+                    action: function (e, dt, node, config) {
+                        e.preventDefault();
+                        var row = $(getSelectedRow(inviteTable));
+                        var iid = row.data('inviteid');
+                        resendInvite(iid);
+                    }
+                },
+                {
+                    text: 'Copy Link',
+                    className: "selectOnOff",
+                    action: function (e, dt, node, config) {
+                        e.preventDefault();
+                        var row = $(getSelectedRow(inviteTable));
+                        var iid = row.data('inviteid');
+                        var email = row.data('email');
+                        copyInviteLink(iid, email);
+                    }
+                },
+                {
+                    text: 'Delete',
+                    className: "selectOnOff",
+                    action: function (e, dt, node, config) {
+                        e.preventDefault();
+                        var row = $(getSelectedRow(inviteTable));
+                        var iid = row.data('inviteid');
+                        removeInvite(iid);
+                    }
+                },
+            ]
+        });
+        configureTableSelect(inviteTable);
+
+        var activeTable = $("#DT_activeAgents").DataTable({
+            "select": { style: 'single' },
+            "columnDefs": [
+                {
+                    "targets": "nosort",
+                    "orderable": false
+                },
+                {
+                    targets: "checksort",
+                    orderDataType: 'dom-checkbox'
+                },
+                {
+                    targets: "checkInvoicing",
+                    orderDataType: 'dom-checkbox'
+                },
+                {
+                    "targets": "reqChkbx",
+                    "orderable": false,
+                    "className": "select-checkbox",
+                    "min-width": "40px",
+                    "max-width": "40px",
+                    "sortable": false,
+                },
+            ],
+            dom: "lfr<'row'tipB>",
+            buttons: [
+                {
+                    text: 'Toggle Admin',
+                    className: "selectOnOff",
+                    action: function (e, dt, node, config) {
+                        e.preventDefault();
+                        var row = $(getSelectedRow(activeTable));
+                        var vid = row.data('vendorid');
+                        var aid = row.data('agentid');
+                        var isadmin = row.data('isadmin');
+                        setAdminRole(vid, aid, !(isadmin == 'True'));
+                    }
+                },
+                {
+                    text: 'Toggle Invoicing',
+                    className: "selectOnOff",
+                    action: function (e, dt, node, config) {
+                        e.preventDefault();
+                        var row = $(getSelectedRow(activeTable));
+                        var vid = row.data('vendorid');
+                        var aid = row.data('agentid');
+                        setBillingAccess(aid)
+                    }
+                },
+                {
+                    text: 'Deactivate',
+                    className: "selectOnOff",
+                    action: function (e, dt, node, config) {
+                        e.preventDefault();
+                        var row = $(getSelectedRow(activeTable));
+                        var vid = row.data('vendorid');
+                        var aid = row.data('agentid');
+                        vuserActivate(vid, aid, false);
+                    }
+                }
+            ],
+            initComplete: function () {
+                // Get all user IDs from table and call the function for each
+                $('#DT_activeAgents tbody tr').each(function () {
+                    var agentid = $(this).data("agentid"); // Assuming the userid is stored as data attribute
+                    if (agentid) {
+                        GetBillinAccessDataByAgentId(agentid);
+                    }
+                });
+            }
+        });
+        configureTableSelect(activeTable);
+
+        var inactiveTable = $("#DT_inactiveAgents").DataTable({
+            "select": { style: 'single' },
+            "columnDefs": [
+                {
+                    "targets": "nosort",
+                    "orderable": false
+                },
+                {
+                    targets: "checksort",
+                    orderDataType: 'dom-checkbox'
+                },
+                {
+                    "targets": "reqChkbx",
+                    "orderable": false,
+                    "className": "select-checkbox",
+                    "min-width": "40px",
+                    "max-width": "40px",
+                    "sortable": false,
+                },
+            ],
+            dom: "lfr<'row'tipB>",
+            buttons: [
+                {
+                    text: 'Activate',
+                    className: "selectOnOff",
+                    action: function (e, dt, node, config) {
+                        e.preventDefault();
+                        var row = $(getSelectedRow(inactiveTable));
+                        var vid = row.data('vendorid');
+                        var aid = row.data('agentid');
+                        vuserActivate(vid, aid, true);
+                    }
+                },
+                {
+                    text: 'Remove',
+                    className: "selectOnOff",
+                    action: function (e, dt, node, config) {
+                        e.preventDefault();
+                        var row = $(getSelectedRow(inactiveTable));
+                        var vid = row.data('vendorid');
+                        var aid = row.data('agentid');
+                        removeAgent(vid, aid);
+                    }
+                }
+            ]
+        });
+        configureTableSelect(inactiveTable);
+
+        $(':checkbox').on('change', function (e) {
+            var row = $(this).closest('tr');
+            var hmc = row.find(':checkbox:checked').length;
+            var kluj = parseInt(hmc);
+            row.find('td.counter').text(kluj);
+            table.row(row).invalidate('dom');
+        });
+    });
+    function configureTableSelect(table) {
+        table.on('select deselect', function (e, dt, type, indexes) {
+            if (type === 'row') {
+                if (table.rows({ selected: true }).indexes().length !== 1) {
+                    table.buttons('.selectOnOff').disable();
+                }
+                else {
+                    var row = $(getSelectedRow(table));
+                    if (row.data("disable") == 'True') {
+                        table.buttons('.selectOnOff').disable();
+                    }
+                    else {
+                        table.buttons('.selectOnOff').enable();
+                    }
+                }
+            }
+        });
+        table.buttons('.selectOnOff').disable();
+    }
+    function getSelectedRow(table) {
+        var a = [];
+        return table.rows({ selected: true }).nodes()[0];
+    }
+</script>

@@ -1,0 +1,155 @@
+# To learn more about .editorconfig see https://aka.ms/editorconfigdocs
+root = true
+
+# All files
+[*]
+indent_style = space
+
+# NETSDK1071: A PackageReference to '' specified a Version of ``. Specifying the version of this package is not recommended
+dotnet_diagnostic.NETSDK1071.severity = none
+
+# CS0414: The field 'StorageHelpers._batchContainer' is assigned but its value is never used
+dotnet_diagnostic.CS0414.severity = none
+
+# CS0162: Unreachable code detected
+dotnet_diagnostic.CS0162.severity = none
+
+# CS0168: The variable 'ex' is declared but never used
+dotnet_diagnostic.CS0168.severity = none
+
+# CS0219: The variable 'found' is assigned but its value is never used
+dotnet_diagnostic.CS0219.severity = none
+
+# CS0649: Field '' is never assigned to, and will always have its default value null
+dotnet_diagnostic.CS0649.severity = none
+
+# CS1998: This async method lacks 'await' operators and will run synchronously.
+dotnet_diagnostic.CS1998.severity = none
+
+# Warning CS8321: The local function 'ASDATE' is declared but never used
+dotnet_diagnostic.CS8321.severity = none
+
+# CA1031: Modify 'function' to catch a more specific allowed exception type, or rethrow the exception
+dotnet_diagnostic.CA1031.severity = none
+
+# CA1034: Do not nest type Selectors. Alternatively, change its accessibility so that it is not externally visible.
+dotnet_diagnostic.CA1034.severity = none
+
+# CA1051: Do not declare visible instance fields
+dotnet_diagnostic.CA1051.severity = none
+
+# CA1052: Type 'TypeMerger' is a static holder type but is neither static nor NotInheritable
+dotnet_diagnostic.CA1052.severity = none
+
+# CA1054: Change the type of parameter '' of method '' that allows '' to be passed as a System.Uri object
+dotnet_diagnostic.CA1054.severity = none
+
+# CA1056: Change the type of 'property' from string to System.Uri
+dotnet_diagnostic.CA1056.severity = none
+
+# CA1062: In externally visible method 'function', validate parameter 'param' is non-null before using it
+dotnet_diagnostic.CA1062.severity = none
+
+# CA1303: Method '' passes a literal string as parameter '' of a call to ''. 
+dotnet_diagnostic.CA1303.severity = none
+
+# CA1304: The behavior of 'function' could vary based on the current user's locale settings
+dotnet_diagnostic.CA1304.severity = none
+
+# CA1305: The behavior of 'function' could vary based on the current user's locale settings
+dotnet_diagnostic.CA1305.severity = none
+
+# CA1307: The behavior of 'function' could vary based on the current user's locale settings
+dotnet_diagnostic.CA1307.severity = none
+
+# CA1308: In method '', replace the call to 'ToLowerInvariant' with 'ToUpperInvariant'
+dotnet_diagnostic.CA1308.severity = none
+
+# CA1507: Use nameof in place of string literal ''
+dotnet_diagnostic.CA1507.severity = none
+
+# CA1707: Remove the underscores from member name
+dotnet_diagnostic.CA1707.severity = none
+
+# CA1710: Rename property to end in 'Dictionary'.
+dotnet_diagnostic.CA1710.severity = none
+
+# CA1716: Rename type XX so that it no longer conflicts with the reserved language keyword 'Module'. Using a reserved keyword as the name of a type makes it harder for consumers in other languages to use the type.
+dotnet_diagnostic.CA1716.severity = none
+
+# CA1717: Only FlagsAttribute enums should have plural names
+dotnet_diagnostic.CA1717.severity = none
+
+# CA1720: Identifier '' contains type name
+dotnet_diagnostic.CA1720.severity = none
+
+# CA1721: The property name '' is confusing given the existence of method ''. Rename or remove one of these members
+dotnet_diagnostic.CA1721.severity = none
+
+# CA1724: The type name Query conflicts in whole or in part with the namespace name ''. Change either name to eliminate the conflict.
+dotnet_diagnostic.CA1724.severity = none
+
+# CA1801: Review unused parameters
+dotnet_diagnostic.CA1801.severity = none
+
+# CA1806: Search calls TryParse but does not explicitly check whether the conversion succeeded. Either use the return value in a conditional statement or verify that the call site expects that the out argument will be set to the default value when the conversion fails.
+dotnet_diagnostic.CA1806.severity = none
+
+# CA1810: Initialize all static fields in '' when those fields are declared and remove the explicit static constructor
+dotnet_diagnostic.CA1810.severity = none
+
+# CA1812: XX is an internal class that is apparently never instantiated. If so, remove the code from the assembly. If this class is intended to contain only static members, make it static
+dotnet_diagnostic.CA1812.severity = none
+
+# CA1814: .cctor uses a multidimensional array of string[*,*]. Replace it with a jagged array if possible.
+dotnet_diagnostic.CA1814.severity = none
+
+# CA1816: Change XX to call GC.SuppressFinalize(object). This will prevent derived types that introduce a finalizer from needing to re-implement 'IDisposable' to call it.
+dotnet_diagnostic.CA1816.severity = none
+
+# CA1819: Properties should not return arrays
+dotnet_diagnostic.CA1819.severity = none
+
+# CA1820: Test for empty strings using 'string.Length' property or 'string.IsNullOrEmpty' method instead of an Equality check.
+dotnet_diagnostic.CA1820.severity = none
+
+# CA1822: Mark members as static
+dotnet_diagnostic.CA1822.severity = none
+
+# CA1823: Unused field ''
+dotnet_diagnostic.CA1823.severity = none
+
+# CA1825: Avoid unnecessary zero-length array allocations.  Use Array.Empty<object>() instead
+dotnet_diagnostic.CA1825.severity = none
+
+# CA1829: Use the "Count" property instead of Enumerable.Count()
+dotnet_diagnostic.CA1829.severity = none
+
+# CA2000: Call System.IDisposable.Dispose on object created by '' before all references to it are out of scope.
+dotnet_diagnostic.CA2000.severity = none
+
+# CA2007
+dotnet_diagnostic.CA2007.severity = none
+
+# CA2100: Review if the query string passed to '' in '', accepts any user input
+dotnet_diagnostic.CA2100.severity = none
+
+# CA2208: Call the ArgumentException constructor that contains a message and/or paramName parameter.
+dotnet_diagnostic.CA2208.severity = none
+
+# CA2211: Non-constant fields should not be visible
+dotnet_diagnostic.CA2211.severity = none
+
+# CA2227: Change 'property' to be read-only by removing the property setter.
+dotnet_diagnostic.CA2227.severity = none
+
+# CA2234: Modify '' to call '' instead of 'HttpClient'.
+dotnet_diagnostic.CA2234.severity = none
+
+# CA8321
+dotnet_diagnostic.CA8321.severity = none
+
+
+# Xml files
+[*.xml]
+indent_size = 2

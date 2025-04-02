@@ -1,0 +1,219 @@
+﻿@model MyDMVpro.Models.AppFormModels.ProcessStatus
+@{
+    bool IsUserVendor() { return false; } 
+
+    string ALTFORMDIV()
+    {
+        return "";// do not use row highlighting
+        //return ((count++) % 2) == 0 ? "evenrow" : "oddrow";
+    }
+    Dictionary<string, string> excludeFields = new Dictionary<string, string>();
+    List<string> fields = new List<string>();
+
+    bool FieldInList(string fieldName)
+    {
+        if (Model.EnabledFields.Count == 0)
+            return true;
+        return Model.EnabledFields.Any(f => f.FieldName == fieldName);
+    }
+}
+<div class="scrollable">
+    <form id="dynamicProcessViewForm" asp-controller="AppForm" asp-action="" method="post" class="w-100">
+        <input type="hidden" asp-for="RequestId" />
+        <div class="row flex_row gap_15">
+            @if (FieldInList("DateToVendor"))
+            {
+                <div class="form-group col-md-6 @ALTFORMDIV()">
+                    <label asp-for="DateToVendor" class="control-label"></label>
+                    <input asp-for="DateToVendor" class="form-control" readonly />
+                    <span asp-validation-for="DateToVendor" class="text-danger"></span>
+                </div>
+            }
+            @if (FieldInList("DateReceived"))
+            {
+                <div class="form-group col-md-6 @ALTFORMDIV()">
+                    <label asp-for="DateReceived" class="control-label"></label>
+                    <input asp-for="DateReceived" class="form-control" readonly />
+                    <span asp-validation-for="DateReceived" class="text-danger"></span>
+                </div>
+            }
+            @if (FieldInList("DateSigned") && IsUserVendor())
+            {
+                <div class="form-group col-md-6 @ALTFORMDIV()">
+                    <label asp-for="DateSigned" class="control-label"></label>
+                    <input asp-for="DateSigned" class="form-control" readonly />
+                    <span asp-validation-for="DateSigned" class="text-danger"></span>
+                </div>
+            }
+            @if (FieldInList("DatePrinted") && IsUserVendor())
+            {
+                <div class="form-group col-md-6 @ALTFORMDIV()">
+                    <label asp-for="DatePrinted" class="control-label"></label>
+                    <input asp-for="DatePrinted" class="form-control" readonly />
+                    <span asp-validation-for="DatePrinted" class="text-danger"></span>
+                </div>
+            }
+            @if (FieldInList("DateToDmv"))
+            {
+                <div class="form-group col-md-6 @ALTFORMDIV()">
+                    <label asp-for="DateToDmv" class="control-label"></label>
+                    <input asp-for="DateToDmv" class="form-control" readonly />
+                    <span asp-validation-for="DateToDmv" class="text-danger"></span>
+                </div>
+            }
+            @if (FieldInList("ETA"))
+            {
+                <div class="form-group col-md-6 @ALTFORMDIV()">
+                    <label asp-for="ETA" class="control-label"></label>
+                    <input asp-for="ETA" class="form-control" readonly />
+                    <span asp-validation-for="ETA" class="text-danger"></span>
+                </div>
+            }
+            @if (FieldInList("DateTitleIssued"))
+            {
+                <div class="form-group col-md-6 @ALTFORMDIV()">
+                    <label asp-for="DateTitleIssued" class="control-label"></label>
+                    <input asp-for="DateTitleIssued" class="form-control" readonly />
+                    <span asp-validation-for="DateTitleIssued" class="text-danger"></span>
+                </div>
+            }
+            @if (FieldInList("DateFromDmv"))
+            {
+                <div class="form-group col-md-6 @ALTFORMDIV()">
+                    <label asp-for="DateFromDmv" class="control-label"></label>
+                    <input asp-for="DateFromDmv" class="form-control" readonly />
+                    <span asp-validation-for="DateFromDmv" class="text-danger"></span>
+                </div>
+            }
+            @if (FieldInList("DateToVendor"))
+            {
+                <div class="form-group col-md-6 @ALTFORMDIV()">
+                    <label asp-for="DateShipped" class="control-label"></label>
+                    <input asp-for="DateShipped" class="form-control" readonly />
+                    <span asp-validation-for="DateShipped" class="text-danger"></span>
+                </div>
+            }
+            @if (FieldInList("ToVendorCourier") && IsUserVendor())
+            {
+                <div class="form-group col-md-6 @ALTFORMDIV()">
+                    <label asp-for="ToVendorCourier" class="control-label"></label>
+                    <input asp-for="ToVendorCourier" class="form-control" readonly />
+                    <span asp-validation-for="ToVendorCourier" class="text-danger"></span>
+                </div>
+            }
+            @if (FieldInList("ToVendorTracking") && IsUserVendor())
+            {
+                <div class="form-group col-md-6 @ALTFORMDIV()">
+                    <label asp-for="ToVendorTracking" class="control-label"></label>
+                    <input asp-for="ToVendorTracking" class="form-control" readonly />
+                    <span asp-validation-for="ToVendorTracking" class="text-danger"></span>
+                </div>
+            }
+            @if (FieldInList("Courier") && IsUserVendor())
+            {
+                <div class="form-group col-md-6 @ALTFORMDIV()">
+                    <label asp-for="Courier" class="control-label"></label>
+                    <input asp-for="Courier" class="form-control" readonly />
+                    <span asp-validation-for="Courier" class="text-danger"></span>
+                </div>
+            }
+            @if (FieldInList("TrackingNumber"))
+            {
+                <div class="form-group col-md-6 @ALTFORMDIV()">
+                    <label asp-for="TrackingNumber" class="control-label"></label>
+                    <input asp-for="TrackingNumber" class="form-control" readonly />
+                    <span asp-validation-for="TrackingNumber" class="text-danger"></span>
+                </div>
+            }
+            @if (FieldInList("DmvCourier") && IsUserVendor())
+            {
+                <div class="form-group col-md-6 @ALTFORMDIV()">
+                    <label asp-for="DmvCourier" class="control-label"></label>
+                    <input asp-for="DmvCourier" class="form-control" readonly />
+                    <span asp-validation-for="DmvCourier" class="text-danger"></span>
+                </div>
+            }
+            @if (FieldInList("DmvTrackingNumber") && IsUserVendor())
+            {
+                <div class="form-group col-md-6 @ALTFORMDIV()">
+                    <label asp-for="DmvTrackingNumber" class="control-label"></label>
+                    <input asp-for="DmvTrackingNumber" class="form-control" readonly />
+                    <span asp-validation-for="DmvTrackingNumber" class="text-danger"></span>
+                </div>
+            }
+            @if (FieldInList("ToDmvTrackingNumber") && IsUserVendor())
+            {
+                <div class="form-group col-md-6 @ALTFORMDIV()">
+                    <label asp-for="ToDmvTrackingNumber" class="control-label"></label>
+                    <input asp-for="ToDmvTrackingNumber" class="form-control" readonly />
+                    <span asp-validation-for="ToDmvTrackingNumber" class="text-danger"></span>
+                </div>
+            }
+            @if (FieldInList("Code") && IsUserVendor())
+            {
+                <div class="form-group col-md-6 @ALTFORMDIV()">
+                    <label asp-for="Code" class="control-label"></label>
+                    <input asp-for="Code" class="form-control" readonly />
+                    <span asp-validation-for="Code" class="text-danger"></span>
+                </div>
+            }
+            @if (FieldInList("RejectionDate") && IsUserVendor())
+            {
+                <div class="form-group col-md-6 @ALTFORMDIV()">
+                    <label asp-for="RejectionDate" class="control-label"></label>
+                    <input asp-for="RejectionDate" class="form-control" readonly />
+                    <span asp-validation-for="RejectionDate" class="text-danger"></span>
+                </div>
+            }
+            @if (FieldInList("CheckNumber") && IsUserVendor())
+            {
+                <div class="form-group col-md-6 @ALTFORMDIV()">
+                    <label asp-for="CheckNumber" class="control-label"></label>
+                    <input asp-for="CheckNumber" class="form-control" />
+                    <span asp-validation-for="CheckNumber" class="text-danger"></span>
+                </div>
+            }
+            @if (FieldInList("LI_DateToDmv") && IsUserVendor())
+            {
+                <div class="form-group col-md-6 @ALTFORMDIV()">
+                    <label asp-for="LI_DateToDmv" class="control-label"></label>
+                    <input asp-for="LI_DateToDmv" class="form-control" />
+                    <span asp-validation-for="LI_DateToDmv" class="text-danger"></span>
+                </div>
+            }
+            @if (FieldInList("LI_DateFromDmv") && IsUserVendor())
+            {
+                <div class="form-group col-md-6 @ALTFORMDIV()">
+                    <label asp-for="LI_DateFromDmv" class="control-label"></label>
+                    <input asp-for="LI_DateFromDmv" class="form-control" />
+                    <span asp-validation-for="LI_DateFromDmv" class="text-danger"></span>
+                </div>
+            }
+            @if (FieldInList("LI_CheckNumber") && IsUserVendor())
+            {
+                <div class="form-group col-md-6 @ALTFORMDIV()">
+                    <label asp-for="LI_CheckNumber" class="control-label"></label>
+                    <input asp-for="LI_CheckNumber" class="form-control" />
+                    <span asp-validation-for="LI_CheckNumber" class="text-danger"></span>
+                </div>
+            }
+            @if (FieldInList("LI_ToDmvCourier") && IsUserVendor())
+            {
+                <div class="form-group col-md-6 @ALTFORMDIV()">
+                    <label asp-for="LI_ToDmvCourier" class="control-label"></label>
+                    <input asp-for="LI_ToDmvCourier" class="form-control" />
+                    <span asp-validation-for="LI_ToDmvCourier" class="text-danger"></span>
+                </div>
+            }
+            @if (FieldInList("LI_ToDmvTracking") && IsUserVendor())
+            {
+                <div class="form-group col-md-6 @ALTFORMDIV()">
+                    <label asp-for="LI_ToDmvTracking" class="control-label"></label>
+                    <input asp-for="LI_ToDmvTracking" class="form-control" />
+                    <span asp-validation-for="LI_ToDmvTracking" class="text-danger"></span>
+                </div>
+            }
+        </div>
+    </form>
+</div>
+

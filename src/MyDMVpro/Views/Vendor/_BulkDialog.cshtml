@@ -1,0 +1,216 @@
+﻿<div id="modal-bulkcode" class="modal fade hidden-print" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Bulk Update Codes</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" id="REQ_BULK_MULTI_VIN_CODE_HEADER"></div>
+                <div class="form-group">
+                    <label for="bulkCode" class="control-label">Code</label>
+                    <input type="text" maxlength="10" name="bulkCode" id="bulkCode" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label id="selectedCount"></label>
+                </div>
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="modal-bulknote" class="modal fade hidden-print" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Bulk Update Notes</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" id="REQ_BULK_MULTI_VIN_CODE_HEADER"></div>
+                <div class="form-group">
+                    <label for="note" class="control-label">Note</label>
+                    <textarea id="note" name="note" rows="4" cols="80" placeholder="" class="form-control" style="resize:none;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="remark" class="control-label">Internal remarks</label>
+                    <textarea id="remark" name="remark" rows="4" cols="80" placeholder="" class="form-control" style="resize:none;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label id="selectedCount"></label>
+                </div>
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="modal-bulketa" class="modal fade hidden-print" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Bulk Update ETA</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" id="REQ_BULK_MULTI_VIN_CODE_HEADER"></div>
+                <div class="form-group">
+                    <label for="bulkETA" class="control-label">ETA</label>
+                    <input type="date" name="bulkETA" id="bulkETA" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label id="selectedCount"></label>
+                </div>
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="modal-bulkaudit" class="modal fade hidden-print" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Bulk Update Audits</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" id="REQ_BULK_MULTI_VIN_CODE_HEADER"></div>
+                <div class="form-group">
+                    <label for="outcome" class="control-label">Outcome</label>
+                    <select id="outcome" name="outcome" class="form-control">
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="notes" class="control-label">Notes</label>
+                    <textarea id="notes" name="notes" rows="2" cols="80" placeholder="" class="form-control" style="resize:none;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="internal" class="control-label">Internal</label>
+                    <textarea id="internal" name="internal" rows="2" cols="80" placeholder="" class="form-control" style="resize:none;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="assignedUser" class="control-label">Assigned User</label>
+                    <select id="assignedUser" name="assignedUser" class="form-control">
+                        <option value="user1">User 1</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label id="selectedCount"></label>
+                </div>
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-Completeaudit" class="modal fade hidden-print" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Complete Audit</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" id="REQ_BULK_MULTI_VIN_CODE_HEADER"></div>
+                <div class="form-group">
+                    <label for="notes" class="control-label">Name</label>
+                    <textarea id="name" name="name" rows="2" cols="80" placeholder="" class="form-control" style="resize:none;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="notes" class="control-label">Note</label>
+                    <textarea id="notes" name="notes" rows="2" cols="80" placeholder="" class="form-control" style="resize:none;"></textarea>
+                </div>
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" id="cancelButton" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="modal-PriorCompleteaudit" class="modal fade hidden-print" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-labelForPrior"></h4>
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-body">
+                <div class="priorCompleteauditGrid">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>S.No</th>
+                                <th>Audit Name</th>
+                                <th>Completed Note</th>
+                                <th>Completed Date</th>
+                                <th>Total Time Taken</th>
+                                <th>Completed By</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="audit-list-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div id="record-count"></div>
+                <button type="button" class="btn btn-default" id="cancel-button" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="modal-bulkNeedToProcess" class="modal fade hidden-print" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModal-label">Bulk Update Process</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" id="REQ_BULK_MULTI_VIN_CODE_HEADER"></div>
+                <div class="form-group">
+                    <label for="assignedProcessor" class="control-label">Assigned Processor</label>
+                    <select id="assignedProcessor" name="assignedProcessor" class="form-control">
+                        <option value="user1">User 1</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="assignedShipper" class="control-label">Assigned Shipper</label>
+                    <select id="assignedShipper" name="assignedShipper" class="form-control">
+                        <option value="user1">User 1</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label id="selectedCount"></label>
+                </div>
+            </div>
+            <div class="alert alert-danger" style="display:none" role="alert"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="okButton">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
